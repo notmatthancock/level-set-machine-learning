@@ -1,0 +1,30 @@
+python module trilinear
+interface
+    function interpolate_point(i, j, k, img, di, dj, dk, m, n, p) result(irp)
+        intent(c) interpolate_point
+        intent(c)
+
+        real(kind=8) intent(in) :: i,j,k,di,dj,dk
+        integer intent(hide), depend(img) :: m = shape(img,0)
+        integer intent(hide), depend(img) :: n = shape(img,1)
+        integer intent(hide), depend(img) :: p = shape(img,2)
+        real(kind=8) intent(in), dimension(m,n,p) :: img
+        real(kind=8) irp
+    end function interpolate_point
+!--1    subroutine interpolate(igrid, jgrid, kgrid, q, r, s, img, m, n, p, irp)
+!--1        intent(c) interpolate
+!--1        intent(c)
+!--1
+!--1        integer intent(hide), depend(img) :: m = shape(img,0)
+!--1        integer intent(hide), depend(img) :: n = shape(img,1)
+!--1        integer intent(hide), depend(img) :: p = shape(img,2)
+!--1
+!--1        integer intent(hide), depend(igrid) :: q = shape(igrid,0)
+!--1        integer intent(hide), depend(igrid) :: r = shape(igrid,1)
+!--1        integer intent(hide), depend(igrid) :: s = shape(igrid,2)
+!--1
+!--1        real(kind=8) intent(in), dimension(q,r,s) :: igrid, jgrid, kgrid, irp
+!--1        real(kind=8) intent(in), dimension(m,n,p) :: img
+!--1    end subroutine interpolate
+end interface
+end python module trilinear

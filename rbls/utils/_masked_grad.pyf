@@ -1,0 +1,110 @@
+python module _masked_grad
+interface
+    subroutine gradient_centered3d(m, n, p, A, mask, di, dj, dk, gmag, &
+                                   deli, delj, delk, normalize)
+        intent(c) gradient_centered3d
+        intent(c)
+
+        integer intent(hide), depend(A) :: m = shape(A,0)
+        integer intent(hide), depend(A) :: n = shape(A,1)
+        integer intent(hide), depend(A) :: p = shape(A,2)
+
+        integer intent(in), optional :: normalize = 0
+
+        real(kind=8) intent(in) :: A(m,n,p)
+        real(kind=8) intent(in) :: di(m,n,p)
+        real(kind=8) intent(in) :: dj(m,n,p)
+        real(kind=8) intent(in) :: dk(m,n,p)
+        real(kind=8) intent(in) :: gmag(m,n,p)
+
+        integer(kind=1) intent(in), optional :: mask(m,n,p) = 1
+        real(kind=8) intent(in), optional :: deli = 1.0
+        real(kind=8) intent(in), optional :: delj = 1.0
+        real(kind=8) intent(in), optional :: delk = 1.0
+    end subroutine gradient_centered3d
+
+    subroutine gradient_centered2d(m, n, A, mask, di, dj, gmag, &
+                                   deli, delj, normalize)
+        intent(c) gradient_centered2d
+        intent(c)
+
+        integer intent(hide), depend(A) :: m = shape(A,0)
+        integer intent(hide), depend(A) :: n = shape(A,1)
+
+        integer intent(in), optional :: normalize = 0
+
+        real(kind=8) intent(in) :: A(m,n)
+        real(kind=8) intent(in) :: di(m,n)
+        real(kind=8) intent(in) :: dj(m,n)
+        real(kind=8) intent(in) :: gmag(m,n)
+
+        integer(kind=1) intent(in), optional :: mask(m,n) = 1
+        real(kind=8) intent(in), optional :: deli = 1.0
+        real(kind=8) intent(in), optional :: delj = 1.0
+    end subroutine gradient_centered2d
+
+    subroutine gradient_centered1d(m, A, mask, di, gmag, deli, normalize)
+        intent(c) gradient_centered1d
+        intent(c)
+
+        integer intent(hide), depend(A) :: m = shape(A,0)
+
+        integer intent(in), optional :: normalize = 0
+
+        real(kind=8) intent(in) :: A(m)
+        real(kind=8) intent(in) :: di(m)
+        real(kind=8) intent(in) :: gmag(m)
+
+        integer(kind=1) intent(in), optional :: mask(m) = 1
+        real(kind=8) intent(in), optional :: deli = 1.0
+    end subroutine gradient_centered1d
+
+    subroutine gmag_os3d(m, n, p, A, mask, nu, gmag, deli, delj, delk)
+        intent(c) gmag_os3d
+        intent(c)
+
+        integer intent(hide), depend(A) :: m = shape(A,0)
+        integer intent(hide), depend(A) :: n = shape(A,1)
+        integer intent(hide), depend(A) :: p = shape(A,2)
+
+        real(kind=8) intent(in) :: A(m,n,p)
+        real(kind=8) intent(in) :: nu(m,n,p)
+        real(kind=8) intent(in) :: gmag(m,n,p)
+
+        integer(kind=1) intent(in), optional :: mask(m,n,p) = 1
+        real(kind=8) intent(in), optional :: deli = 1.0
+        real(kind=8) intent(in), optional :: delj = 1.0
+        real(kind=8) intent(in), optional :: delk = 1.0
+    end subroutine gmag_os3d
+
+    subroutine gmag_os2d(m, n, A, mask, nu, gmag, deli, delj)
+        intent(c) gmag_os2d
+        intent(c)
+
+        integer intent(hide), depend(A) :: m = shape(A,0)
+        integer intent(hide), depend(A) :: n = shape(A,1)
+
+        real(kind=8) intent(in) :: A(m,n)
+        real(kind=8) intent(in) :: nu(m,n)
+        real(kind=8) intent(in) :: gmag(m,n)
+
+        integer(kind=1) intent(in), optional :: mask(m,n) = 1
+        real(kind=8) intent(in), optional :: deli = 1.0
+        real(kind=8) intent(in), optional :: delj = 1.0
+    end subroutine gmag_os2d
+
+    subroutine gmag_os1d(m, A, mask, nu, gmag, deli)
+        intent(c) gmag_os1d
+        intent(c)
+
+        integer intent(hide), depend(A) :: m = shape(A,0)
+
+        real(kind=8) intent(in) :: A(m)
+        real(kind=8) intent(in) :: nu(m)
+        real(kind=8) intent(in) :: gmag(m)
+
+        integer(kind=1) intent(in), optional :: mask(m) = 1
+        real(kind=8) intent(in), optional :: deli = 1.0
+    end subroutine gmag_os1d
+end interface
+end python module _masked_grad
