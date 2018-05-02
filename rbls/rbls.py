@@ -572,7 +572,7 @@ class RBLS(object):
         else:
             self.models = [nnet]
 
-        if not self._fopts_leave_tmp:
+        if self._fopts_remove_tmp:
             self._logger.info("Removing tmp files at %s." % self._iter_dir)
             shutil.rmtree(self._iter_dir)
         del self._iter_dir
@@ -632,12 +632,25 @@ class RBLS(object):
                                    "%.3f hours.") % iter_time,
                                   self._iter, maxiters)
 
+            self._logger.info("Saving model to %s." % self._fopts_save_file)
 
-        if not self._fopts_leave_tmp:
+            # Swap the logger before saving the model since
+            # file objects don't pickel.
+            logger = self._logger
+            self._logger = None
+
+            # Save the model. 
+            with open(self._fopts_save_file, 'w') as f:
+                pickle.dump(self, f)
+
+            # Put the logger back.
+            self._logger = logger
+
+
+        if self._fopts_remove_tmp:
             self._logger.info("Removing temporary files at %s." 
-                                    % self._models_path)
-            shutil.rmtree(self._models_path)
-            os.remove(os.path.join(self.__fopts_tmp_dir, "tmp.h5"))
+                                    % self._fopts_tmp_dir)
+            shutil.rmtree(self._fopts_tmp_dir)
 
 
         self._is_fitted = True
@@ -650,13 +663,13 @@ class RBLS(object):
         for h in self._logger.handlers: h.close()
         del self._logger
 
-        # Actually save the model ...
+        # Save the model. 
         with open(self._fopts_save_file, 'w') as f:
             pickle.dump(self, f)
 
 
     def set_fit_options(self, inds=None, save_file=None,
-                        tmp_dir=None, leave_tmp=False,
+                        tmp_dir=None, remove_tmp=False,
                         maxiters=100, va_hist_len=5, va_hist_tol=0.0,
                         logfile=None, logstamp=True, logstdout=True):
         """
@@ -685,7 +698,7 @@ class RBLS(object):
             if the validation set performance degrades (see `va_his_len` 
             and `va_hist_tol`).
 
-        leave_tmp: bool, default=False
+        remove_tmp: bool, default=False
             If True, the temporary files created over the fitting process 
             are left in place and not deleted. This includes for example,
             all the network models for the grid search procedure.
@@ -726,7 +739,11 @@ class RBLS(object):
                                                  "rbls_model.pkl")
 
         if self._fopts_tmp_dir is None:
-            self._fopts_tmp_dir = os.path.curdir
+            self._fopts_tmp_dir = os.path.join(os.path.curdir, 'tmp')
+        else:
+            self._fopts_tmp_dir = os.path.join(self._fopts_tmp_dir, 'tmp')
+
+        os.mkdir(self._fopts_tmp_dir)
 
         self._inds = inds
         self._logger = fit_logger(file=logfile, stamp=logstamp, 
@@ -851,8 +868,7 @@ class RBLS(object):
             scores = np.zeros((iters+1,))
             scores[0] = self.score_func(u[0], seg)
 
-        nu   = np.zeros(img.shape)
-        #gmag = np.zeros(img.shape)
+        nu = np.zeros(img.shape)
 
         if verbose:
             if seg is None:

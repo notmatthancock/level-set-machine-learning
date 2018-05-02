@@ -1,6 +1,7 @@
 import numpy as np
 from rbls.feature_maps import feature_map_base
 from scipy.ndimage import gaussian_filter1d as gf1d
+from rbls.utils import masked_grad as mg
 
 class simple_feature_map(feature_map_base):
     """
@@ -121,16 +122,12 @@ class simple_feature_map(feature_map_base):
             if memoize is None:
                 if sigma > 0:
                     blur = img
-                    gmag = np.zeros_like(img)
                     for axis in range(len(dx)):
                         blur = gf1d(blur, sigma/dx[axis], axis=axis)
-                        gmag += gf1d(img/dx[axis], sigma/dx[axis], 
-                                     axis=axis, order=1)**2
-                    gmag **= 0.5
+                    _,gmag = mg.gradient_centered(blur, mask=mask, dx=dx) 
                 else:
                     blur = img
-                    gx,gy = np.gradient(img, *dx)
-                    gmag = np.sqrt(gx**2 + gy**2)
+                    _,gmag = mg.gradient_centered(blur, mask=mask, dx=dx) 
             else:
                 if memoize == 'create':
                     if not hasattr(self, 'blurs'):
@@ -140,21 +137,22 @@ class simple_feature_map(feature_map_base):
 
                     if sigma > 0:
                         self.blurs[isig] = img
-                        self.gmags[isig] = np.zeros_like(img)
                         for axis in range(len(dx)):
                             self.blurs[isig] = gf1d(self.blurs[isig],
                                                     sigma/dx[axis],
                                                     axis=axis)
-                            self.gmags[isig] += gf1d(img/dx[axis], 
-                                                     sigma/dx[axis], 
-                                                     axis=axis,
-                                                     order=1)**2
-                        self.gmags[isig] **= 0.5
+                        _, self.gmags[isig] = mg.gradient_centered(
+                                                self.blurs[isig],
+                                                mask=mask,
+                                                dx=dx
+                                              )
                     else:
                         self.blurs[isig] = img
-                        gx,gy = np.gradient(img, *dx)
-                        self.gmags[isig] = np.sqrt(gx**2 + gy**2)
-                        d = self.blurs[isig] - img
+                        _, self.gmags[isig] = mg.gradient_centered(
+                                                self.blurs[isig],
+                                                mask=mask,
+                                                dx=dx
+                                              )
 
                 # Handles both 'create' and 'use' `memoize` cases.
                 blur = self.blurs[isig]
