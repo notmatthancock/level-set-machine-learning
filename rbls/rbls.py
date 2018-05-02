@@ -162,11 +162,21 @@ class RBLS(object):
             dist = tf["%d/dist"%i][...]
             mask = tf["%d/mask"%i][...]
 
+            # Don't update if the mask is empty.
+            if not mask.any(): continue
+
+            # Check if level set vanished and set mask to zeros if so.
+            if (u > 0).all() or (u < 0).all():
+                tf["%d/mask"%i] = np.zeros_like(mask)
+                continue
+
             # Compute features.
             F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
+
             # Compute approximate velocity from features.
             nu_hat = np.zeros_like(u)
             nu_hat[mask] = nnet.predict(F[mask])
+
             # Compute gradient magnitude using upwind Osher/Sethian method.
             gmag = mg.gmag_os(u, nu_hat, mask=mask, dx=dx)
 
@@ -180,17 +190,9 @@ class RBLS(object):
                 mask = ~dist.mask
                 dist = dist.data
             else:
-                # `dist` was computed every and is either all neg or all pos.
-                # Grab the first element of `dist`:
-                # (note that `ravel` returns a memory view, rather than
-                # `flatten` which copies the entire array).
-
-                if dist.ravel()[0] > 0:
-                    self._logger.warn("Level set %i is all positive." % i)
-                    mask = np.ones(dist.shape, dtype=np.bool)
-                else:
-                    self._logger.warn("Level set %i is all negative." % i)
-                    mask = np.zeros(dist.shape, dtype=np.bool)
+                # This might happend if band is very large
+                # or the object is very large.
+                mask = np.ones(dist.shape, dtype=np.bool)
 
             # Update the data in the hdf5 file.
             tf["%d/u"%i][...] = u
@@ -239,11 +241,12 @@ class RBLS(object):
 
         return mu
 
-    def _balance_mask(self, y, rs=None, tol=1e-5, error_on_fail=True):
+    def _balance_mask(self, y, rs=None):
         """
         Return a mask for balancing `y` to have equal negative and positive.
         """
         rs = np.random.RandomState() if rs is None else rs
+
         n = y.shape[0]
         npos = (y > 0).sum()
         nneg = (y < 0).sum()
@@ -261,13 +264,6 @@ class RBLS(object):
         else: # n = npos or n == nneg or npos == nneg
             mask = np.ones(y.shape, dtype=np.bool)
 
-        # Check if the mask is farther than `tol` from 50% pos/neg.
-#        if n abs((y[mask]>0).mean() - 0.5) >= tol:
-#            if error_on_fail:
-#                raise BalanceError("Balancing failed.")
-#            else:
-#                mask = np.ones(y.shape, dtype=np.bool)
-        
         return mask
 
     def _featurize_image(self, dataset, balance, rs):
@@ -282,26 +278,34 @@ class RBLS(object):
             To make results reproducible.
         """
         who = ['tr','va','ts'].index(dataset)
-        # Get a random image from the appropriate dataset.
-        i = rs.choice(self._inds[who])
 
-        df = self._get_data_file()
-        img = df["%d/img"%i][...]
-        target = df["%d/dist"%i][...]
-        dx = df["%d"%i].attrs['dx']
-        df.close()
+        while True:
+            # Get a random image from the appropriate dataset.
+            i = rs.choice(self._inds[who])
 
-        tf = self._get_tmp_file()
-        u = tf["%d/u"%i][...]
-        dist = tf["%d/dist"%i][...]
-        mask = tf["%d/mask"%i][...]
-        tf.close()
+            df = self._get_data_file()
+            img = df["%d/img"%i][...]
+            target = df["%d/dist"%i][...]
+            dx = df["%d"%i].attrs['dx']
+            df.close()
+
+            tf = self._get_tmp_file()
+            u = tf["%d/u"%i][...]
+            dist = tf["%d/dist"%i][...]
+            mask = tf["%d/mask"%i][...]
+            tf.close()
+
+            if mask.any():
+                break # Otherwise, repeat the loop until a non-empty mask.
 
         # Precompute data size.
         if balance:
             npos = (target[mask] > 0).sum()
             nneg = (target[mask] < 0).sum()
-            count = 2*min(npos,nneg)
+            if min(npos,nneg) > 0:
+                count = 2*min(npos,nneg)
+            else:
+                count = max(npos, nneg)
         else:
             count = mask.sum()
 
@@ -364,13 +368,14 @@ class RBLS(object):
 
         lstr = "Epoch %d / %d, Batch %d / %d."
 
-
         # Stochastic gradient descent.
-        for epoch in range(1,self._nopts_maxepochs+1):
+        for epoch in range(self._nopts_maxepochs+1):
             for batch in range(bpe):
                 if self._nopts_log_batch:
-                    logger.info(lstr % (epoch, self._nopts_maxepochs,
-                                        batch+1,self._nopts_batches_per_epoch))
+                    logger.info(lstr % (epoch,
+                                        self._nopts_maxepochs,
+                                        batch+1,
+                                        self._nopts_batches_per_epoch))
 
                 while len(bqtr) == 0:
                     x,y = self._featurize_image(dataset='tr', 
@@ -385,31 +390,25 @@ class RBLS(object):
                 Xtr,ytr = bqtr.next()
                 Xva,yva = bqva.next()
 
-                ltr,lva = nnet.gradient_descent(Xtr, ytr, Xva, yva,
-                                                step=gradstep, 
-                                                iters=iterspb,
-                                                ret_last=(epoch > 1),
-                                                verbose=False)
-
-                if epoch > 1:
-                    nnet.loss_tr[epoch] += ltr / bpe
-                    nnet.loss_va[epoch] += lva / bpe
+                # The initial epoch only computes loss.
+                if epoch == 0:
+                    ltr = nnet.loss(Xtr,ytr)
+                    lva = nnet.loss(Xva,yva)
                 else:
-                    nnet.loss_tr[[0,1]] += ltr[[0,-1]] / bpe
-                    nnet.loss_va[[0,1]] += lva[[0,-1]] / bpe
-
-            if epoch == 1:
-                # Print the scores at initialization, too.
-                logger.progress("Epoch. LTR=%.4f, LVA=%.4f" 
-                                     % (nnet.loss_tr[0], nnet.loss_va[0]),
-                                0, self._nopts_maxepochs)
+                    ltr,lva = nnet.gradient_descent(Xtr, ytr, Xva, yva,
+                                                    step=gradstep, 
+                                                    iters=iterspb,
+                                                    ret_last=True,
+                                                    verbose=False)
+                nnet.loss_tr[epoch] += ltr / bpe
+                nnet.loss_va[epoch] += lva / bpe
 
             logger.progress("Epoch. LTR=%.4f, LVA=%.4f" 
                              % (nnet.loss_tr[epoch], nnet.loss_va[epoch]),
                              epoch, self._nopts_maxepochs)
 
             # Save the model if the validation loss is the best observed.
-            if epoch == 1 or nnet.loss_va[epoch] < nnet.loss_va[:epoch].min():
+            if epoch == 0 or nnet.loss_va[epoch] < nnet.loss_va[:epoch].min():
                 with open(os.path.join(self._iter_dir, nnet_name), 'w') as f:
                     pickle.dump(nnet, f)
 
@@ -457,8 +456,8 @@ class RBLS(object):
             if not balance:
                 mu += mask.sum() / n
             else:
-                npos = (targ > 0).sum()
-                nneg = (targ < 0).sum()
+                npos = (targ[mask] > 0).sum()
+                nneg = (targ[mask] < 0).sum()
                 
                 if 0 < nneg < npos:
                     mu += 2*nneg / n
@@ -532,8 +531,8 @@ class RBLS(object):
         for nh in self._nopts_nhidden:
             for init in range(self._nopts_ninits):
                 p = mp.Process(target=self._fit_nnet,
-                            args=(nh, init),
-                            name="nnet: nh=%d, init=%d" % (nh, init))
+                               args=(nh, init),
+                               name="nnet: nh=%d, init=%d" % (nh, init))
                 p.start()
                 procs.append(p)
         for p in procs:
@@ -572,6 +571,7 @@ class RBLS(object):
         else:
             self.models = [nnet]
 
+        # Remove the temporary neural net files if necessary.
         if self._fopts_remove_tmp:
             self._logger.info("Removing tmp files at %s." % self._iter_dir)
             shutil.rmtree(self._iter_dir)
@@ -879,6 +879,11 @@ class RBLS(object):
                 print(pstr % (0, scores[0]))
 
         for i in range(iters):
+            if not mask.any(): continue
+            if (u > 0).all() or (u < 0).all():
+                mask = np.zeros_like(mask)
+                continue
+
             # Compute the features, and use the model to predict speeds.
             mem = 'create' if i==0 else 'use'
             features = self.feature_map(u[i], img, dist=dist,
