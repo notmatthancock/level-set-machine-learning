@@ -165,11 +165,6 @@ class RBLS(object):
             # Don't update if the mask is empty.
             if not mask.any(): continue
 
-            # Check if level set vanished and set mask to zeros if so.
-            if (u > 0).all() or (u < 0).all():
-                tf["%d/mask"%i] = np.zeros_like(mask)
-                continue
-
             # Compute features.
             F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
 
@@ -183,16 +178,21 @@ class RBLS(object):
             # Here's the actual level set update.
             u[mask] += self.step*nu_hat[mask]*gmag[mask]
 
-            # Update the distance and mask for u.
-            dist = skfmm.distance(u, narrow=self.band, dx=dx)
-            
-            if hasattr(dist, 'mask'):
-                mask = ~dist.mask
-                dist = dist.data
+            # Check if level set vanished and set mask to zeros if so.
+            if (u > 0).all() or (u < 0).all():
+                mask = np.zeros_like(mask)
+                dist = np.zeros_like(dist)
             else:
-                # This might happend if band is very large
-                # or the object is very large.
-                mask = np.ones(dist.shape, dtype=np.bool)
+                # Update the distance and mask for u.
+                dist = skfmm.distance(u, narrow=self.band, dx=dx)
+                
+                if hasattr(dist, 'mask'):
+                    mask = ~dist.mask
+                    dist = dist.data
+                else:
+                    # This might happend if band is very large
+                    # or the object is very large.
+                    mask = np.ones(dist.shape, dtype=np.bool)
 
             # Update the data in the hdf5 file.
             tf["%d/u"%i][...] = u
@@ -221,6 +221,14 @@ class RBLS(object):
             u = tf["%d/u"%i][...]
             dist = tf["%d/dist"%i][...]
             mask = tf["%d/mask"%i][...]
+
+            if not mask.any():
+                continue
+
+            if (u > 0).all() or (u < 0).all():
+                mask = np.zeros_like(mask)
+                dist = np.zeros_like(dist)
+                continue
 
             # Compute features.
             F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
