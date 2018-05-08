@@ -2,10 +2,13 @@ from rbls.init_funcs import init_func_base
 import numpy as np
 import skfmm
 
-class randinit(init_func_base):
+class random(init_func_base):
     """
-    This initializes the zero level set
-    to a random circle/sphere/hypersphere in the image.
+    Initialize the zero level set to a sphere
+    of random location and radius.
+
+    This initialization function works for all dimensions, so
+    the intialization is a random circle in 2d, sphere in 3d, etc.
 
     If the `reproducible` flag is set to True,
     then the same "random" initialization is produced
@@ -13,12 +16,12 @@ class randinit(init_func_base):
 
     Example::
         
-        >>> from rbls.init_funcs import randinit as ri
+        >>> from rbls.init_funcs import random as init_random
 
-        >>> initfunc = ri.randinit(reproducible=True)
+        >>> ifnc = init_random.random(reproducible=True)
         >>> img = np.random.randn(46, 67, 81)
 
-        >>> u0,dist,mask = initfunc(img, band=3.0)
+        >>> u0,dist,mask = ifnc(img, band=3.0)
     """
     def __init__(self, reproducible=True):
         self.rs = np.random.RandomState()
@@ -68,9 +71,6 @@ class randinit(init_func_base):
             mask = ~dist.mask
             dist = dist.data
         else:
-            if dist.flatten()[0] < 0:
-                mask = np.zeros(img.shape, dtype=np.bool)
-            else:
-                mask = np.ones(img.shape, dtype=np.bool)
+            mask = np.ones(img.shape, dtype=np.bool)
 
         return u0, dist, mask

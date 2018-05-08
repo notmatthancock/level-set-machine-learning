@@ -13,14 +13,14 @@ class simple_feature_map(feature_map_base):
 
     Example::
 
-        >>> from rbls.feature_maps.dim2 import simple_feature_map as sfm
+        from rbls.feature_maps.dim2 import simple_feature_map as sfm
 
-        >>> fm = sfm.simple_feature_map(sigmas=[0, 3.2])
+        fm = sfm.simple_feature_map(sigmas=[0, 3.2])
 
-        >>> print(fm.nfeatures, fm.names)
+        print(fm.nfeatures, fm.names)
 
-        >>> # Assuming u, img, dist, and mask are defined ...
-        >>> F = fm(u, img, dist, mask)
+        # Assuming u, img, dist, and mask are defined ...
+        F = fm(u, img, dist, mask)
 
 
     Documentation for `__call__`:
@@ -45,13 +45,13 @@ class simple_feature_map(feature_map_base):
         1.0 is used for each axis.
 
     memoize: flag, default=None
-        Should be one of [None, 'create', 'use']. This variable will be False
+        Should be one of [None, 'create', 'use']. This variable will be None
         always during training, but during run-time (where the feature 
         map is called for many iterations on the same image), it is
         'create' at the first iteration and 'use' for all iterations 
         thereafter. Use this to create more efficient run-time 
-        performance by storing features that can be re-used in the 
-        first iteration which are then used in subsequent iterations.
+        performance by storing features that can be re-used
+        in subsequent iterations.
 
     """
     nlocalimg  = 2 # img, grad
@@ -135,6 +135,8 @@ class simple_feature_map(feature_map_base):
                     if not hasattr(self, 'gmags'):
                         self.gmags = np.zeros((len(self.sigmas),) + img.shape)
 
+                    mask_all = np.ones(img.shape, dtype=np.bool)
+
                     if sigma > 0:
                         self.blurs[isig] = img
                         for axis in range(len(dx)):
@@ -143,14 +145,14 @@ class simple_feature_map(feature_map_base):
                                                     axis=axis)
                         _, self.gmags[isig] = mg.gradient_centered(
                                                 self.blurs[isig],
-                                                mask=mask,
+                                                mask=mask_all,
                                                 dx=dx
                                               )
                     else:
                         self.blurs[isig] = img
                         _, self.gmags[isig] = mg.gradient_centered(
                                                 self.blurs[isig],
-                                                mask=mask,
+                                                mask=mask_all,
                                                 dx=dx
                                               )
 

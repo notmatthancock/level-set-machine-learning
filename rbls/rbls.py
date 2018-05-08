@@ -8,7 +8,6 @@ from feature_maps import feature_map_base
 from init_funcs import init_func_base
 from utils.data import splitter
 
-#from utils.featurize import featurize
 import utils.masked_grad as mg
 from neural_network import neural_network as nn
 
@@ -71,9 +70,6 @@ class RBLS(object):
         """
         self._data_file = data_file
 
-        with self._get_data_file() as df:
-            self._n_examples = len(df)
-
         if not isinstance(feature_map, feature_map_base):
             raise ValueError(("`feature_map` should be a class derived from"
                               " `rbls.feature_maps.feature_map_base`.")) 
@@ -112,7 +108,7 @@ class RBLS(object):
 
         step = np.inf
 
-        for i in range(self._n_examples):
+        for i in [ii for ii in ind for ind in inds]:
             # Run the initialization function.
             u0,dist,mask = self.init_func(df["%d/img"%i][...], self.band,
                                           dx=df["%d"%i].attrs['dx'])
@@ -154,7 +150,7 @@ class RBLS(object):
         nnet = self.models[-1]
 
         # Loop over all indices in the validation dataset.
-        for i in range(self._n_examples):
+        for i in [ii for ii in ind for ind in inds]:
             img = df["%d/img"%i][...]
             dx = df["%d"%i].attrs['dx']
 
@@ -163,22 +159,24 @@ class RBLS(object):
             mask = tf["%d/mask"%i][...]
 
             # Don't update if the mask is empty.
-            if not mask.any(): continue
+            if not mask.any():
+                continue
 
             # Compute features.
             F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
 
             # Compute approximate velocity from features.
-            nu_hat = np.zeros_like(u)
-            nu_hat[mask] = nnet.predict(F[mask])
+            nu = np.zeros_like(u)
+            nu[mask] = nnet.predict(F[mask])
 
             # Compute gradient magnitude using upwind Osher/Sethian method.
-            gmag = mg.gmag_os(u, nu_hat, mask=mask, dx=dx)
+            gmag = mg.gmag_os(u, nu, mask=mask, dx=dx)
 
             # Here's the actual level set update.
-            u[mask] += self.step*nu_hat[mask]*gmag[mask]
+            u[mask] += self.step*nu[mask]*gmag[mask]
 
-            # Check if level set vanished and set mask to zeros if so.
+            # Update the distance transform and mask,
+            # checking if the zero level set has vanished.
             if (u > 0).all() or (u < 0).all():
                 mask = np.zeros_like(mask)
                 dist = np.zeros_like(dist)
@@ -222,25 +220,20 @@ class RBLS(object):
             dist = tf["%d/dist"%i][...]
             mask = tf["%d/mask"%i][...]
 
-            if not mask.any():
-                continue
+            if mask.any():
+                # Compute features.
+                F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
 
-            if (u > 0).all() or (u < 0).all():
-                mask = np.zeros_like(mask)
-                dist = np.zeros_like(dist)
-                continue
+                # Compute approximate velocity from features.
+                nu = np.zeros_like(u)
+                nu[mask] = nnet.predict(F[mask])
 
-            # Compute features.
-            F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
-            # Compute approximate velocity from features.
-            nu_hat = np.zeros_like(u)
-            nu_hat[mask] = nnet.predict(F[mask])
-            # Compute gradient magnitude using upwind Osher/Sethian method.
-            gmag = mg.gmag_os(u, nu_hat, mask=mask, dx=dx)
+                # Compute gradient magnitude using upwind Osher/Sethian method.
+                gmag = mg.gmag_os(u, nu, mask=mask, dx=dx)
 
-            # Here's the dummy update.
-            utmp = u.copy()
-            utmp[mask] = u[mask] + self.step*nu_hat[mask]*gmag[mask]
+                # Here's the dummy update.
+                utmp = u.copy()
+                utmp[mask] += self.step*nu[mask]*gmag[mask]
 
             mu += self.score_func(utmp, seg) / nva
 
@@ -737,9 +730,8 @@ class RBLS(object):
         for l in L: setattr(self, "_fopts_%s"%l, L[l])
 
         # Validate and store the training/validation/testing indices.
-        if inds is not None:
-            self._validate_inds(inds)
-        else:
+        self._validate_inds(inds)
+        if inds is None:
             inds = splitter.split(self._n_examples, rs=self._rs)
 
         if self._fopts_save_file is None:
@@ -831,7 +823,7 @@ class RBLS(object):
                            "> 50. This could result in excessive train "
                            "times and/or memory consumption."))
 
-    def segment(self, img, seg=None, dx=None, verbose=True):
+    def segment(self, img, seg=None, dx=None, verbose=True, memoize=True):
         """
         Segment `img`.
 
@@ -887,43 +879,46 @@ class RBLS(object):
                 print(pstr % (0, scores[0]))
 
         for i in range(iters):
-            if not mask.any(): continue
-            if (u > 0).all() or (u < 0).all():
-                mask = np.zeros_like(mask)
-                continue
-
-            # Compute the features, and use the model to predict speeds.
-            mem = 'create' if i==0 else 'use'
-            features = self.feature_map(u[i], img, dist=dist,
-                                        mask=mask, memoize=mem,
-                                        dx=dx)
-            nu[mask] = self.models[i].predict(features[mask])
-
-            gmag = mg.gmag_os(u[i], nu, mask=mask, dx=dx)
-                
-            # Update the level set.
             u[i+1] = u[i].copy()
-            u[i+1][mask] = u[i][mask] + self.step*nu[mask]*gmag[mask]
 
-            # Update the signed distance function for phi.
-            dist = skfmm.distance(u[i], narrow=self.band, dx=dx)
+            if mask.any():
+                # Compute the features, and use the model to predict speeds.
+                mem = 'create' if i == 0 else 'use'
+                mem = mem if memoize else None
 
-            if hasattr(dist, 'mask'):
-                mask = ~dist.mask
-                dist =  dist.data
-            else:
-                if u.ravel()[0] > 0:
-                    mask = np.ones(u[i].shape, dtype=np.bool)
-                    warnings.warn("`u` is all positive.")
+                features = self.feature_map(u[i], img, dist=dist,
+                                            mask=mask, memoize=mem, dx=dx)
+
+                if i == 4:
+                    pass
+                    #np.save('blurs.npy', self.feature_map.blurs)
+
+                nu[mask] = self.models[i].predict(features[mask])
+
+                gmag = mg.gmag_os(u[i], nu, mask=mask, dx=dx)
+                    
+                # Update the level set.
+                u[i+1][mask] += self.step*nu[mask]*gmag[mask]
+
+                # Check for level set vanishing.
+                if (u[i+1] > 0).all() or (u[i+1] < 0).all():
+                    mask = np.zeros_like(mask)
+                    dist = np.zeros_like(dist)
                 else:
-                    mask = np.zeros(u[i].shape, dtype=np.bool)
-                    warnings.warn("`u` is all negative.")
+                    # Update the signed distance function for phi.
+                    dist = skfmm.distance(u[i+1], narrow=self.band, dx=dx)
+
+                    if hasattr(dist, 'mask'):
+                        mask = ~dist.mask
+                        dist =  dist.data
+                    else:
+                        mask = np.ones(u[i+1].shape, dtype=np.bool)
 
             if seg is not None:
-                scores[i+1] = self.score_func(u[i], seg)
+                scores[i+1] = self.score_func(u[i+1], seg)
 
             if verbose and seg is None:
-                print(pstr % i)
+                print(pstr % (i+1))
             elif verbose and seg is not None:
                 print(pstr % (i+1, scores[i+1]))
 
@@ -934,6 +929,12 @@ class RBLS(object):
 
     
     def _validate_inds(self, inds):
+        if inds is None:
+            df = self._get_data_file()
+            self._n_examples = len(df)
+            df.close()
+            return
+
         if len(inds) != 3:
             raise ValueError("`inds` should be length 3.")
         if not all([isinstance(i, list) for i in inds]):
@@ -944,8 +945,8 @@ class RBLS(object):
             raise ValueError("Training set indices overlap with testing.")
         if len(set(inds[1]).intersection(set(inds[2]))) > 0:
             raise ValueError("Validation set indices overlap with testing.")
-        if set(inds[0] + inds[1] + inds[2]) - set(range(self._n_examples)) > 0:
-            raise ValueError("`inds` does not include all the data.")
+
+        self._n_examples = sum([len(i) for i in inds])
 
     def _collect_scores(self):
         df = self._get_data_file()
@@ -954,7 +955,7 @@ class RBLS(object):
         if not hasattr(self, 'scores'):
             self.scores = np.zeros((self._fopts_maxiters+1, self._n_examples))
 
-        for i in range(self._n_examples):
+        for i in [ii for ii in ind for ind in inds]:
             s = self.score_func(tf["%d/u"%i][...], df["%d/seg"%i][...])
             self.scores[self._iter, i] = s
 
