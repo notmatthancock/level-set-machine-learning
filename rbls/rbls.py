@@ -108,7 +108,7 @@ class RBLS(object):
 
         step = np.inf
 
-        for i in [ii for ii in ind for ind in inds]:
+        for i in self._inds_list:
             # Run the initialization function.
             u0,dist,mask = self.init_func(df["%d/img"%i][...], self.band,
                                           dx=df["%d"%i].attrs['dx'])
@@ -150,7 +150,7 @@ class RBLS(object):
         nnet = self.models[-1]
 
         # Loop over all indices in the validation dataset.
-        for i in [ii for ii in ind for ind in inds]:
+        for i in self._inds_list:
             img = df["%d/img"%i][...]
             dx = df["%d"%i].attrs['dx']
 
@@ -276,25 +276,27 @@ class RBLS(object):
             Balance by neg/pos of target value.
 
         rs: numpy.RandomState
-            To make results reproducible.
+            To make results reproducible. The random state
+            should be passed here rather than using the `self._rs`
+            attribute, since in the multiprocessing setting we can't
+            rely on `self._rs`.
         """
+        assert dataset in ['tr','va','ts']
         who = ['tr','va','ts'].index(dataset)
 
         while True:
             # Get a random image from the appropriate dataset.
             i = rs.choice(self._inds[who])
 
-            df = self._get_data_file()
-            img = df["%d/img"%i][...]
-            target = df["%d/dist"%i][...]
-            dx = df["%d"%i].attrs['dx']
-            df.close()
+            with self._get_data_file() as df:
+                img    = df["%d/img"%i][...]
+                target = df["%d/dist"%i][...]
+                dx     = df["%d"%i].attrs['dx']
 
-            tf = self._get_tmp_file()
-            u = tf["%d/u"%i][...]
-            dist = tf["%d/dist"%i][...]
-            mask = tf["%d/mask"%i][...]
-            tf.close()
+            with self._get_tmp_file() as tf:
+                u    = tf["%d/u"%i][...]
+                dist = tf["%d/dist"%i][...]
+                mask = tf["%d/mask"%i][...]
 
             if mask.any():
                 break # Otherwise, repeat the loop until a non-empty mask.
@@ -635,8 +637,7 @@ class RBLS(object):
 
             self._logger.info("Saving model to %s." % self._fopts_save_file)
 
-            # Swap the logger before saving the model since
-            # file objects don't pickel.
+            # Swap the logger before saving since file objects don't pickle.
             logger = self._logger
             self._logger = None
 
@@ -644,7 +645,7 @@ class RBLS(object):
             with open(self._fopts_save_file, 'w') as f:
                 pickle.dump(self, f)
 
-            # Put the logger back.
+            # Swap the logger back.
             self._logger = logger
 
 
@@ -659,8 +660,7 @@ class RBLS(object):
 
         self._logger.info("Saving model to %s." % self._fopts_save_file)
 
-        # We have to remove the logger before saving the model
-        # since we can't pickle file objects.
+        # Close I/O and file stream handlers before deleting the logger.
         for h in self._logger.handlers: h.close()
         del self._logger
 
@@ -862,7 +862,7 @@ class RBLS(object):
             raise ValueError("`dx` has incorrect number of elements.")
 
         u = np.zeros((iters+1,) + img.shape)
-        u[0],dist,mask = self.init_func(img, self.band)
+        u[0],dist,mask = self.init_func(img, self.band, dx=dx)
 
         if seg is not None:
             scores = np.zeros((iters+1,))
@@ -948,6 +948,10 @@ class RBLS(object):
 
         self._n_examples = sum([len(i) for i in inds])
 
+    @property
+    def _inds_list(self):
+        return [ii for ind in self._inds for ii in ind]
+
     def _collect_scores(self):
         df = self._get_data_file()
         tf = self._get_tmp_file()
@@ -955,9 +959,10 @@ class RBLS(object):
         if not hasattr(self, 'scores'):
             self.scores = np.zeros((self._fopts_maxiters+1, self._n_examples))
 
-        for i in [ii for ii in ind for ind in inds]:
-            s = self.score_func(tf["%d/u"%i][...], df["%d/seg"%i][...])
-            self.scores[self._iter, i] = s
+        for i in self._inds_list:
+            print i
+            score = self.score_func(tf["%d/u"%i][...], df["%d/seg"%i][...])
+            self.scores[self._iter, i] = score
 
         df.close()
         tf.close()
