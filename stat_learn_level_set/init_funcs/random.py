@@ -1,4 +1,4 @@
-from rbls.init_funcs import init_func_base
+from stat_learn_level_set.init_funcs import init_func_base
 import numpy as np
 import skfmm
 
@@ -16,7 +16,7 @@ class random(init_func_base):
 
     Example::
         
-        >>> from rbls.init_funcs import random as init_random
+        >>> from stat_learn_level_set.init_funcs import random as init_random
 
         >>> ifnc = init_random.random(reproducible=True)
         >>> img = np.random.randn(46, 67, 81)

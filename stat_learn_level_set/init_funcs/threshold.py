@@ -1,6 +1,7 @@
 import skfmm
 import numpy as np
-from rbls.init_funcs import init_func_base
+from stat_learn_level_set.init_funcs import init_func_base
+from scipy.ndimage import gaussian_filter as gf
 from skimage.filters.thresholding import threshold_otsu as otsu
 
 class threshold(init_func_base):
@@ -11,21 +12,24 @@ class threshold(init_func_base):
 
     Example::
         
-        >>> from rbls.init_funcs import threshold as th
+        >>> from stat_learn_level_set.init_funcs import threshold as th
 
-        >>> ifnc = th.threshold(reproducible=True)
+        >>> ifnc = th.threshold(sigma=2)
         >>> img = np.random.randn(46, 67, 81)
 
         >>> u0,dist,mask = ifnc(img, band=3.0)
     """
-    def __init__(self): pass
+    def __init__(self, sigma=1.234):
+        assert sigma >= 0
+        self.sigma = sigma
 
     def __call__(self, img, band, dx=None):
         dx = np.ones(img.ndim) if dx is None else dx
 
-        t = otsu(img)
+        blur = img if self.sigma == 0 else gf(img, self.sigma)
+        t = otsu(blur)
         
-        u0 = (img >= t).astype(np.float)
+        u0 = (blur >= t).astype(np.float)
         u0 *= 2
         u0 -= 1
 

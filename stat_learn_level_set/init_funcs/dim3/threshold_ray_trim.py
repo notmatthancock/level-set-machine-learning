@@ -8,7 +8,7 @@ import skfmm
 from scipy.ndimage import gaussian_filter
 from scipy.ndimage import gaussian_filter1d as gf1d
 from skimage.measure import label
-from rbls.cutils import radii_from_mask as rfm
+from stat_learn_level_set.utils import radii_from_mask as rfm
 
 
 rs = None
@@ -117,8 +117,6 @@ def init(vol, sigma, pr, only_seg=False, band=3,
                         radii=radii, di=spacing[0], dj=spacing[1],
                         dk=spacing[2])
     rad_thresh = np.percentile(radii, pr)
-
-    if return_R: return radii
 
     # Set voxels outside of radius threshold to zero.
     ts = [np.arange(vol.shape[i], dtype=np.float)*spacing[i]

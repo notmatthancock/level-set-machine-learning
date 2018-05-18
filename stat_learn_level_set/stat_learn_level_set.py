@@ -11,13 +11,17 @@ from utils.data import splitter
 import utils.masked_grad as mg
 from neural_network import neural_network as nn
 
-class RBLS(object):
+class stat_learn_level_set(object):
     def __init__(self, data_file, feature_map, init_func, score_func=None,
                  step='auto', band=3, rs=None): 
         """
-        Initialize a RBLS object. The parameters required at initialization 
+        Initialize a statistical learning level set object.
+        
+        The parameters required at initialization 
         are those that can be used in *both* the training and run-time
-        phases of the algorithm.
+        phases of the algorithm. Training options should be set via
+        the `set_fit_options` and `set_net_options` member functions
+        after initialization.
 
         Parameters
         ----------
@@ -27,14 +31,14 @@ class RBLS(object):
                 some/path/to/data.h5
 
             where `data.h5` is formatted as specified in the 
-            :meth:`rbls.utils.tohdf5` module. `data.h5` contains the 
-            image and ground truth data.
+            :meth:`stat_learn_level_set.utils.tohdf5` module. 
+            `data.h5` contains the image and ground truth data.
 
         feature_map: feature map class
-            See :class:`rbls.feature_maps.feature_map_base`.
+            See :class:`stat_learn_level_set.feature_maps.feature_map_base`.
 
         init_func: init func class
-            See :class:`rbls.init_funcs.init_func_base`.
+            See :class:`stat_learn_level_set.init_funcs.init_func_base`.
 
         score_func: function, default=None
             Has signature::
@@ -72,12 +76,12 @@ class RBLS(object):
 
         if not isinstance(feature_map, feature_map_base):
             raise ValueError(("`feature_map` should be a class derived from"
-                              " `rbls.feature_maps.feature_map_base`.")) 
+                              " `stat_learn_level_set.feature_maps.feature_map_base`.")) 
         self.feature_map = feature_map
 
         if not isinstance(init_func, init_func_base):
             raise ValueError(("`init_func` should be a class derived from"
-                              " `rbls.init_funcs.init_func_base`.")) 
+                              " `stat_learn_level_set.init_funcs.init_func_base`.")) 
         self.init_func = init_func
 
         self.score_func = jaccard if score_func is None else score_func
@@ -128,7 +132,7 @@ class RBLS(object):
             g = tf.create_group("%d"%i)
 
             # The group consists of the current "level set field" u, the 
-            # signed distance transform to `u` (only in the narrow band), and
+            # signed distance transform of u (only in the narrow band), and
             # the boolean mask indicating the narrow band region.
             g.create_dataset("u",    data=u0,   compression='gzip')
             g.create_dataset("dist", data=dist, compression='gzip')
@@ -505,6 +509,9 @@ class RBLS(object):
         else:
             self._auto_batches_per_epoch = int(total / self._nopts_batch_size)
 
+        # Make sure it's at least 1 batch per epoch.
+        self._auto_batches_per_epoch = max(1, self._auto_batches_per_epoch)
+
         self._logger.info("Computed auto batches per epoch is %d."
                                  % self._auto_batches_per_epoch)
 
@@ -581,8 +588,9 @@ class RBLS(object):
         del self._iter_dir
 
     def _get_mean_scores(self, iter):
-        return [self.scores[iter][self._inds[i]].mean()
-                    for i in range(3)]
+        return [np.mean([self.scores[iter][self._imap[i]]
+                                   for i in self._inds[k]])
+                                            for k in range(3)]
 
     def fit(self):
         """
@@ -602,7 +610,7 @@ class RBLS(object):
 
         self._logger.info("Collecting scores.")
         self._collect_scores()
-        self._logger.progress("Scores => TR: %.4f VA: %.4f TS %.4f."
+        self._logger.progress("Scores => TR: %.4f VA: %.4f TS: %.4f."
                               % tuple(self._get_mean_scores(self._iter)),
                               self._iter, self._fopts_maxiters)
 
@@ -680,12 +688,12 @@ class RBLS(object):
             This should be a tuple of 3 lists. The lists contain the
             indices to be used as training, validation, and testing, 
             respectively. The default (None) creates a random split
-            of 60/20/20% using the :meth:`rbls.utils.data.splitter.split`
-            routine.
+            of 60/20/20% using the 
+            :meth:`stat_learn_level_set.utils.data.splitter.split` routine.
 
         save_file: str, default=None
             The model (the total RBLS object) will be pickled to this path.
-            The default (None) uses the file `rbls_model.pkl` at the current
+            The default (None) uses the file `slls_model.pkl` at the current
             working directory.
 
         tmp_dir: str, default=None
@@ -736,7 +744,7 @@ class RBLS(object):
 
         if self._fopts_save_file is None:
             self._fopts_save_file = os.path.join(os.path.curdir,
-                                                 "rbls_model.pkl")
+                                                 "slls_model.pkl")
 
         if self._fopts_tmp_dir is None:
             self._fopts_tmp_dir = os.path.join(os.path.curdir, 'tmp')
@@ -889,10 +897,6 @@ class RBLS(object):
                 features = self.feature_map(u[i], img, dist=dist,
                                             mask=mask, memoize=mem, dx=dx)
 
-                if i == 4:
-                    pass
-                    #np.save('blurs.npy', self.feature_map.blurs)
-
                 nu[mask] = self.models[i].predict(features[mask])
 
                 gmag = mg.gmag_os(u[i], nu, mask=mask, dx=dx)
@@ -956,17 +960,33 @@ class RBLS(object):
         df = self._get_data_file()
         tf = self._get_tmp_file()
 
+        self._imap = dict(zip(self._inds_list, range(self._n_examples)))
+
         if not hasattr(self, 'scores'):
             self.scores = np.zeros((self._fopts_maxiters+1, self._n_examples))
 
         for i in self._inds_list:
-            print i
             score = self.score_func(tf["%d/u"%i][...], df["%d/seg"%i][...])
-            self.scores[self._iter, i] = score
+            self.scores[self._iter, self._imap[i]] = score
 
         df.close()
         tf.close()
 
+    def _scores_dataset(self, who):
+        assert self._is_fitted
+        return np.vstack([self.scores[:,self._imap[i]]
+                            for i in self._inds[who]])
+    @property
+    def scores_training(self):
+        return self._scores_dataset(0)
+    @property
+    def scores_validation(self):
+        return self._scores_dataset(1)
+    @property
+    def scores_testing(self):
+        return self._scores_dataset(2)
+
+# This class is used privately within the stat learn level set model.
 class fit_logger(logging.Logger):
     def __init__(self, file=None, stamp=True, stdout=True):
         fmt = '[%(asctime)s] %(levelname)-8s %(message)s'
@@ -991,22 +1011,22 @@ class fit_logger(logging.Logger):
                 file = os.path.join(dir, base)
 
         self.file = file
-        self.stamp = True
-        self.stdout = True
+        self.stamp = stamp
+        self.stdout = stdout
 
         fhandler = logging.FileHandler(file, mode='w')
         fhandler.setFormatter(formatter)
 
-        if stdout:
+        if self.stdout:
             shandler = logging.StreamHandler()
             shandler.setFormatter(formatter)
 
-        logging.Logger.__init__(self, 'rbls_fit_logger')
+        logging.Logger.__init__(self, 'slls_fit_logger')
         self.setLevel(logging.DEBUG)
 
         self.addHandler(fhandler)
 
-        if stdout: self.addHandler(shandler)
+        if self.stdout: self.addHandler(shandler)
 
     def progress(self, msg, i, n):
         s = "(%%0%dd / %d) %s" % (len(str(n)), n, msg)    
