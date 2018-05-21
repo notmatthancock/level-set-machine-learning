@@ -23,7 +23,7 @@ class threshold(init_func_base):
         assert sigma >= 0
         self.sigma = sigma
 
-    def __call__(self, img, band, dx=None):
+    def __call__(self, img, band, dx=None, seed=None):
         dx = np.ones(img.ndim) if dx is None else dx
 
         blur = img if self.sigma == 0 else gf(img, self.sigma)

@@ -9,6 +9,13 @@ class init_func_base(object):
     At minimum, the `__call__` function should be implemented and
     return `u0, dist, mask`.
     """
-    def __init__(self): pass
-    def __call__(self, u, band):
+    def __init__(self):
+        raise NotImplementedError
+    def __call__(self, img, band, dx=None, seed=None):
+        """
+        All initialization functions must have the above __call__ signature
+        with *at least* these arguments (additional keyword arguments are
+        of course allowed, but won't be used by the `fit` routine
+        in the `stat_learn_level_set` module).
+        """
         raise NotImplementedError

@@ -16,18 +16,13 @@ class random(init_func_base):
 
     Example::
         
-        >>> from stat_learn_level_set.init_funcs import random as init_random
-
-        >>> ifnc = init_random.random(reproducible=True)
-        >>> img = np.random.randn(46, 67, 81)
-
-        >>> u0,dist,mask = ifnc(img, band=3.0)
+        TODO
     """
     def __init__(self, reproducible=True):
         self.rs = np.random.RandomState()
         self.reproducible = reproducible
 
-    def __call__(self, img, band, dx=None):
+    def __call__(self, img, band, dx=None, seed=None):
         dx = np.ones(img.ndim) if dx is None else dx
 
         if self.reproducible:

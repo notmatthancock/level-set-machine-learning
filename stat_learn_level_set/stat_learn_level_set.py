@@ -72,7 +72,10 @@ class stat_learn_level_set(object):
         rs: numpy.random.RandomState, default=None
             Provide for reproducible results.
         """
-        self._data_file = data_file
+        self._data_file_name = data_file
+
+        with self._data_file as df:
+            self._ndim = df[df.keys()[0]+"/img"].ndim
 
         if not isinstance(feature_map, feature_map_base):
             raise ValueError(("`feature_map` should be a class derived from"
@@ -91,52 +94,76 @@ class stat_learn_level_set(object):
             raise ValueError("`step` must be 'auto' or float.")
         self.step = step
 
-        if rs is not None:
-            self._rs = rs
-        else:
+        if rs is None:
+            rs = np.random.RandomState()
             warnings.warn(("No RandomState provided. Results will not be"
                            " reproducible."))
+        self._rs = rs
+
 
         self._is_fitted    = False
         self._fit_opts_set = False
         self._net_opts_set = False
 
-    def _get_data_file(self):
-        return h5py.File(self._data_file, 'r')
-    def _get_tmp_file(self):
+    @property
+    def _data_file(self):
+        return h5py.File(self._data_file_name, 'r')
+    @property
+    def _tmp_file(self):
         return h5py.File(os.path.join(self._fopts_tmp_dir, "tmp.h5"))
 
+    def _iter_seeds(self, ds):
+        assert ds in ['tr','va','ts']
+        if not hasattr(self, '_seeds'):
+            raise RuntimeError("Can't iter seeds without seeds initialized.")
+        for key in self._seeds[ds]:
+            for iseed,seed in enumerate(self._seeds[ds][key]):
+                yield key,iseed,seed
+
+    def _iter_tmp(self):
+        for ds in ['tr','va','ts']:
+            for key,iseed,seed in self._iter_seeds(ds):
+                yield ds,key,iseed,seed
+
+
     def _initialize(self):
-        df = self._get_data_file()
-        tf = self._get_tmp_file()
+        df = self._data_file
+        tf = self._tmp_file
 
         step = np.inf
 
-        for i in self._inds_list:
-            # Run the initialization function.
-            u0,dist,mask = self.init_func(df["%d/img"%i][...], self.band,
-                                          dx=df["%d"%i].attrs['dx'])
+        for ds,key,iseed,seed in self._iter_tmp():
+            # Create dataset group if it doesn't exist.
+            if ds not in tf:
+                tf.create_group(ds)
 
-            # "Auto" step: only use training or validation sets.
-            if i in self._inds[0] or i in self._inds[1]:
+            # Compute the initialization for this example and seed value.
+            u0,dist,mask = self.init_func(df[key+"/img"][...], self.band,
+                                          dx=df[key].attrs['dx'], seed=seed)
+
+            # "Auto" step: only use training and validation datasets.
+            if ds in ['tr','va']:
                 # Compute the maximum velocity for the i'th example
-                mx = np.abs(df["%d/dist"%i][mask]).max()
+                mx = np.abs(df[key+"/dist"][mask]).max()
 
                 # Create the candidate step size for this example.
-                tmp = np.min(df["%d"%i].attrs['dx']) / mx
+                tmp = np.min(df[key].attrs['dx']) / mx
 
                 # Assign tmp to step if it is the smallest observed so far.
                 step = tmp if tmp < step else step
             
             # Create a group for the i'th example.
-            g = tf.create_group("%d"%i)
+            if key not in tf[ds]:
+                tf[ds].create_group(key)
+
+            seed_group = tf[ds][key].create_group("seed-%d" % iseed)
 
             # The group consists of the current "level set field" u, the 
             # signed distance transform of u (only in the narrow band), and
             # the boolean mask indicating the narrow band region.
-            g.create_dataset("u",    data=u0,   compression='gzip')
-            g.create_dataset("dist", data=dist, compression='gzip')
-            g.create_dataset("mask", data=mask, compression='gzip')
+            seed_group.create_dataset("u",    data=u0,   compression='gzip')
+            seed_group.create_dataset("dist", data=dist, compression='gzip')
+            seed_group.create_dataset("mask", data=mask, compression='gzip')
 
         if self.step == 'auto':
             self.step = step
@@ -148,19 +175,19 @@ class stat_learn_level_set(object):
         tf.close()
 
     def _update_level_sets(self):
-        df = self._get_data_file()
-        tf = self._get_tmp_file()
+        df = self._data_file
+        tf = self._tmp_file
 
         nnet = self.models[-1]
 
         # Loop over all indices in the validation dataset.
-        for i in self._inds_list:
-            img = df["%d/img"%i][...]
-            dx = df["%d"%i].attrs['dx']
+        for ds,key,iseed,seed in self._iter_tmp():
+            img = df[key+"/img"][...]
+            dx = df[key].attrs['dx']
 
-            u = tf["%d/u"%i][...]
-            dist = tf["%d/dist"%i][...]
-            mask = tf["%d/mask"%i][...]
+            u    = tf["%s/%s/seed-%d/u"    % (ds,key,iseed)][...]
+            dist = tf["%s/%s/seed-%d/dist" % (ds,key,iseed)][...]
+            mask = tf["%s/%s/seed-%d/mask" % (ds,key,iseed)][...]
 
             # Don't update if the mask is empty.
             if not mask.any():
@@ -197,9 +224,9 @@ class stat_learn_level_set(object):
                     mask = np.ones(dist.shape, dtype=np.bool)
 
             # Update the data in the hdf5 file.
-            tf["%d/u"%i][...] = u
-            tf["%d/dist"%i][...] = dist
-            tf["%d/mask"%i][...] = mask
+            tf["%s/%s/seed-%d/u"    % (ds,key,iseed)][...] = u
+            tf["%s/%s/seed-%d/dist" % (ds,key,iseed)][...] = dist
+            tf["%s/%s/seed-%d/mask" % (ds,key,iseed)][...] = mask
 
         df.close()
         tf.close()
@@ -209,20 +236,20 @@ class stat_learn_level_set(object):
         Do a "dummy" update over the validation dataset to 
         record segmentation scores.
         """
-        df = self._get_data_file()
-        tf = self._get_tmp_file()
+        df = self._data_file
+        tf = self._tmp_file
 
-        mu = 0.0; nva = float(len(self._inds[1]))
+        mu = 0.
 
         # Loop over all indices in the validation dataset.
-        for i in self._inds[1]:
-            img = df["%d/img"%i][...]
-            seg = df["%d/seg"%i][...]
-            dx = df["%d"%i].attrs['dx']
+        for key,iseed,seed in self._iter_seeds('va'):
+            img = df[key+"/img"][...]
+            seg = df[key+"/seg"][...]
+            dx  = df[key].attrs['dx']
 
-            u = tf["%d/u"%i][...]
-            dist = tf["%d/dist"%i][...]
-            mask = tf["%d/mask"%i][...]
+            u    = tf["va/%s/seed-%d/u"    % (key,iseed)][...]
+            dist = tf["va/%s/seed-%d/dist" % (key,iseed)][...]
+            mask = tf["va/%s/seed-%d/mask" % (key,iseed)][...]
 
             if mask.any():
                 # Compute features.
@@ -239,7 +266,7 @@ class stat_learn_level_set(object):
                 utmp = u.copy()
                 utmp[mask] += self.step*nu[mask]*gmag[mask]
 
-            mu += self.score_func(utmp, seg) / nva
+            mu += self.score_func(utmp, seg)*1.0 / self._nva
 
         df.close()
         tf.close()
@@ -271,7 +298,7 @@ class stat_learn_level_set(object):
 
         return mask
 
-    def _featurize_image(self, dataset, balance, rs):
+    def _featurize_random_image(self, dataset, balance, rs):
         """
         dataset: str
             Should be in ['tr','va','ts']
@@ -290,17 +317,18 @@ class stat_learn_level_set(object):
 
         while True:
             # Get a random image from the appropriate dataset.
-            i = rs.choice(self._inds[who])
+            key   = rs.choice(self._seeds[dataset].keys())
+            iseed = rs.choice(len(self._seeds[dataset][key]))
 
-            with self._get_data_file() as df:
-                img    = df["%d/img"%i][...]
-                target = df["%d/dist"%i][...]
-                dx     = df["%d"%i].attrs['dx']
+            with self._data_file as df:
+                img    = df[key+"/img"][...]
+                target = df[key+"/dist"][...]
+                dx     = df[key].attrs['dx']
 
-            with self._get_tmp_file() as tf:
-                u    = tf["%d/u"%i][...]
-                dist = tf["%d/dist"%i][...]
-                mask = tf["%d/mask"%i][...]
+            with self._tmp_file as tf:
+                u    = tf["%s/%s/seed-%d/u"    % (dataset,key,iseed)][...]
+                dist = tf["%s/%s/seed-%d/dist" % (dataset,key,iseed)][...]
+                mask = tf["%s/%s/seed-%d/mask" % (dataset,key,iseed)][...]
 
             if mask.any():
                 break # Otherwise, repeat the loop until a non-empty mask.
@@ -385,13 +413,13 @@ class stat_learn_level_set(object):
                                         self._nopts_batches_per_epoch))
 
                 while len(bqtr) == 0:
-                    x,y = self._featurize_image(dataset='tr', 
-                                                balance=balance, rs=rs)
+                    x,y = self._featurize_random_image(dataset='tr', 
+                                                       balance=balance, rs=rs)
                     bqtr.update(x,y)
 
                 while len(bqva) == 0:
-                    x,y = self._featurize_image(dataset='va',
-                                                balance=balance, rs=rs)
+                    x,y = self._featurize_random_image(dataset='va',
+                                                       balance=balance, rs=rs)
                     bqva.update(x,y)
 
                 Xtr,ytr = bqtr.next()
@@ -449,29 +477,28 @@ class stat_learn_level_set(object):
         del logger
 
     def _compute_auto_batch_size(self):
-        df = self._get_data_file()
-        tf = self._get_tmp_file()
+        df = self._data_file
+        tf = self._tmp_file
 
         mu = 0.0
-        n = float(len(self._inds[0]))
         balance = self._nopts_balance
 
-        for i in self._inds[0]:
-            mask = tf["%d/mask"%i][...]
-            targ = df["%d/dist"%i][...]
+        for key,iseed,seed in self._iter_seeds('tr'):
+            mask = tf["tr/%s/seed-%d/mask" % (key,iseed)][...]
+            targ = df[key+"/dist"][...]
 
             if not balance:
-                mu += mask.sum() / n
+                mu += mask.sum()*1.0 / self._ntr
             else:
                 npos = (targ[mask] > 0).sum()
                 nneg = (targ[mask] < 0).sum()
                 
                 if 0 < nneg < npos:
-                    mu += 2*nneg / n
+                    mu += 2.0*nneg / self._ntr
                 elif 0 < npos < nneg:
-                    mu += 2*npos / n
+                    mu += 2.0*npos / self._ntr
                 else:
-                    mu += max(npos, nneg) / n
+                    mu += max(npos, nneg) / self._ntr
 
         self._auto_batch_size = int(mu) * self._nopts_batch_size
         self._logger.info("Computed auto batch size is %d."
@@ -481,15 +508,15 @@ class stat_learn_level_set(object):
         tf.close()
 
     def _compute_auto_batches_per_epoch(self):
-        df = self._get_data_file()
-        tf = self._get_tmp_file()
+        df = self._data_file
+        tf = self._tmp_file
 
         total = 0.0
         balance = self._nopts_balance
 
-        for i in self._inds[0]:
-            mask = tf["%d/mask"%i][...]
-            targ = df["%d/dist"%i][...]
+        for key,iseed,seed in self._iter_seeds('tr'):
+            mask = tf["tr/%s/seed-%d/mask" % (key,iseed)][...]
+            targ = df[key+"/dist"][...]
 
             if not balance:
                 total += mask.sum()
@@ -587,11 +614,6 @@ class stat_learn_level_set(object):
             shutil.rmtree(self._iter_dir)
         del self._iter_dir
 
-    def _get_mean_scores(self, iter):
-        return [np.mean([self.scores[iter][self._imap[i]]
-                                   for i in self._inds[k]])
-                                            for k in range(3)]
-
     def fit(self):
         """
         Run `set_fit_options` and `set_net_opts` before calling `fit`.
@@ -611,7 +633,7 @@ class stat_learn_level_set(object):
         self._logger.info("Collecting scores.")
         self._collect_scores()
         self._logger.progress("Scores => TR: %.4f VA: %.4f TS: %.4f."
-                              % tuple(self._get_mean_scores(self._iter)),
+                          % tuple(self._get_mean_scores_at_iter(self._iter)),
                               self._iter, self._fopts_maxiters)
 
         self._models_path = os.path.join(self._fopts_tmp_dir, "models")
@@ -633,7 +655,7 @@ class stat_learn_level_set(object):
             self._logger.progress("Collecting scores.", self._iter, maxiters)
             self._collect_scores()
             self._logger.progress("Scores => TR: %.4f VA: %.4f TS %.4f."
-                                  % tuple(self._get_mean_scores(self._iter)),
+                          % tuple(self._get_mean_scores_at_iter(self._iter)),
                                   self._iter, maxiters)
 
             iter_stop = time.time()
@@ -677,19 +699,51 @@ class stat_learn_level_set(object):
             pickle.dump(self, f)
 
 
-    def set_fit_options(self, inds=None, save_file=None,
+    def set_fit_options(self, datasets=None, seeds=None, save_file=None,
                         tmp_dir=None, remove_tmp=False,
                         maxiters=100, va_hist_len=5, va_hist_tol=0.0,
                         logfile=None, logstamp=True, logstdout=True):
         """
         Parameters
         ----------
-        inds: tuple, len=3, default=None
-            This should be a tuple of 3 lists. The lists contain the
-            indices to be used as training, validation, and testing, 
-            respectively. The default (None) creates a random split
-            of 60/20/20% using the 
-            :meth:`stat_learn_level_set.utils.data.splitter.split` routine.
+        datasets: dict, len=3, default=None
+            This should be a dict of 3 lists of the form::
+
+                datasets['tr'] = list of strings
+                datasets['va'] = list of strings
+                datasets['ts'] = list of strings
+
+            Each list of strings contains the keys into the h5py dataset
+            file for training ('tr'), validation ('va'), and testing ('ts').
+            So for example, `datasets['tr'][0]` yields a string that is a 
+            key into the dataset file for the first training example.
+
+            If `datasets` is None (default), then an auto split of 
+            60/20/20% is made using the 
+            `stat_learn_level_set.utils.data.splitter` utility.
+
+        seeds: tuple, len=3, default=None
+            The seeds are used in the `init_func` supplied at initialization.
+            Note that seed coordinates must be given in *index* coordinates, 
+            i.e., they should *not* take into account pixel spacing / 
+            resolution. However, fractional values are allowed (float type).
+
+            `seeds` format:
+
+            Let `ds` be in `['tr','va','ts']`. For each `key` (string) in 
+            `datasets[ds]`, we should have `seeds[ds][key]` being an iterable 
+            of iterables. `seeds[ds][key]` refers to the `key` example in 
+            dataset `ds`, and thus `seeds[ds][key]` should contain a list 
+            of seeds for that example (each seed being an iterable type).
+            
+            For example, we might have `seeds[ds][key] == [[25,34], [27,35]]`, 
+            which indicates there are two seeds for example `key` in 
+            dataset `ds`.
+
+            If None (default), then a single seed for each example is used 
+            and computed automatically: the center-of-mass of the ground-
+            truth segmentation of the respective examples.
+
 
         save_file: str, default=None
             The model (the total RBLS object) will be pickled to this path.
@@ -734,13 +788,18 @@ class stat_learn_level_set(object):
             If True, the log will print to stdout (as well as logging to file).
         """
         # This is hackish. It just sets most the arguments to member variables.
-        L = locals(); L.pop('self'); L.pop('inds')
+        L = locals(); L.pop('self'); L.pop('datasets'); L.pop('seeds')
         for l in L: setattr(self, "_fopts_%s"%l, L[l])
 
-        # Validate and store the training/validation/testing indices.
-        self._validate_inds(inds)
-        if inds is None:
-            inds = splitter.split(self._n_examples, rs=self._rs)
+        self._validate_datasets(datasets)
+        self._validate_seeds(seeds)
+
+        # Count the number of examples.
+        self._ntr = len([_ for _ in self._iter_seeds('tr')])
+        self._nva = len([_ for _ in self._iter_seeds('va')])
+        self._nts = len([_ for _ in self._iter_seeds('ts')])
+        self._ntotal = self._ntr + self._nva + self._nts
+
 
         if self._fopts_save_file is None:
             self._fopts_save_file = os.path.join(os.path.curdir,
@@ -753,7 +812,6 @@ class stat_learn_level_set(object):
 
         os.mkdir(self._fopts_tmp_dir)
 
-        self._inds = inds
         self._logger = fit_logger(file=logfile, stamp=logstamp, 
                                   stdout=logstdout)
         self._fit_opts_set = True
@@ -930,61 +988,117 @@ class stat_learn_level_set(object):
             return u
         else:
             return u, scores
-
     
-    def _validate_inds(self, inds):
-        if inds is None:
-            df = self._get_data_file()
-            self._n_examples = len(df)
+    def _validate_datasets(self, datasets):
+        if datasets is None:
+            df = self._data_file
+            datasets = splitter.split(df.keys(), rs=self._rs)
             df.close()
-            return
 
-        if len(inds) != 3:
-            raise ValueError("`inds` should be length 3.")
-        if not all([isinstance(i, list) for i in inds]):
-            raise ValueError("`inds` should be tuple of three index lists.")
-        if len(set(inds[0]).intersection(set(inds[1]))) > 0:
-            raise ValueError("Training set indices overlap with validation.")
-        if len(set(inds[0]).intersection(set(inds[2]))) > 0:
+        # Check if all dataset keys are present.
+        for d in ['tr', 'va', 'ts']:
+            if d not in datasets:
+                raise ValueError("Missing %s dataset."%d)
+
+        if not all([np.iterable(datasets[d]) for d in datasets]):
+            raise ValueError("Each dataset should be an iterable of keys.")
+
+        if len(set(datasets['tr']).intersection(set(datasets['va']))) > 0:
+            raise ValueError("Training set keys overlap with validation.")
+
+        if len(set(datasets['tr']).intersection(set(datasets['ts']))) > 0:
             raise ValueError("Training set indices overlap with testing.")
-        if len(set(inds[1]).intersection(set(inds[2]))) > 0:
+
+        if len(set(datasets['va']).intersection(set(datasets['ts']))) > 0:
             raise ValueError("Validation set indices overlap with testing.")
 
-        self._n_examples = sum([len(i) for i in inds])
+        self._datasets = datasets
 
-    @property
-    def _inds_list(self):
-        return [ii for ind in self._inds for ii in ind]
+    def _validate_seeds(self, seeds):
+        if seeds is None:
+            df = self._data_file
+            seeds = dict(tr={}, va={}, ts={})
+            for ds in ['tr','va','ts']:
+                for key in self._datasets[ds]:
+                    seg = df[key+"/seg"][...]
+
+                    # Get the index coordinates.
+                    inds = np.indices(seg.shape, dtype=np.float)
+
+                    total = seg.sum()
+
+                    # Compute the center of mass as the seed.
+                    seed = [(i*seg).sum() / total for i in inds]
+
+                    # Append the single seed as a list of length 1,
+                    # since, in general, the seed list can be longer for
+                    # a single example (i.e., for a single index).
+                    seeds[ds][key] = [seed]
+            df.close()
+
+        for ds in ['tr', 'va', 'ts']:
+            if ds not in seeds:
+                raise ValueError("Missing %s dataset in seeds dict." % ds)
+
+            if not np.iterable(seeds[ds]):
+                raise ValueError("Seed list %s is not iterable." % ds)
+
+            if len(self._datasets[ds]) != len(seeds[ds]):
+                raise ValueError(("List of seed lists length doesn't match "
+                                  " dataset %s length." % ds))
+
+            for key in seeds[ds]:
+                if len(seeds[ds][key]) == 0:
+                    raise ValueError("Each example must have at least 1 seed.")
+
+                for iseed,seed in enumerate(seeds[ds][key]):
+                    if not np.iterable(seed):
+                        raise ValueError("Each seed must be iterable.")
+                    if len(seed) != self._ndim:
+                        raise ValueError(("Number of seed coordinates doesn't "
+                                          "match image dimensions."))
+        self._seeds = seeds
 
     def _collect_scores(self):
-        df = self._get_data_file()
-        tf = self._get_tmp_file()
+        df = self._data_file
+        tf = self._tmp_file
 
-        self._imap = dict(zip(self._inds_list, range(self._n_examples)))
+        if not hasattr(self, '_scores'):
+            self._scores = {}
+            for ds,key,iseed,seed in self._iter_tmp():
+                if ds not in self._scores:
+                    self._scores[ds] = {}
+                if key not in self._scores[ds]:
+                    self._scores[ds][key] = {}
+                self._scores[ds][key][iseed] = []
 
-        if not hasattr(self, 'scores'):
-            self.scores = np.zeros((self._fopts_maxiters+1, self._n_examples))
-
-        for i in self._inds_list:
-            score = self.score_func(tf["%d/u"%i][...], df["%d/seg"%i][...])
-            self.scores[self._iter, self._imap[i]] = score
+        for ds,key,iseed,seed in self._iter_tmp():
+            u   = tf["%s/%s/seed-%d/u" % (ds,key,iseed)][...]
+            seg = df[key+"/seg"][...]
+            score = self.score_func(u, seg)
+            self._scores[ds][key][iseed].append(score)
 
         df.close()
         tf.close()
 
-    def _scores_dataset(self, who):
-        assert self._is_fitted
-        return np.vstack([self.scores[:,self._imap[i]]
-                            for i in self._inds[who]])
-    @property
-    def scores_training(self):
-        return self._scores_dataset(0)
-    @property
-    def scores_validation(self):
-        return self._scores_dataset(1)
-    @property
-    def scores_testing(self):
-        return self._scores_dataset(2)
+    def _get_mean_scores_at_iter(self, iter):
+        mu = {}
+        for ds in ['tr','va','ts']:
+            mu[ds] = 0.0
+            for key,iseed,seed in self._iter_seeds(ds):
+                score = self._scores[ds][key][iseed][iter]
+                mu[ds] += score / getattr(self, '_n'+ds)
+        return [mu[ds] for ds in ['tr','va','ts']]
+
+    def _scores_over_iters(self, dataset):
+        assert dataset in ['tr','va','ts']
+        names  = []
+        scores = []
+        for key,iseed,seed in self._iter_seeds(dataset):
+            names.append("%s/%s/seed-%d" % (dataset,key,iseed))
+            scores.append(self._scores[dataset][key][iseed])
+        return np.vstack(scores), names
+
 
 # This class is used privately within the stat learn level set model.
 class fit_logger(logging.Logger):
