@@ -614,6 +614,28 @@ class stat_learn_level_set(object):
             shutil.rmtree(self._iter_dir)
         del self._iter_dir
 
+    def _check_early_exit(self):
+        i = self._iter
+        l = self._fopts_va_hist_len
+        t = self._fopts_va_hist_tol
+
+        if i >= l-1:
+            if not hasattr(self, '_va_hist_x'):
+                self._va_hist_x = np.c_[np.ones(l), np.arange(l)]
+            x = self._va_hist_x
+            s = self._scores_over_iters('va')[0].mean(0)
+
+            # Scores over past `l` iters (current iteration inclusive).
+            y = s[i+1-l:i+1]
+
+            # The slope of the best fit line.
+            m = np.linalg.lstsq(x, y, rcond=None)[0][1]
+
+            # True if slope is less than tolerance.
+            return m < t, m
+        else:
+            return False, None
+
     def fit(self):
         """
         Run `set_fit_options` and `set_net_opts` before calling `fit`.
@@ -654,7 +676,7 @@ class stat_learn_level_set(object):
 
             self._logger.progress("Collecting scores.", self._iter, maxiters)
             self._collect_scores()
-            self._logger.progress("Scores => TR: %.4f VA: %.4f TS %.4f."
+            self._logger.progress("Scores => TR: %.4f VA: %.4f TS: %.4f."
                           % tuple(self._get_mean_scores_at_iter(self._iter)),
                                   self._iter, maxiters)
 
@@ -678,12 +700,22 @@ class stat_learn_level_set(object):
             # Swap the logger back.
             self._logger = logger
 
+            exit_early, trend = self._check_early_exit()
+            if trend is not None:
+                self._logger.info("Linear trend over VA: %.4f (tol=%.4f)."
+                                    % (trend, self._fopts_va_hist_tol))
+                if exit_early:
+                    self._logger.info("Trend less than tolerance. Exiting.")
+                    break
 
         if self._fopts_remove_tmp:
             self._logger.info("Removing temporary files at %s." 
                                     % self._fopts_tmp_dir)
             shutil.rmtree(self._fopts_tmp_dir)
 
+        scores = self._scores_over_iters('va')[0].mean(0)
+        nmax = scores.argmax()
+        self.models = self.models[:nmax]
 
         self._is_fitted = True
         self._logger.info("Fitting complete.")
