@@ -84,7 +84,8 @@ def gradient_centered(A, mask=None, dx=None, return_gmag=True,
     if return_gmag:
         return D, gmag
     else:
-        return gmag
+        return D
+
 
 def gmag_os(A, nu, mask=None, dx=None):
     """

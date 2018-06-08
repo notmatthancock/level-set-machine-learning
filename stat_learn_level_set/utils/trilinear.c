@@ -4,6 +4,10 @@
 #include <math.h>
 #include "utils.h"
 
+/* A big ugly function for performing trilinear interpolation on
+ * a 3d scalar field.
+ */
+
 double interpolate_point(double i, double j, double k, double * img,
                          double di, double dj, double dk, // delta terms
                          int m, int n, int p) {

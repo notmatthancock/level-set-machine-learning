@@ -1,3 +1,5 @@
+// Helper utilities for C libraries.
+
 #ifndef SCLS_C_UTILS
 #define SCLS_C_UTILS
 

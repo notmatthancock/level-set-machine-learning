@@ -1,0 +1,20 @@
+python module normal_samples
+interface
+    subroutine get_samples(m, n, p, img, ni, nj, nk, di, dj, dk, &
+                           mask, com, nsamples, samples)
+        intent(c) get_samples
+        intent(c)
+
+        integer, intent(hide)          :: m = shape(img, 0)
+        integer, intent(hide)          :: n = shape(img, 1)
+        integer, intent(hide)          :: p = shape(img, 2)
+        integer, intent(in)            :: nsamples
+        real(kind=8), dimension(m,n,p) :: img, ni, nj, nk
+        real(kind=8)                   :: di, dj, dk
+        real(kind=8), dimension(3)     :: com
+        real(kind=8), intent(inout)    :: samples(m,n,p, nsamples, 2)
+
+        integer(kind=1), intent(in), optional, dimension(m,n,p) :: mask = 1
+    end subroutine get_samples
+end interface
+end python module normal_samples

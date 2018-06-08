@@ -5,7 +5,7 @@ from scipy.ndimage import gaussian_filter1d as gf1d
 from skimage.measure import label
 
 from stat_learn_level_set.init_funcs import init_func_base
-from stat_learn_level_set.utils import radii_from_mask as rfm
+from stat_learn_level_set.init_funcs.dim3.utils import radii_from_mask as rfm
 
 
 class ray_trim(init_func_base):

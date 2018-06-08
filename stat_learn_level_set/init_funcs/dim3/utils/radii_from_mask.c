@@ -2,8 +2,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "utils.h"
-#include "trilinear.c"
+#include "../../../utils/utils.h"
+#include "../../../utils/trilinear.c"
+
+/* Compute the radial distance from provided 3d `seed`
+ * in direction given by theta and phi angles until a 
+ * value of `false` is encountered in `mask`.
+ */
 
 void radii_from_mask(int ntpr, double * thetas, double * phis,
                      double * radii, double * seed, int m, int n, int p, 

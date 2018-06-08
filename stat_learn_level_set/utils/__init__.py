@@ -1,7 +1,7 @@
 """
-Submodule containing all the C extensions.
+A variety of helper functions.
 
-These C scripts each have a corresponding "f2py signature file" (.pyf). 
+The C scripts each have a corresponding "f2py signature file" (.pyf). 
 We use NumPy's `f2py` utility to create Python wrapper libraries for 
 these utilities. `f2py` is intended to be used to wrap Fortran, but wraps 
 C also, provided we use the line `intent(C)` in the signature files.
