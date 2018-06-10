@@ -132,7 +132,11 @@ class stat_learn_level_set(object):
 
         step = np.inf
 
-        for ds,key,iseed,seed in self._iter_tmp():
+        nexamples = len(list(self._iter_tmp()))
+
+        for index,(ds,key,iseed,seed) in enumerate(self._iter_tmp()):
+            self._logger.progress("... initializing", index, nexamples)
+
             # Create dataset group if it doesn't exist.
             if ds not in tf:
                 tf.create_group(ds)
@@ -434,7 +438,8 @@ class stat_learn_level_set(object):
                                                     step=gradstep, 
                                                     iters=iterspb,
                                                     ret_last=True,
-                                                    verbose=False)
+                                                    verbose=False,
+                                                    logger=logger)
                 nnet.loss_tr[epoch] += ltr / bpe
                 nnet.loss_va[epoch] += lva / bpe
 
@@ -636,7 +641,7 @@ class stat_learn_level_set(object):
         else:
             return False, None
 
-    def fit(self):
+    def fit(self, warm_start=False):
         """
         Run `set_fit_options` and `set_net_opts` before calling `fit`.
         """
@@ -648,22 +653,29 @@ class stat_learn_level_set(object):
             raise RuntimeError("This model has already been fitted.")
 
         
-        self._logger.info("Initializing.")
-        self._initialize()
-        self._iter = 0
+        if not warm_start:
+            self._logger.info("Initializing.")
+            self._initialize()
+            self._iter = 0
 
-        self._logger.info("Collecting scores.")
-        self._collect_scores()
-        self._logger.progress("Scores => TR: %.4f VA: %.4f TS: %.4f."
-                          % tuple(self._get_mean_scores_at_iter(self._iter)),
-                              self._iter, self._fopts_maxiters)
+            self._logger.info("Collecting scores.")
+            self._collect_scores()
+            self._logger.progress(
+                "Scores => TR: %.4f VA: %.4f TS: %.4f."
+                    % tuple(self._get_mean_scores_at_iter(self._iter)),
+                self._iter,
+                self._fopts_maxiters
+            )
 
-        self._models_path = os.path.join(self._fopts_tmp_dir, "models")
-        os.mkdir(self._models_path)
+            self._models_path = os.path.join(self._fopts_tmp_dir, "models")
+            os.mkdir(self._models_path)
 
-        maxiters = self._fopts_maxiters
+            maxiters = self._fopts_maxiters
+            start_iter = 1
+        else: # warm_start
+            start_iter = self._iter
 
-        for self._iter in range(1, maxiters+1):
+        for self._iter in range(start_iter, maxiters+1):
             self._logger.progress("Beginning iteration.",
                                   self._iter, maxiters)
             iter_start = time.time()

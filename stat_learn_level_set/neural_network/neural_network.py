@@ -1,5 +1,6 @@
 import os
 import cPickle
+import warnings
 import numpy as np
 import stats_recorder as sr
 from datetime import datetime
@@ -209,7 +210,7 @@ class neural_network(object):
 
     def gradient_descent(self, Xtr, ytr, Xva=None, yva=None, step=0.1,
                          iters=10, update_stats=True, verbose=True,
-                         ret_last=False):
+                         ret_last=False, logger=None):
         """
         Run `iters` gradient descent steps.
 
@@ -261,6 +262,9 @@ class neural_network(object):
         if Xva is not None:
             loss_va = np.zeros(iters+1)
 
+        init_params = [self.W.copy(), self.b.copy(),
+                       self.z.copy, self.c]
+
         for i in range(iters):
             loss_tr[i], G = self.lossgrad(Xtr, ytr)
             if Xva is not None:
@@ -273,6 +277,57 @@ class neural_network(object):
 
             self.W -= step*G[0]; self.b -= step*G[1]
             self.z -= step*G[2]; self.c -= step*G[3]
+
+            # If a bad loss value is encountered, reduce the step size.
+            # hard-coded reduction of 0.9 and max tries of 100
+            bad_loss = False
+            for loss_test_iter in range(100):
+                # We need to check the loss after parameter update
+                # to see if the step size caused a 'blow up'.
+                ltr = self.loss(Xtr, ytr)
+                lva = self.loss(Xva, yva)
+
+                # Check if nan or if loss rose >= relative factor of 100%.
+                bad_loss = np.isnan(ltr) or np.isnan(lva) or \
+                           (ltr-loss_tr[i])/loss_tr[i] > 2.0
+
+                if bad_loss:
+                    if loss_test_iter == 99:
+                        if logger is not None:
+                            logger.warn(("Couldn't make a good descent step, "
+                                         " returning initial parameters."))
+                        self.set_params(*init_params)
+
+                        if Xva is None:
+                            if ret_last:
+                                return loss_tr[i]
+                            else:
+                                return loss_tr[:i+1]
+                        else:
+                            if ret_last:
+                                return loss_tr[i], loss_va[i]
+                            else:
+                                return loss_tr[:i+1], loss_va[:i+1]
+
+                    # Correct the parameters back.
+                    self.W += step*G[0]; self.b += step*G[1]
+                    self.z += step*G[2]; self.c += step*G[3]
+
+                    # Reduce the step by factor of 0.9. 
+                    step *= 0.9
+
+                    if logger is not None:
+                        logger.warn(("Bad loss encountered, reducing step "
+                                     "size to %.7f."%step))
+
+                    # Perform grad desc update with smaller step.
+                    self.W -= step*G[0]; self.b -= step*G[1]
+                    self.z -= step*G[2]; self.c -= step*G[3]
+                else:
+                    # The loss was good, so we break the inner for loop
+                    # to the gradient descent step (`i`) for loop.
+                    break
+
 
         loss_tr[iters] = self.loss(Xtr, ytr)
 
