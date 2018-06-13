@@ -1,0 +1,252 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Nothing &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Making a dataset for segmentation" href="../lidc/create-dataset.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="nothing">
+<h1>Nothing<a class="headerlink" href="#nothing" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="stat_learn_level_set.stat_learn_level_set">
+<em class="property">class </em><code class="descclassname">stat_learn_level_set.</code><code class="descname">stat_learn_level_set</code><span class="sig-paren">(</span><em>data_file</em>, <em>feature_map</em>, <em>init_func</em>, <em>score_func=None</em>, <em>step='auto'</em>, <em>band=3</em>, <em>rs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.stat_learn_level_set" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="stat_learn_level_set.stat_learn_level_set.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>warm_start=False</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.stat_learn_level_set.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run <cite>set_fit_options</cite> and <cite>set_net_opts</cite> before calling <cite>fit</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.stat_learn_level_set.segment">
+<code class="descname">segment</code><span class="sig-paren">(</span><em>img</em>, <em>seg=None</em>, <em>dx=None</em>, <em>verbose=True</em>, <em>memoize=True</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.stat_learn_level_set.segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Segment <cite>img</cite>.</p>
+<dl class="docutils">
+<dt>img: ndarray</dt>
+<dd>The image.</dd>
+<dt>seg: ndarry, default=None</dt>
+<dd>The boolean segmentation volume. If provided (not None), then
+the score for the model against the ground-truth <cite>seg</cite> is 
+computed and returned.</dd>
+<dt>dx: ndarray or list, default=None</dt>
+<dd>List of the spatial delta terms along each axis. The default 
+uses ones.</dd>
+<dt>verbose: bool, default=True</dt>
+<dd>Print progress.</dd>
+</dl>
+<dl class="docutils">
+<dt>u[, scores]: ndarray[, ndarray]</dt>
+<dd><cite>u</cite> is shape <cite>(len(self.models)+1,) + img.shape</cite>, where <cite>u[i]</cite>
+is the i’th iterate of the level set function and <cite>u[i] &gt; 0</cite> 
+yields an approximate boolean-mask segmentation of <cite>img</cite> at
+the i’th iteration.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.stat_learn_level_set.set_fit_options">
+<code class="descname">set_fit_options</code><span class="sig-paren">(</span><em>datasets=None</em>, <em>seeds=None</em>, <em>save_file=None</em>, <em>tmp_dir=None</em>, <em>remove_tmp=False</em>, <em>maxiters=100</em>, <em>va_hist_len=5</em>, <em>va_hist_tol=0.0</em>, <em>logfile=None</em>, <em>logstamp=True</em>, <em>logstdout=True</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.stat_learn_level_set.set_fit_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>datasets: dict, len=3, default=None</dt>
+<dd><p class="first">This should be a dict of 3 lists of the form:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">datasets</span><span class="p">[</span><span class="s1">&#39;tr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">strings</span>
+<span class="n">datasets</span><span class="p">[</span><span class="s1">&#39;va&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">strings</span>
+<span class="n">datasets</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">strings</span>
+</pre></div>
+</div>
+<p>Each list of strings contains the keys into the h5py dataset
+file for training (‘tr’), validation (‘va’), and testing (‘ts’).
+So for example, <cite>datasets[‘tr’][0]</cite> yields a string that is a 
+key into the dataset file for the first training example.</p>
+<p class="last">If <cite>datasets</cite> is None (default), then an auto split of 
+60/20/20% is made using the 
+<cite>stat_learn_level_set.utils.data.splitter</cite> utility.</p>
+</dd>
+<dt>seeds: tuple, len=3, default=None</dt>
+<dd><p class="first">The seeds are used in the <cite>init_func</cite> supplied at initialization.
+Note that seed coordinates must be given in <em>index</em> coordinates, 
+i.e., they should <em>not</em> take into account pixel spacing / 
+resolution. However, fractional values are allowed (float type).</p>
+<p><cite>seeds</cite> format:</p>
+<p>Let <cite>ds</cite> be in <cite>[‘tr’,’va’,’ts’]</cite>. For each <cite>key</cite> (string) in 
+<cite>datasets[ds]</cite>, we should have <cite>seeds[ds][key]</cite> being an iterable 
+of iterables. <cite>seeds[ds][key]</cite> refers to the <cite>key</cite> example in 
+dataset <cite>ds</cite>, and thus <cite>seeds[ds][key]</cite> should contain a list 
+of seeds for that example (each seed being an iterable type).</p>
+<p>For example, we might have <cite>seeds[ds][key] == [[25,34], [27,35]]</cite>, 
+which indicates there are two seeds for example <cite>key</cite> in 
+dataset <cite>ds</cite>.</p>
+<p class="last">If None (default), then a single seed for each example is used 
+and computed automatically: the center-of-mass of the ground-
+truth segmentation of the respective examples.</p>
+</dd>
+<dt>save_file: str, default=None</dt>
+<dd>The model (the total RBLS object) will be pickled to this path.
+The default (None) uses the file <cite>slls_model.pkl</cite> at the current
+working directory.</dd>
+<dt>tmp_dir: str, default=None</dt>
+<dd>The working directory. Temporary data (e.g., intermediate
+level set values) will be stored in this directory.
+The default uses the current working directory.</dd>
+<dt>maxiters: int, default=100</dt>
+<dd>The maximum number of iterations (i.e., number of 
+regression models).  Note that less than <cite>maxiters</cite> will be used 
+if the validation set performance degrades (see <cite>va_his_len</cite> 
+and <cite>va_hist_tol</cite>).</dd>
+<dt>remove_tmp: bool, default=False</dt>
+<dd>If True, the temporary files created over the fitting process 
+are left in place and not deleted. This includes for example,
+all the network models for the grid search procedure.</dd>
+<dt>va_hist_len: int, default=5</dt>
+<dd>The process terminates when the average segmentation quality 
+over the last <cite>va_hist_len</cite> iterations is trending downward, or
+when <cite>maxiters</cite> has been reached.</dd>
+<dt>va_hist_tol: float, default=0.0</dt>
+<dd>The linear trend over of the average segmentation quality over 
+the last <cite>va_hist_len</cite> iterations is computed. The process 
+terminates if the linear trend (slope of best fit line) is less 
+than <cite>va_hist_tol</cite>, or when <cite>maxiters</cite> has been reached.</dd>
+<dt>logfile: str, default=None</dt>
+<dd>The name of the log file to write. The default (None) writes to
+<cite>log.txt</cite> in the current working directory.</dd>
+<dt>logstamp: bool, default=True</dt>
+<dd>Include a timestamp in the <cite>logfile</cite> name.</dd>
+<dt>logstdout: bool, default=True</dt>
+<dd>If True, the log will print to stdout (as well as logging to file).</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.stat_learn_level_set.set_net_options">
+<code class="descname">set_net_options</code><span class="sig-paren">(</span><em>nhidden=[64, 128, 256, 512], ninits=3, step=0.1, maxepochs=1000, batch_size=5, batch_size_auto=True, batches_per_epoch=None, iters_per_batch=1, log_batch=False, balance=True, va_hist_len=25, va_hist_tol=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.stat_learn_level_set.set_net_options" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>nhidden: list of ints, default=[64, 128, 256, 512]</dt>
+<dd>The number hidden hidden units to search over.</dd>
+<dt>ninits: int, default=3</dt>
+<dd>The number of random initializations to perform for optimization 
+using each <cite>nhidden</cite> value.</dd>
+<dt>step: float, default=0.1</dt>
+<dd>The step size for stochastic gradient descent.</dd>
+<dt>maxepochs: int, default=1000</dt>
+<dd>The maximum allowable number of epochs.</dd>
+<dt>batch_size: int, default=5</dt>
+<dd>The batch size for stochastic gradient descent.
+If <cite>batch_size_image</cite> is True (default), then <cite>batch_size</cite> 
+should be interpreted as the (average) number of images 
+in a single batch (i.e., the average number number of images 
+used to collect feature vectors to compose a single batch).
+Otherwise (<cite>batch_size_image</cite> False), <cite>batch_size</cite>
+is interpretted as the number of feature vector examples 
+to be included in a single batch.</dd>
+<dt>batch_size_image: bool, default=True</dt>
+<dd>See <cite>batch_size</cite>.</dd>
+<dt>batches_per_epoch: int, default=None</dt>
+<dd>The number of batch updates performed in each “epoch”.
+If None (default), then the effective number of batches
+necessary to make one pass through the training data
+(on average) is computed and used.</dd>
+<dt>iters_per_batch: int, default=1</dt>
+<dd>The number of gradient descent updates to perform with each batch.</dd>
+<dt>log_batch: bool, default=False</dt>
+<dd>If True, then the log file for each neural network training
+session records the current batch number. This is in addition 
+to recording the loss values over each epoch. Setting this 
+flag to True is useful if you expect batches to take a long time, 
+which in general should not be the case.</dd>
+<dt>balance: bool, default=True</dt>
+<dd>If True, the each batch is balanced by the positivity/negativity
+of the target values in the batch.</dd>
+<dt>va_hist_len: int, default=5</dt>
+<dd>The process terminates when the mean-squared error over the 
+validation dataset over the last <cite>va_hist_len</cite> epochs is 
+trending downward, or when <cite>maxepochs</cite> has been reached.</dd>
+<dt>va_hist_tol: float, default=0.0</dt>
+<dd>The linear trend over of the MSE over 
+the last <cite>va_hist_len</cite> epochs is computed. The process terminates 
+if the linear trend (slope of best fit line) is less than 
+<cite>va_hist_tol</cite>, or when <cite>maxepochs</cite> has been reached.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">LIDC</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../lidc/setup.html">Setup and Dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lidc/create-dataset.html">Making a dataset for segmentation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">SLLS</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Nothing</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../lidc/create-dataset.html" title="previous chapter">Making a dataset for segmentation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Matt Hancock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

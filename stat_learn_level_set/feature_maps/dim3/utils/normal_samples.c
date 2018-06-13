@@ -41,9 +41,9 @@ void get_samples(
                 // dt is the step length along in the normal directions.
                 dt = cdist / (nsamples+1.0);
 
-                a = dt * ni[l];
-                b = dt * nj[l];
-                c = dt * nk[l];
+                a = dt*ni[l];
+                b = dt*nj[l];
+                c = dt*nk[l];
 
                 // The gradient vector is zero, so we can't compute
                 // the feature for this coordinate, (i,j,k).
@@ -68,15 +68,10 @@ void get_samples(
                                                (int) round(jj_o/dj),
                                                (int) round(kk_o/dk),
                                                m, n, p);
-                    if (!in_bounds_i)
-                        printf("i0 %.2f, %.2f, %.2f\n", ii_i, jj_i, kk_i);
-//                    else
-//                        printf("i1 %.2f, %.2f, %.2f\n", ii_i, jj_i, kk_i);
 
-                    if (!in_bounds_o)
-                        printf("o0 %.2f, %.2f, %.2f\n", ii_o, jj_o, kk_o);
-//                    else
-//                        printf("o1 %.2f, %.2f, %.2f\n", ii_o, jj_o, kk_o);
+                    //printf("%.7f, %.7f, %.7f, ", ii_i, jj_i, kk_i);
+                    //printf("%.7f, %.7f, %.7f\n", ii_o, jj_o, kk_o);
+
 
                     // `samples` is 4D, so we use the map index function `mi3d`
                     // to map the 3D, row-major coordinate to 4D row-major.
@@ -84,7 +79,7 @@ void get_samples(
                     ll = nsamples*l + q-1;
 
                     // Add the inward normal sample to `samples`.
-                    if (!in_bounds_i || is_zero) {
+                    if (is_zero || !in_bounds_i) {
                         samples[2*ll+0] = 0.0;
                     }
                     else {
@@ -95,7 +90,7 @@ void get_samples(
                     }
 
                     // Add the outward normal sample to `samples`.
-                    if (!in_bounds_o || is_zero) {
+                    if (is_zero || !in_bounds_o) {
                         samples[2*ll+1] = 0.0;
                     }
                     else {

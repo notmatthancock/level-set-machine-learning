@@ -1,0 +1,8 @@
+LIDC Segmentaiton Dataset Creation Programs
+===========================================
+
+.. toctree::
+    :maxdepth: 1
+
+    setup
+    segmentation-dataset
