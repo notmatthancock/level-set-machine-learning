@@ -16,7 +16,7 @@ void get_samples(
         double * ni, double * nj, double * nk, // unit normal comps
         double   di, double   dj, double   dk, // delta terms
         bool * mask, // boolean mask volume
-        double * com, // center of mass (in ? coords)
+        double * com, // center of mass (in *index* coordinates)
         int nsamples, // desired # of samples
         double * samples // output volume, shape = (m, n, p, nsamples, 2)
     ) {
@@ -47,7 +47,8 @@ void get_samples(
 
                 // The gradient vector is zero, so we can't compute
                 // the feature for this coordinate, (i,j,k).
-                is_zero = (a == 0) && (b == 0) && (c == 0);
+                is_zero = false;
+                if (a == 0 && b == 0 && c == 0) is_zero = true;
 
                 // _i = inward normal
                 ii_i = i*di;
@@ -68,10 +69,6 @@ void get_samples(
                                                (int) round(jj_o/dj),
                                                (int) round(kk_o/dk),
                                                m, n, p);
-
-                    //printf("%.7f, %.7f, %.7f, ", ii_i, jj_i, kk_i);
-                    //printf("%.7f, %.7f, %.7f\n", ii_o, jj_o, kk_o);
-
 
                     // `samples` is 4D, so we use the map index function `mi3d`
                     // to map the 3D, row-major coordinate to 4D row-major.

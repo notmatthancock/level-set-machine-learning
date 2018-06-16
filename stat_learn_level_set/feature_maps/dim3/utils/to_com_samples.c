@@ -2,27 +2,42 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "utils.h"
-#include "trilinear.c"
+#include "../../../utils/utils.h"
+#include "../../../utils/trilinear.c"
 
-// di, dj, dk should be normalized to be unit length.
-// samples is (n,n,n, 2*nsamples)
-void get_samples(int n, double * img, bool * mask, double * com,
-                 int nsamples, double * samples) {
+// This utility grabs `nsamples` image samples in both the inward and outward
+// normal directions. The sampled points are equally spaced along the normal
+// ray, and the ray extends in the inward and outward directions, a
+// distance equal to distance from the local spatial coordinate to 
+// the provided center of mass (com).
+
+void get_samples(
+        int m, int n, int p, double * img, // dims and image vol.
+        double   di, double   dj, double   dk, // delta terms
+        bool * mask, // boolean mask volume
+        double * com, // center of mass (in *index* coordinates)
+        int nsamples, // desired # of samples
+        double * samples // output volume, shape = (m, n, p, nsamples, 2)
+    ) {
     int l,ll;
     double a, b, c;
     double ii_i, jj_i, kk_i;
     double ii_o, jj_o, kk_o;
     bool in_bounds_i, in_bounds_o, is_zero;
-    double dt,cdist;
+    double dt, cdist;
 
-    for (int i=0; i < n; i++) {
+    for (int i=0; i < m; i++) {
         for (int j=0; j < n; j++) {
-            for (int k=0; k < n; k++) {
-                l = map_index(i,j,k,n,n,n);
+            for (int k=0; k < p; k++) {
+                l = mi3d(i,j,k,m,n,p);
                 if (!mask[l]) continue;
 
-                cdist = sqrt(sqr(i-com[0])+sqr(j-com[1])+sqr(k-com[2]));
+                // Distance to center of mass.
+                cdist = sqrt(sqr(di*(i-com[0])) +
+                             sqr(dj*(j-com[1])) +
+                             sqr(dk*(k-com[2])));
+
+                // dt is the step length along in the normal directions.
                 dt = cdist / (nsamples+1.0);
 
                 a = dt * (com[0]-i) / cdist;
@@ -34,34 +49,52 @@ void get_samples(int n, double * img, bool * mask, double * com,
                 is_zero = false;
                 if (a == 0 && b == 0 && c == 0) is_zero = true;
 
-                ii_i = (double) i;
-                jj_i = (double) j;
-                kk_i = (double) k;
-
-                ii_o = (double) i;
-                jj_o = (double) j;
-                kk_o = (double) k;
+                // _i = inward normal
+                ii_i = i*di;
+                jj_i = j*dj;
+                kk_i = k*dk;
+                
+                // _o = outward normal
+                ii_o = i*di;
+                jj_o = j*dj;
+                kk_o = k*dk;
 
                 for (int q=1; q <= nsamples; q++) {
-                    in_bounds_i = check_bounds((int) round(ii_i),
-                                               (int) round(jj_i),
-                                               (int) round(kk_i), n, n, n);
-                    in_bounds_o = check_bounds((int) round(ii_o),
-                                               (int) round(jj_o),
-                                               (int) round(kk_o), n, n, n);
+                    in_bounds_i = check_bounds((int) round(ii_i/di),
+                                               (int) round(jj_i/dj),
+                                               (int) round(kk_i/dk),
+                                               m, n, p);
+                    in_bounds_o = check_bounds((int) round(ii_o/di),
+                                               (int) round(jj_o/dj),
+                                               (int) round(kk_o/dk),
+                                               m, n, p);
 
+                    // `samples` is 4D, so we use the map index function `mi3d`
+                    // to map the 3D, row-major coordinate to 4D row-major.
+                    // `ll` is part of the 4D index computation used below.
                     ll = nsamples*l + q-1;
 
-                    if (!in_bounds_i || is_zero)
+                    // Add the inward normal sample to `samples`.
+                    if (is_zero || !in_bounds_i) {
                         samples[2*ll+0] = 0.0;
-                    else
+                    }
+                    else {
                         samples[2*ll+0] = interpolate_point(ii_i, jj_i, kk_i,
-                                                            img, n, n, n);
-                    if (!in_bounds_o || is_zero)
+                                                            img, 
+                                                            di, dj, dk,
+                                                            m, n, p);
+                    }
+
+                    // Add the outward normal sample to `samples`.
+                    if (is_zero || !in_bounds_o) {
                         samples[2*ll+1] = 0.0;
-                    else
+                    }
+                    else {
                         samples[2*ll+1] = interpolate_point(ii_o, jj_o, kk_o,
-                                                            img, n, n, n);
+                                                            img,
+                                                            di, dj, dk,
+                                                            m, n, p);
+                    }
 
                     // Advance one step along ray.
                     ii_i += a;
