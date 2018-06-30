@@ -93,7 +93,7 @@ class lidc_glocal_feature_map(feature_map_base):
         V = H.sum() * pdx
         F[mask,0] = V
 
-        dHi,dHj,dHk = np.gradient(H.astype(np.float), *dx)
+        dHi,dHj,dHk = np.gradient(Hf, *dx)
         gmagH = np.sqrt(dHi**2 + dHj**2 + dHk**2)
 
         # Surface area
@@ -123,6 +123,9 @@ class lidc_glocal_feature_map(feature_map_base):
         F[mask,5] = (kk*Hf / V).sum() * pdx
 
         com = np.array([F[mask,3][0], F[mask,4][0], F[mask,5][0]])
+        com = np.array([(i*Hf).sum() / V for i in np.indices(H.shape,
+                                                             dtype=np.float)])
+        print com
 
         # Second moments.
         F[mask,6] = ((ii**2)*Hf / V).sum() * pdx

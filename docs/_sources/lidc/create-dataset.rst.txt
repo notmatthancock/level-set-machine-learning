@@ -15,10 +15,10 @@ First we'll collect all nodules for which there are four annotations. We'll
 create a list where each element of the list is itself a list of length 4,
 corresponding to the Annotation ids of a nodule.
 
-.. literalinclude:: /_static/code/get_nodules_with_four_annotations.py
+.. literalinclude:: /_static/code/lidc/get_nodules_with_four_annotations.py
     :language: python
 
-Source: `get_nodules_with_four_annotations.py <_static/code/get_nodules_with_four_annotations.py>`_
+Source: `get_nodules_with_four_annotations.py </_static/code/lidc/get_nodules_with_four_annotations.py>`_
 
 You might see messages indicating failure to group nodules into groups <= 4 
 in some cases. These might be tossed out, or manually inspected. These cases 
@@ -61,10 +61,10 @@ using h5py <https://www.h5py.org/>`_.
 
 This accomplished in the following Python script:
 
-.. literalinclude:: /_static/code/create_seg_data.py
+.. literalinclude:: /_static/code/lidc/create_seg_data.py
     :language: python
 
-Source: `create_seg_data.py <_static/code/create_seg_data.py>`_
+Source: `create_seg_data.py </_static/code/create_seg_data.py>`_
 
 The resulting file is only about 800 MB, compared to the 124 GB of the full 
 LIDC dataset of all the slices, since we've sampled only sub-volumes from 
@@ -78,7 +78,7 @@ and create all the volumes, and an overnight run might be a good idea.
 
 Let's see how we might load and use the data after it is created:
     
-.. literalinclude:: /_static/code/seg_data_demo.py
+.. literalinclude:: /_static/code/lidc/seg_data_demo.py
     :language: python
 
-Source: `seg_data_demo.py <_static/code/seg_data_demo.py>`_
+Source: `seg_data_demo.py </_static/code/seg_data_demo.py>`_

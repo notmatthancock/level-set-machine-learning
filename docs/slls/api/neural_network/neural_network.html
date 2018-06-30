@@ -1,0 +1,262 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>stat_learn_level_set.neural_network.neural_network &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="stat_learn_level_set.neural_network.stats_recorder" href="stats_recorder.html" />
+    <link rel="prev" title="stat_learn_level_set.feature_maps.dim2.simple_feature_map" href="../feature_maps/dim2/simple_feature_map.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-stat_learn_level_set.neural_network.neural_network">
+<span id="stat-learn-level-set-neural-network-neural-network"></span><h1>stat_learn_level_set.neural_network.neural_network<a class="headerlink" href="#module-stat_learn_level_set.neural_network.neural_network" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="stat_learn_level_set.neural_network.neural_network.batch_queue">
+<em class="property">class </em><code class="descclassname">stat_learn_level_set.neural_network.neural_network.</code><code class="descname">batch_queue</code><span class="sig-paren">(</span><em>batch_size</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#batch_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.batch_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given data, this implements a queue of batches.</p>
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.batch_queue.next">
+<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#batch_queue.next"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.batch_queue.next" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the next batch (x,y) from the queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.batch_queue.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#batch_queue.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.batch_queue.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split x and y into batches and all the batches to the queue.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network">
+<em class="property">class </em><code class="descclassname">stat_learn_level_set.neural_network.neural_network.</code><code class="descname">neural_network</code><span class="sig-paren">(</span><em>ninput</em>, <em>nhidden</em>, <em>rs=None</em>, <em>reg=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Single hidden layer neural network with single output unit that
+computes the identity.</p>
+<dl class="docutils">
+<dt>params: W, where w[i,j] = weight from input i to hidden unit j.</dt>
+<dd>b, where b[j] = bias into hidden unit j.
+z, where z[j] = weight from hidden unit j to output unit.
+c, single scalar bias for output unit.</dd>
+</dl>
+<p>For a single vector input, the computation chain is:
+h = hidden_layer = tanh( dot(W.T, input) + b )
+output = dot(h, z) + c</p>
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.get_params">
+<code class="descname">get_params</code><span class="sig-paren">(</span><em>flat=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.get_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.get_params" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>flat</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If True, the parameters are flattened into a single array.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>params</strong> – If <cite>flat</cite> is False (default), then the parameters are returned
+as [W,b,z,c]. Otherwise, these are flattened into a single
+array and returned.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list or array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.gradient_descent">
+<code class="descname">gradient_descent</code><span class="sig-paren">(</span><em>Xtr</em>, <em>ytr</em>, <em>Xva=None</em>, <em>yva=None</em>, <em>step=0.1</em>, <em>iters=10</em>, <em>update_stats=True</em>, <em>verbose=True</em>, <em>ret_last=False</em>, <em>logger=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.gradient_descent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.gradient_descent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run <cite>iters</cite> gradient descent steps.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Xtr</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nsamples</em><em>, </em><em>ninput</em><em>)</em>) – The training inputs – examples by row.</li>
+<li><strong>ytr</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nsamples</em><em>,</em><em>)</em>) – The training outputs.</li>
+<li><strong>Xva</strong><strong>,</strong><strong>yva</strong> (<em>ndarrays</em><em>, </em><em>defaults=None</em>) – These are the validation dataset analogues to <cite>Xtr</cite> and <cite>ytr</cite>.
+If given, then the MSE over this validation data is recorded.</li>
+<li><strong>step</strong> (<em>float</em>) – Step size for gradient descent steps.</li>
+<li><strong>iters</strong> (<em>int</em><em>, </em><em>default=10</em>) – Number of gradient descent steps to run.</li>
+<li><strong>ret_last</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If True, only the loss on the last iteration is returned.</li>
+<li><strong>update_stats</strong> (<em>bool</em><em>, </em><em>default=True</em>) – If True, the training data <cite>Xtr</cite> are used to update the
+running empirical mean and standard deviation for automatic
+variable normalization.</li>
+<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Print the loss(es) for each iteration.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>loss_tr[, loss_va]</strong> – The MSE over the training (and validation) sets. Note that
+these arrays are length <a href="#id1"><span class="problematic" id="id2">`</span></a>iters`+1 since the loss prior to the
+first gradient descent step is recorded as the first entry.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray[, ndarray], shapes=(iters+1,)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.loss">
+<code class="descname">loss</code><span class="sig-paren">(</span><em>X</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the mean-squared-error loss between the network’s
+prediction of <cite>X</cite> and the values <cite>y</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nsamples</em><em>, </em><em>ninput</em><em>)</em>) – The input array.</li>
+<li><strong>y</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nsamples</em><em>,</em><em>)</em>) – The response variable, i.e., the “correct” output values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>mse</strong> – The mean-squared error between the network ouput with <cite>X</cite> as input
+and <cite>y</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">float</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.lossgrad">
+<code class="descname">lossgrad</code><span class="sig-paren">(</span><em>X</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.lossgrad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.lossgrad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return loss and [Dloss/Dparam for param in [W,b,z,c]]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.predict" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>X</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nsamples</em><em>, </em><em>ninputs</em><em>)</em>) – Each row of <cite>X</cite> is an observation.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – out = dot(tanh(X,W)+b, z) + c</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray, shape=(nsamples,)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.randomize_params">
+<code class="descname">randomize_params</code><span class="sig-paren">(</span><em>scale=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.randomize_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.randomize_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize the model parameters using IID Gaussian random variables
+with variance <cite>scale</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>base='./'</em>, <em>fname=None</em>, <em>ts=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pickle the model.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="stat_learn_level_set.neural_network.neural_network.neural_network.set_params">
+<code class="descname">set_params</code><span class="sig-paren">(</span><em>W</em>, <em>b</em>, <em>z</em>, <em>c</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#neural_network.set_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.neural_network.set_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the parameter values to those providedin the arguments.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="stat_learn_level_set.neural_network.neural_network.stop_early">
+<code class="descclassname">stat_learn_level_set.neural_network.neural_network.</code><code class="descname">stop_early</code><span class="sig-paren">(</span><em>loss_hist</em>, <em>hist_len=100</em>, <em>tol=0</em>, <em>dec=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/neural_network/neural_network.html#stop_early"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.neural_network.neural_network.stop_early" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True when the linear trend over the <cite>hist_len</cite> most recent
+components of <cite>loss_hist</cite> is greater (or lesser if dec=False) than <cite>eps</cite>.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">LIDC</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../lidc/setup.html">Setup and Dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../lidc/create-dataset.html">Making a dataset for segmentation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/2d-hamburger.html">Segment 2d images</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Full documentation and specs</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">SLLS API</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">SLLS API</a><ul>
+      <li>Previous: <a href="../feature_maps/dim2/simple_feature_map.html" title="previous chapter">stat_learn_level_set.feature_maps.dim2.simple_feature_map</a></li>
+      <li>Next: <a href="stats_recorder.html" title="next chapter">stat_learn_level_set.neural_network.stats_recorder</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Matt Hancock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,271 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>stat_learn_level_set.feature_maps.dim2.simple_feature_map &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for stat_learn_level_set.feature_maps.dim2.simple_feature_map</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">stat_learn_level_set.feature_maps</span> <span class="k">import</span> <span class="n">feature_map_base</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="k">import</span> <span class="n">gaussian_filter1d</span> <span class="k">as</span> <span class="n">gf1d</span>
+<span class="kn">from</span> <span class="nn">stat_learn_level_set.utils</span> <span class="k">import</span> <span class="n">masked_grad</span> <span class="k">as</span> <span class="n">mg</span>
+
+<div class="viewcode-block" id="simple_feature_map"><a class="viewcode-back" href="../../../../slls/api/feature_maps/dim2/simple_feature_map.html#stat_learn_level_set.feature_maps.dim2.simple_feature_map.simple_feature_map">[docs]</a><span class="k">class</span> <span class="nc">simple_feature_map</span><span class="p">(</span><span class="n">feature_map_base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple feature map with local and global, shape and image features,</span>
+<span class="sd">    with image features computed at multiple scales.</span>
+
+<span class="sd">    The feature map computation is implemented in the `__call__` member</span>
+<span class="sd">    function so that the object can be called like in the example below.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        TODO</span>
+
+<span class="sd">    Documentation for `__call__`:</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    u: ndarrary</span>
+<span class="sd">        The &quot;level set function&quot;.</span>
+
+<span class="sd">    img: ndarray</span>
+<span class="sd">        The image.</span>
+
+<span class="sd">    dist: ndarray</span>
+<span class="sd">        The signed distance transform to the level set `u` (only computed</span>
+<span class="sd">        necessarily in the narrow band region).</span>
+
+<span class="sd">    mask: ndarray, dtype=bool</span>
+<span class="sd">        The boolean mask indicating the narrow band region of `u`.</span>
+
+<span class="sd">    dx: ndarray, shape=img.ndim</span>
+<span class="sd">        The &quot;delta&quot; spacing terms for each image axis. If None, then</span>
+<span class="sd">        1.0 is used for each axis.</span>
+
+<span class="sd">    memoize: flag, default=None</span>
+<span class="sd">        Should be one of [None, &#39;create&#39;, &#39;use&#39;]. This variable will be None</span>
+<span class="sd">        always during training, but during run-time (where the feature </span>
+<span class="sd">        map is called for many iterations on the same image), it is</span>
+<span class="sd">        &#39;create&#39; at the first iteration and &#39;use&#39; for all iterations </span>
+<span class="sd">        thereafter. Use this to create more efficient run-time </span>
+<span class="sd">        performance by storing features that can be re-used</span>
+<span class="sd">        in subsequent iterations.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nlocalimg</span>  <span class="o">=</span> <span class="mi">2</span> <span class="c1"># img, grad</span>
+    <span class="n">nlocalseg</span>  <span class="o">=</span> <span class="mi">1</span> <span class="c1"># dist from com</span>
+    <span class="n">nglobalimg</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># mean, std</span>
+    <span class="n">nglobalseg</span> <span class="o">=</span> <span class="mi">7</span> <span class="c1"># area, len, iso, mi1, mj1, mi2, mj2</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigmas</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigmas</span> <span class="o">=</span> <span class="n">sigmas</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nfeatures</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlocalimg</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nglobalimg</span><span class="p">)</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">sigmas</span><span class="p">)</span> <span class="o">+</span> \
+                          <span class="bp">self</span><span class="o">.</span><span class="n">nlocalseg</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nglobalseg</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">memoize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">u</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">img</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> \
+               <span class="n">dist</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">mask</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">assert</span> <span class="n">memoize</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="s1">&#39;use&#39;</span><span class="p">]</span>
+
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span> <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">dx</span>
+
+        <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nfeatures</span><span class="p">,))</span>
+
+        <span class="n">pdx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Area</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pdx</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span>
+
+        <span class="n">dHx</span><span class="p">,</span><span class="n">dHy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">),</span> <span class="o">*</span><span class="n">dx</span><span class="p">)</span>
+        <span class="n">gmagH</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dHx</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">dHy</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Boundary length</span>
+        <span class="c1"># This uses a volume integral:</span>
+        <span class="c1"># :math:`\\int\\int \\delta(u) \\| Du \\| dx dy`</span>
+        <span class="c1"># to compute the length of the boundary contour via Co-Area formula.</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">gmagH</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pdx</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">L</span>
+
+        <span class="c1"># Isoperimetric ratio</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">A</span> <span class="o">/</span> <span class="n">L</span><span class="o">**</span><span class="mi">2</span>
+        
+        <span class="k">if</span> <span class="n">memoize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ii</span><span class="p">,</span><span class="n">jj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+            <span class="n">ii</span> <span class="o">*=</span> <span class="n">dx</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="n">jj</span> <span class="o">*=</span> <span class="n">dx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">memoize</span> <span class="o">==</span> <span class="s1">&#39;create&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ii</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">jj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ii</span> <span class="o">*=</span> <span class="n">dx</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="bp">self</span><span class="o">.</span><span class="n">jj</span> <span class="o">*=</span> <span class="n">dx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># Handles both &#39;create&#39; and &#39;use&#39; cases.</span>
+            <span class="n">ii</span><span class="p">,</span><span class="n">jj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ii</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">jj</span>
+
+        <span class="c1"># First moments.</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ii</span><span class="o">*</span><span class="n">H</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pdx</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">jj</span><span class="o">*</span><span class="n">H</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pdx</span>
+
+        <span class="c1"># Second moments.</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">ii</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">H</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pdx</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">jj</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">H</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">pdx</span>
+
+        <span class="c1"># Distance from center of mass.</span>
+        <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">ii</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">-</span><span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+                            <span class="p">(</span><span class="n">jj</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">-</span><span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="mi">4</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">isig</span><span class="p">,</span><span class="n">sigma</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigmas</span><span class="p">):</span>
+            <span class="n">ijump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nglobalseg</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlocalseg</span> <span class="o">+</span> \
+                    <span class="n">isig</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlocalimg</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nglobalimg</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">memoize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">sigma</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">blur</span> <span class="o">=</span> <span class="n">img</span>
+                    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dx</span><span class="p">)):</span>
+                        <span class="n">blur</span> <span class="o">=</span> <span class="n">gf1d</span><span class="p">(</span><span class="n">blur</span><span class="p">,</span> <span class="n">sigma</span><span class="o">/</span><span class="n">dx</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+                    <span class="n">_</span><span class="p">,</span><span class="n">gmag</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">gradient_centered</span><span class="p">(</span><span class="n">blur</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="n">dx</span><span class="p">)</span> 
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">blur</span> <span class="o">=</span> <span class="n">img</span>
+                    <span class="n">_</span><span class="p">,</span><span class="n">gmag</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">gradient_centered</span><span class="p">(</span><span class="n">blur</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="n">dx</span><span class="p">)</span> 
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">memoize</span> <span class="o">==</span> <span class="s1">&#39;create&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;blurs&#39;</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">blurs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigmas</span><span class="p">),)</span> <span class="o">+</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;gmags&#39;</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">gmags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigmas</span><span class="p">),)</span> <span class="o">+</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+                    <span class="n">mask_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">sigma</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">blurs</span><span class="p">[</span><span class="n">isig</span><span class="p">]</span> <span class="o">=</span> <span class="n">img</span>
+                        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dx</span><span class="p">)):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">blurs</span><span class="p">[</span><span class="n">isig</span><span class="p">]</span> <span class="o">=</span> <span class="n">gf1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blurs</span><span class="p">[</span><span class="n">isig</span><span class="p">],</span>
+                                                    <span class="n">sigma</span><span class="o">/</span><span class="n">dx</span><span class="p">[</span><span class="n">axis</span><span class="p">],</span>
+                                                    <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+                        <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gmags</span><span class="p">[</span><span class="n">isig</span><span class="p">]</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">gradient_centered</span><span class="p">(</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">blurs</span><span class="p">[</span><span class="n">isig</span><span class="p">],</span>
+                                                <span class="n">mask</span><span class="o">=</span><span class="n">mask_all</span><span class="p">,</span>
+                                                <span class="n">dx</span><span class="o">=</span><span class="n">dx</span>
+                                              <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">blurs</span><span class="p">[</span><span class="n">isig</span><span class="p">]</span> <span class="o">=</span> <span class="n">img</span>
+                        <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gmags</span><span class="p">[</span><span class="n">isig</span><span class="p">]</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">gradient_centered</span><span class="p">(</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">blurs</span><span class="p">[</span><span class="n">isig</span><span class="p">],</span>
+                                                <span class="n">mask</span><span class="o">=</span><span class="n">mask_all</span><span class="p">,</span>
+                                                <span class="n">dx</span><span class="o">=</span><span class="n">dx</span>
+                                              <span class="p">)</span>
+
+                <span class="c1"># Handles both &#39;create&#39; and &#39;use&#39; `memoize` cases.</span>
+                <span class="n">blur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blurs</span><span class="p">[</span><span class="n">isig</span><span class="p">]</span>
+                <span class="n">gmag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gmags</span><span class="p">[</span><span class="n">isig</span><span class="p">]</span>
+
+            <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="n">ijump</span><span class="o">+</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">blur</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>     <span class="c1"># Local image.</span>
+            <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="n">ijump</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">gmag</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>     <span class="c1"># Local image edge.</span>
+            <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="n">ijump</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">blur</span><span class="p">[</span><span class="n">H</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="c1"># Global image.</span>
+            <span class="n">F</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span><span class="n">ijump</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">blur</span><span class="p">[</span><span class="n">H</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>  <span class="c1"># Global image edge.</span>
+
+        <span class="k">return</span> <span class="n">F</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the list of feature names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">,</span> <span class="s1">&#39;boundary length&#39;</span><span class="p">,</span> <span class="s1">&#39;isoperimetric&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;moment 1 axis i&#39;</span><span class="p">,</span> <span class="s1">&#39;moment 1 axis j&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;moment 2 axis i&#39;</span><span class="p">,</span> <span class="s1">&#39;moment 2 axis j&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;dist from center of mass&#39;</span><span class="p">]</span>
+
+        <span class="n">img_feats</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;img-val&#39;</span><span class="p">,</span> <span class="s1">&#39;img-edge&#39;</span><span class="p">,</span> <span class="s1">&#39;img-avg&#39;</span><span class="p">,</span> <span class="s1">&#39;img-std&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigmas</span><span class="p">:</span>
+            <span class="n">feats</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-sigma=</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">img_feats</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">feats</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../../../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">LIDC</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../lidc/setup.html">Setup and Dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../lidc/create-dataset.html">Making a dataset for segmentation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../slls/examples/2d-hamburger.html">Segment 2d images</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Full documentation and specs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../slls/api/index.html">SLLS API</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  <li><a href="../../feature_maps.html">stat_learn_level_set.feature_maps</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Matt Hancock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

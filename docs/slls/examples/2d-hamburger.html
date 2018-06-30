@@ -1,0 +1,206 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Segment 2d images &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="SLLS API" href="../api/index.html" />
+    <link rel="prev" title="Making a dataset for segmentation" href="../../lidc/create-dataset.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="segment-2d-images">
+<h1>Segment 2d images<a class="headerlink" href="#segment-2d-images" title="Permalink to this headline">¶</a></h1>
+<p>In this example, we’ll illustrate the SLLS programs on some simple
+two-dimensional images like the one shown below (which we are calling
+‘hamburger images’ since it looks like hamburger buns).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">stat_learn_level_set.utils.data.synth.dim2</span> <span class="kn">import</span> <span class="n">hamburger</span>
+
+<span class="n">img</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">hamburger</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span> <span class="n">cut_theta</span><span class="o">=</span><span class="mf">3.14159</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img src="/_static/images/2d-hamburger-example.png"><p>We have used the <cite>hamburger</cite> module from
+the <cite>stat_learn_level_set.utils.dim2.hamburger</cite> module to create
+the above image, using a cut oriented at <span class="math notranslate">\(\pi/4\)</span> radians through the
+circle, using the <cite>hamburger.make</cite> function.</p>
+<p>The SLLS programs include a number of utilities for creating synthetic
+datasets for testing purposes that can be found in the
+<cite>utils.data.synth</cite> submodule, which is further divided into the submodules
+<cite>dim2</cite> and <cite>dim3</cite>.</p>
+<p>We can make a dataset of randomly generated images for image segmentation
+testing purposes using <cite>hamburger.make_dataset()</cite>. This will randomize
+the various parameters (e.g., radius, cut angle, cut thickness, noise
+strength, etc.) for each image. The result is two numpy <cite>numpy.ndarray</cite>’s:
+the images and the corresponding segmentations. In the following,
+we’ll using a <cite>numpy.random.RandomState</cite> object to seed the random number
+generator for reproducible results in making the dataset:</p>
+<p>After generating the image and segmentation pairs as <cite>numpy</cite> arrays, we
+store them in an <cite>hdf5</cite> file that has the schema expected by the SLLS
+routines. This is accomplished using the
+<cite>stat_learn_level_set.utils.tohdf5</cite> utility.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>  <span class="c1"># from RandomState</span>
+
+<span class="kn">from</span> <span class="nn">stat_learn_level_set.utils.data.synth.dim2</span> <span class="kn">import</span> <span class="n">hamburger</span>
+<span class="kn">from</span> <span class="nn">stat_learn_level_set.utils.data</span> <span class="kn">import</span> <span class="n">tohdf5</span>
+
+
+<span class="c1"># Create the random number generator.</span>
+<span class="n">seed</span> <span class="o">=</span> <span class="mi">1234</span>
+<span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+<span class="n">n_samples</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">img_dim</span> <span class="o">=</span> <span class="mi">51</span>
+
+<span class="c1"># Create a dataset with 50 samples. The images are square, size 50px.</span>
+<span class="c1"># rad, cb, cthick all set the ranges of the random values to generate</span>
+<span class="c1"># the parameters of the images.</span>
+<span class="n">imgs</span><span class="p">,</span><span class="n">segs</span> <span class="o">=</span> <span class="n">hamburger</span><span class="o">.</span><span class="n">make_dataset</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">img_dim</span><span class="p">,</span>
+                                   <span class="n">rad</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">16</span><span class="p">],</span> <span class="n">cb</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">],</span> <span class="n">cthick</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
+
+<span class="c1"># Set the path where the hdf5 file will be saved.</span>
+<span class="n">h5file</span> <span class="o">=</span> <span class="s1">&#39;./dataset.h5&#39;</span>
+
+<span class="c1"># Convert the arrays to an hdf5 file with correct schema for the SLLS routines.</span>
+<span class="n">tohdf5</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">imgs</span><span class="p">,</span> <span class="n">segs</span><span class="p">,</span> <span class="n">h5file</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The dataset is now stored and ready for use. Let’s now run the SLLS
+training routine. To do so, we first create a <cite>stat_learn_level_set</cite>
+object, and provide some specifications. Next, we further specificy some
+parameters of the fitting process as well as the neural network fitting
+process (which happens at each iteration of the global fitting process).</p>
+<p>An example of the fitting routine is given in the following block of code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">stat_learn_level_set</span> <span class="kn">import</span> <span class="n">stat_learn_level_set</span> <span class="k">as</span> <span class="n">SLLS</span>
+<span class="kn">from</span> <span class="nn">stat_learn_level_set.feature_maps.dim2</span> <span class="kn">import</span> <span class="n">simple_feature_map</span> <span class="k">as</span> <span class="n">sfm</span>
+<span class="kn">from</span> <span class="nn">stat_learn_level_set.init_funcs</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">rand_init</span>
+
+<span class="c1"># Seed a random number generator.</span>
+<span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
+
+<span class="c1"># Set simple feature map function.</span>
+<span class="n">fmap</span> <span class="o">=</span> <span class="n">sfm</span><span class="o">.</span><span class="n">simple_feature_map</span><span class="p">(</span><span class="n">sigmas</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
+
+<span class="c1"># Set the level set init routine.</span>
+<span class="n">ifnc</span> <span class="o">=</span> <span class="n">rand_init</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">rs</span><span class="o">=</span><span class="n">rs</span><span class="p">)</span>
+
+<span class="c1"># Initialize the model.</span>
+<span class="n">slls</span> <span class="o">=</span> <span class="n">SLLS</span><span class="p">(</span><span class="n">data_file</span><span class="o">=</span><span class="s2">&quot;./dataset.h5&quot;</span><span class="p">,</span> <span class="n">feature_map</span><span class="o">=</span><span class="n">fmap</span><span class="p">,</span>
+            <span class="n">init_func</span><span class="o">=</span><span class="n">ifnc</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span> <span class="n">rs</span><span class="o">=</span><span class="n">rs</span><span class="p">)</span>
+
+<span class="c1"># See documentation for complete list of fit options.</span>
+<span class="n">slls</span><span class="o">.</span><span class="n">set_fit_options</span><span class="p">(</span><span class="n">maxiters</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">remove_tmp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                     <span class="n">logfile</span><span class="o">=</span><span class="s2">&quot;./log.txt&quot;</span><span class="p">,</span> <span class="n">logstamp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">logstdout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># See documentation for complete list of neural network fit options.</span>
+<span class="n">slls</span><span class="o">.</span><span class="n">set_net_options</span><span class="p">(</span><span class="n">nhidden</span><span class="o">=</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">maxepochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ninits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+     
+<span class="c1"># Finally, start the fitting process.</span>
+<span class="n">slls</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In the previous code block, we start by specifying the feature map
+instance to be an instance of the <a class="reference external" href="/slls/api/feature_maps/dim2/simple_feature_map.html">simple feature map</a>
+which is provided by the <cite>stat_learn_level_set</cite> module. This feature map computes simple
+local image and image gradient features, as well as some global image and shape features.
+The features are computed at multiple scales, namely at the sigma values provided at
+initialized. The <a class="reference external" href="/slls/api/feature_maps/dim2/simple_feature_map.html">simple feature map</a>
+derives from a <a class="reference external" href="/slls/api/feature_maps/base.html">base class</a>, and all other feature maps that are developed and used to
+plug into the slls module should also derive from the same base class.</p>
+<p>Next, we specify the initialization function to be an instance of the
+<a class="reference external" href="/slls/api/init_funcs/random.html">random</a>, which initializes the zero level
+set to a circle of random radius and random location. Ideally, a more robust
+initialization function should be developed and used. Any initialization function
+should derive from the <a class="reference external" href="/slls/api/init_funcs/base.html">initialization base class</a>.
+The <cite>stat_learn_level_set</cite> module also provides another simple initialization routine that uses
+<a class="reference external" href="/slls/api/init_funcs/threshold.html">thresholding</a>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">LIDC</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../lidc/setup.html">Setup and Dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lidc/create-dataset.html">Making a dataset for segmentation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Segment 2d images</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Full documentation and specs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">SLLS API</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../../lidc/create-dataset.html" title="previous chapter">Making a dataset for segmentation</a></li>
+      <li>Next: <a href="../api/index.html" title="next chapter">SLLS API</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Matt Hancock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

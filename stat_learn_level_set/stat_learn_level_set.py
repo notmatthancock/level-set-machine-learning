@@ -187,6 +187,10 @@ class stat_learn_level_set(object):
         # Loop over all indices in the validation dataset.
         for ds,key,iseed,seed in self._iter_tmp():
             img = df[key+"/img"][...]
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
             dx = df[key].attrs['dx']
 
             u    = tf["%s/%s/seed-%d/u"    % (ds,key,iseed)][...]
@@ -248,6 +252,10 @@ class stat_learn_level_set(object):
         # Loop over all indices in the validation dataset.
         for key,iseed,seed in self._iter_seeds('va'):
             img = df[key+"/img"][...]
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
             seg = df[key+"/seg"][...]
             dx  = df[key].attrs['dx']
 
@@ -744,7 +752,7 @@ class stat_learn_level_set(object):
 
 
     def set_fit_options(self, datasets=None, seeds=None, save_file=None,
-                        tmp_dir=None, remove_tmp=False,
+                        normalize_images=True, tmp_dir=None, remove_tmp=False,
                         maxiters=100, va_hist_len=5, va_hist_tol=0.0,
                         logfile=None, logstamp=True, logstdout=True):
         """
@@ -793,6 +801,11 @@ class stat_learn_level_set(object):
             The model (the total RBLS object) will be pickled to this path.
             The default (None) uses the file `slls_model.pkl` at the current
             working directory.
+
+        normalize_images: bool, default=True
+            If True, then whenever an image is loaded, we normalize it, i.e.,
+            we compute and use `(img - img.mean()) / img.std()` in place of
+            each image array, `img`.
 
         tmp_dir: str, default=None
             The working directory. Temporary data (e.g., intermediate

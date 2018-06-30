@@ -18,8 +18,11 @@ class random(init_func_base):
         
         TODO
     """
-    def __init__(self, reproducible=True):
-        self.rs = np.random.RandomState()
+    def __init__(self, rs=None, reproducible=True):
+        if rs is None:
+            self.rs = np.random.RandomState()
+        else:
+            self.rs = rs
         self.reproducible = reproducible
 
     def __call__(self, img, band, dx=None, seed=None):

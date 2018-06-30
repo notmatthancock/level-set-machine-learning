@@ -22,13 +22,13 @@ SLLS Image Segmentation
 
 .. toctree::
     :maxdepth: 1
-    :caption: SLLS
+    :caption: Examples
 
-    slls/examples/nothing
+    slls/examples/2d-hamburger
 
 .. toctree::
     :maxdepth: 1
-    :caption: API
+    :caption: Full documentation and specs
+    :glob:
 
-    slls/api/stat_learn_level_set
-    slls/api/utils
+    slls/api/index

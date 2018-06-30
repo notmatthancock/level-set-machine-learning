@@ -1,0 +1,653 @@
+[2018-06-18 19:05:37] INFO     Initializing.
+[2018-06-18 19:05:37] INFO     (00 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (01 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (02 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (03 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (04 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (05 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (06 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (07 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (08 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (09 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (10 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (11 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (12 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (13 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (14 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (15 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (16 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (17 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (18 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (19 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (20 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (21 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (22 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (23 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (24 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (25 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (26 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (27 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (28 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (29 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (30 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (31 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (32 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (33 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (34 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (35 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (36 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (37 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (38 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (39 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (40 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (41 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (42 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (43 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (44 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (45 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (46 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (47 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (48 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     (49 / 50) ... initializing
+[2018-06-18 19:05:37] INFO     Computed auto step is 0.0577906.
+[2018-06-18 19:05:37] INFO     Collecting scores.
+[2018-06-18 19:05:38] INFO     (00 / 50) Scores => TR: 0.2792 VA: 0.2151 TS: 0.1850.
+[2018-06-18 19:05:38] INFO     (01 / 50) Beginning iteration.
+[2018-06-18 19:05:38] INFO     Fitting nnets.
+[2018-06-18 19:05:38] INFO     Computed auto batch size is 1195.
+[2018-06-18 19:05:38] INFO     Computed auto batches per epoch is 26.
+[2018-06-18 19:05:38] INFO     Training neural nets. Logs are in ./tmp/models/iter-1.
+[2018-06-18 19:08:24] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:08:24] INFO     (01 / 50) Updating level sets.
+[2018-06-18 19:08:25] INFO     (01 / 50) Collecting scores.
+[2018-06-18 19:08:25] INFO     (01 / 50) Scores => TR: 0.2869 VA: 0.2218 TS: 0.1874.
+[2018-06-18 19:08:25] INFO     (01 / 50) End of iteration. Ellapsed time: 0.047 hours.
+[2018-06-18 19:08:25] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:08:25] INFO     (02 / 50) Beginning iteration.
+[2018-06-18 19:08:25] INFO     Fitting nnets.
+[2018-06-18 19:08:25] INFO     Computed auto batch size is 1205.
+[2018-06-18 19:08:25] INFO     Computed auto batches per epoch is 26.
+[2018-06-18 19:08:25] INFO     Training neural nets. Logs are in ./tmp/models/iter-2.
+[2018-06-18 19:10:01] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:10:01] INFO     (02 / 50) Updating level sets.
+[2018-06-18 19:10:02] INFO     (02 / 50) Collecting scores.
+[2018-06-18 19:10:02] INFO     (02 / 50) Scores => TR: 0.3012 VA: 0.2350 TS: 0.1944.
+[2018-06-18 19:10:02] INFO     (02 / 50) End of iteration. Ellapsed time: 0.027 hours.
+[2018-06-18 19:10:02] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:10:02] INFO     (03 / 50) Beginning iteration.
+[2018-06-18 19:10:02] INFO     Fitting nnets.
+[2018-06-18 19:10:02] INFO     Computed auto batch size is 1220.
+[2018-06-18 19:10:02] INFO     Computed auto batches per epoch is 26.
+[2018-06-18 19:10:02] INFO     Training neural nets. Logs are in ./tmp/models/iter-3.
+[2018-06-18 19:12:06] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:12:06] INFO     (03 / 50) Updating level sets.
+[2018-06-18 19:12:07] INFO     (03 / 50) Collecting scores.
+[2018-06-18 19:12:07] INFO     (03 / 50) Scores => TR: 0.3142 VA: 0.2479 TS: 0.2001.
+[2018-06-18 19:12:07] INFO     (03 / 50) End of iteration. Ellapsed time: 0.035 hours.
+[2018-06-18 19:12:07] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:12:07] INFO     (04 / 50) Beginning iteration.
+[2018-06-18 19:12:07] INFO     Fitting nnets.
+[2018-06-18 19:12:07] INFO     Computed auto batch size is 1240.
+[2018-06-18 19:12:07] INFO     Computed auto batches per epoch is 25.
+[2018-06-18 19:12:07] INFO     Training neural nets. Logs are in ./tmp/models/iter-4.
+[2018-06-18 19:13:38] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:13:38] INFO     (04 / 50) Updating level sets.
+[2018-06-18 19:13:39] INFO     (04 / 50) Collecting scores.
+[2018-06-18 19:13:39] INFO     (04 / 50) Scores => TR: 0.3257 VA: 0.2574 TS: 0.2048.
+[2018-06-18 19:13:39] INFO     (04 / 50) End of iteration. Ellapsed time: 0.026 hours.
+[2018-06-18 19:13:39] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:13:39] INFO     Linear trend over VA: 0.0111 (tol=0.0000).
+[2018-06-18 19:13:39] INFO     (05 / 50) Beginning iteration.
+[2018-06-18 19:13:39] INFO     Fitting nnets.
+[2018-06-18 19:13:39] INFO     Computed auto batch size is 1275.
+[2018-06-18 19:13:39] INFO     Computed auto batches per epoch is 25.
+[2018-06-18 19:13:39] INFO     Training neural nets. Logs are in ./tmp/models/iter-5.
+[2018-06-18 19:16:21] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:16:21] INFO     (05 / 50) Updating level sets.
+[2018-06-18 19:16:22] INFO     (05 / 50) Collecting scores.
+[2018-06-18 19:16:22] INFO     (05 / 50) Scores => TR: 0.3370 VA: 0.2652 TS: 0.2110.
+[2018-06-18 19:16:22] INFO     (05 / 50) End of iteration. Ellapsed time: 0.045 hours.
+[2018-06-18 19:16:22] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:16:22] INFO     Linear trend over VA: 0.0109 (tol=0.0000).
+[2018-06-18 19:16:22] INFO     (06 / 50) Beginning iteration.
+[2018-06-18 19:16:22] INFO     Fitting nnets.
+[2018-06-18 19:16:22] INFO     Computed auto batch size is 1295.
+[2018-06-18 19:16:22] INFO     Computed auto batches per epoch is 24.
+[2018-06-18 19:16:22] INFO     Training neural nets. Logs are in ./tmp/models/iter-6.
+[2018-06-18 19:17:56] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:17:56] INFO     (06 / 50) Updating level sets.
+[2018-06-18 19:17:57] INFO     (06 / 50) Collecting scores.
+[2018-06-18 19:17:57] INFO     (06 / 50) Scores => TR: 0.3482 VA: 0.2779 TS: 0.2162.
+[2018-06-18 19:17:57] INFO     (06 / 50) End of iteration. Ellapsed time: 0.026 hours.
+[2018-06-18 19:17:57] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:17:57] INFO     Linear trend over VA: 0.0103 (tol=0.0000).
+[2018-06-18 19:17:57] INFO     (07 / 50) Beginning iteration.
+[2018-06-18 19:17:57] INFO     Fitting nnets.
+[2018-06-18 19:17:57] INFO     Computed auto batch size is 1305.
+[2018-06-18 19:17:57] INFO     Computed auto batches per epoch is 24.
+[2018-06-18 19:17:57] INFO     Training neural nets. Logs are in ./tmp/models/iter-7.
+[2018-06-18 19:19:22] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:19:22] INFO     (07 / 50) Updating level sets.
+[2018-06-18 19:19:23] INFO     (07 / 50) Collecting scores.
+[2018-06-18 19:19:23] INFO     (07 / 50) Scores => TR: 0.3591 VA: 0.2860 TS: 0.2214.
+[2018-06-18 19:19:23] INFO     (07 / 50) End of iteration. Ellapsed time: 0.024 hours.
+[2018-06-18 19:19:23] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:19:23] INFO     Linear trend over VA: 0.0097 (tol=0.0000).
+[2018-06-18 19:19:23] INFO     (08 / 50) Beginning iteration.
+[2018-06-18 19:19:23] INFO     Fitting nnets.
+[2018-06-18 19:19:23] INFO     Computed auto batch size is 1320.
+[2018-06-18 19:19:23] INFO     Computed auto batches per epoch is 24.
+[2018-06-18 19:19:23] INFO     Training neural nets. Logs are in ./tmp/models/iter-8.
+[2018-06-18 19:21:09] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:21:09] INFO     (08 / 50) Updating level sets.
+[2018-06-18 19:21:10] INFO     (08 / 50) Collecting scores.
+[2018-06-18 19:21:10] INFO     (08 / 50) Scores => TR: 0.3695 VA: 0.2947 TS: 0.2271.
+[2018-06-18 19:21:10] INFO     (08 / 50) End of iteration. Ellapsed time: 0.030 hours.
+[2018-06-18 19:21:10] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:21:10] INFO     Linear trend over VA: 0.0095 (tol=0.0000).
+[2018-06-18 19:21:10] INFO     (09 / 50) Beginning iteration.
+[2018-06-18 19:21:10] INFO     Fitting nnets.
+[2018-06-18 19:21:10] INFO     Computed auto batch size is 1305.
+[2018-06-18 19:21:10] INFO     Computed auto batches per epoch is 24.
+[2018-06-18 19:21:10] INFO     Training neural nets. Logs are in ./tmp/models/iter-9.
+[2018-06-18 19:22:41] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:22:41] INFO     (09 / 50) Updating level sets.
+[2018-06-18 19:22:42] INFO     (09 / 50) Collecting scores.
+[2018-06-18 19:22:42] INFO     (09 / 50) Scores => TR: 0.3804 VA: 0.3035 TS: 0.2345.
+[2018-06-18 19:22:42] INFO     (09 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 19:22:42] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:22:42] INFO     Linear trend over VA: 0.0093 (tol=0.0000).
+[2018-06-18 19:22:42] INFO     (10 / 50) Beginning iteration.
+[2018-06-18 19:22:42] INFO     Fitting nnets.
+[2018-06-18 19:22:42] INFO     Computed auto batch size is 1355.
+[2018-06-18 19:22:42] INFO     Computed auto batches per epoch is 23.
+[2018-06-18 19:22:42] INFO     Training neural nets. Logs are in ./tmp/models/iter-10.
+[2018-06-18 19:24:03] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:24:03] INFO     (10 / 50) Updating level sets.
+[2018-06-18 19:24:04] INFO     (10 / 50) Collecting scores.
+[2018-06-18 19:24:04] INFO     (10 / 50) Scores => TR: 0.3914 VA: 0.3132 TS: 0.2402.
+[2018-06-18 19:24:04] INFO     (10 / 50) End of iteration. Ellapsed time: 0.023 hours.
+[2018-06-18 19:24:04] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:24:04] INFO     Linear trend over VA: 0.0088 (tol=0.0000).
+[2018-06-18 19:24:04] INFO     (11 / 50) Beginning iteration.
+[2018-06-18 19:24:04] INFO     Fitting nnets.
+[2018-06-18 19:24:04] INFO     Computed auto batch size is 1370.
+[2018-06-18 19:24:04] INFO     Computed auto batches per epoch is 23.
+[2018-06-18 19:24:04] INFO     Training neural nets. Logs are in ./tmp/models/iter-11.
+[2018-06-18 19:25:27] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:25:27] INFO     (11 / 50) Updating level sets.
+[2018-06-18 19:25:27] INFO     (11 / 50) Collecting scores.
+[2018-06-18 19:25:27] INFO     (11 / 50) Scores => TR: 0.4015 VA: 0.3228 TS: 0.2456.
+[2018-06-18 19:25:27] INFO     (11 / 50) End of iteration. Ellapsed time: 0.023 hours.
+[2018-06-18 19:25:27] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:25:27] INFO     Linear trend over VA: 0.0092 (tol=0.0000).
+[2018-06-18 19:25:27] INFO     (12 / 50) Beginning iteration.
+[2018-06-18 19:25:27] INFO     Fitting nnets.
+[2018-06-18 19:25:27] INFO     Computed auto batch size is 1340.
+[2018-06-18 19:25:28] INFO     Computed auto batches per epoch is 23.
+[2018-06-18 19:25:28] INFO     Training neural nets. Logs are in ./tmp/models/iter-12.
+[2018-06-18 19:27:00] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:27:00] INFO     (12 / 50) Updating level sets.
+[2018-06-18 19:27:01] INFO     (12 / 50) Collecting scores.
+[2018-06-18 19:27:01] INFO     (12 / 50) Scores => TR: 0.4118 VA: 0.3324 TS: 0.2507.
+[2018-06-18 19:27:01] INFO     (12 / 50) End of iteration. Ellapsed time: 0.026 hours.
+[2018-06-18 19:27:01] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:27:01] INFO     Linear trend over VA: 0.0095 (tol=0.0000).
+[2018-06-18 19:27:01] INFO     (13 / 50) Beginning iteration.
+[2018-06-18 19:27:01] INFO     Fitting nnets.
+[2018-06-18 19:27:01] INFO     Computed auto batch size is 1405.
+[2018-06-18 19:27:01] INFO     Computed auto batches per epoch is 22.
+[2018-06-18 19:27:01] INFO     Training neural nets. Logs are in ./tmp/models/iter-13.
+[2018-06-18 19:28:37] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:28:37] INFO     (13 / 50) Updating level sets.
+[2018-06-18 19:28:37] INFO     (13 / 50) Collecting scores.
+[2018-06-18 19:28:37] INFO     (13 / 50) Scores => TR: 0.4219 VA: 0.3415 TS: 0.2558.
+[2018-06-18 19:28:37] INFO     (13 / 50) End of iteration. Ellapsed time: 0.027 hours.
+[2018-06-18 19:28:37] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:28:37] INFO     Linear trend over VA: 0.0095 (tol=0.0000).
+[2018-06-18 19:28:37] INFO     (14 / 50) Beginning iteration.
+[2018-06-18 19:28:37] INFO     Fitting nnets.
+[2018-06-18 19:28:38] INFO     Computed auto batch size is 1415.
+[2018-06-18 19:28:38] INFO     Computed auto batches per epoch is 22.
+[2018-06-18 19:28:38] INFO     Training neural nets. Logs are in ./tmp/models/iter-14.
+[2018-06-18 19:30:09] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:30:09] INFO     (14 / 50) Updating level sets.
+[2018-06-18 19:30:10] INFO     (14 / 50) Collecting scores.
+[2018-06-18 19:30:10] INFO     (14 / 50) Scores => TR: 0.4319 VA: 0.3504 TS: 0.2615.
+[2018-06-18 19:30:10] INFO     (14 / 50) End of iteration. Ellapsed time: 0.026 hours.
+[2018-06-18 19:30:10] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:30:10] INFO     Linear trend over VA: 0.0093 (tol=0.0000).
+[2018-06-18 19:30:10] INFO     (15 / 50) Beginning iteration.
+[2018-06-18 19:30:10] INFO     Fitting nnets.
+[2018-06-18 19:30:10] INFO     Computed auto batch size is 1430.
+[2018-06-18 19:30:10] INFO     Computed auto batches per epoch is 22.
+[2018-06-18 19:30:10] INFO     Training neural nets. Logs are in ./tmp/models/iter-15.
+[2018-06-18 19:31:38] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:31:38] INFO     (15 / 50) Updating level sets.
+[2018-06-18 19:31:39] INFO     (15 / 50) Collecting scores.
+[2018-06-18 19:31:39] INFO     (15 / 50) Scores => TR: 0.4423 VA: 0.3600 TS: 0.2685.
+[2018-06-18 19:31:39] INFO     (15 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 19:31:39] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:31:39] INFO     Linear trend over VA: 0.0092 (tol=0.0000).
+[2018-06-18 19:31:39] INFO     (16 / 50) Beginning iteration.
+[2018-06-18 19:31:39] INFO     Fitting nnets.
+[2018-06-18 19:31:39] INFO     Computed auto batch size is 1440.
+[2018-06-18 19:31:39] INFO     Computed auto batches per epoch is 22.
+[2018-06-18 19:31:39] INFO     Training neural nets. Logs are in ./tmp/models/iter-16.
+[2018-06-18 19:33:09] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:33:09] INFO     (16 / 50) Updating level sets.
+[2018-06-18 19:33:10] INFO     (16 / 50) Collecting scores.
+[2018-06-18 19:33:10] INFO     (16 / 50) Scores => TR: 0.4518 VA: 0.3691 TS: 0.2756.
+[2018-06-18 19:33:10] INFO     (16 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 19:33:10] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:33:10] INFO     Linear trend over VA: 0.0092 (tol=0.0000).
+[2018-06-18 19:33:10] INFO     (17 / 50) Beginning iteration.
+[2018-06-18 19:33:10] INFO     Fitting nnets.
+[2018-06-18 19:33:10] INFO     Computed auto batch size is 1425.
+[2018-06-18 19:33:10] INFO     Computed auto batches per epoch is 22.
+[2018-06-18 19:33:10] INFO     Training neural nets. Logs are in ./tmp/models/iter-17.
+[2018-06-18 19:34:37] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:34:37] INFO     (17 / 50) Updating level sets.
+[2018-06-18 19:34:37] INFO     (17 / 50) Collecting scores.
+[2018-06-18 19:34:37] INFO     (17 / 50) Scores => TR: 0.4609 VA: 0.3779 TS: 0.2811.
+[2018-06-18 19:34:37] INFO     (17 / 50) End of iteration. Ellapsed time: 0.024 hours.
+[2018-06-18 19:34:37] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:34:37] INFO     Linear trend over VA: 0.0091 (tol=0.0000).
+[2018-06-18 19:34:37] INFO     (18 / 50) Beginning iteration.
+[2018-06-18 19:34:37] INFO     Fitting nnets.
+[2018-06-18 19:34:38] INFO     Computed auto batch size is 1450.
+[2018-06-18 19:34:38] INFO     Computed auto batches per epoch is 22.
+[2018-06-18 19:34:38] INFO     Training neural nets. Logs are in ./tmp/models/iter-18.
+[2018-06-18 19:36:05] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:36:05] INFO     (18 / 50) Updating level sets.
+[2018-06-18 19:36:06] INFO     (18 / 50) Collecting scores.
+[2018-06-18 19:36:06] INFO     (18 / 50) Scores => TR: 0.4699 VA: 0.3851 TS: 0.2869.
+[2018-06-18 19:36:06] INFO     (18 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 19:36:06] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:36:06] INFO     Linear trend over VA: 0.0087 (tol=0.0000).
+[2018-06-18 19:36:06] INFO     (19 / 50) Beginning iteration.
+[2018-06-18 19:36:06] INFO     Fitting nnets.
+[2018-06-18 19:36:06] INFO     Computed auto batch size is 1460.
+[2018-06-18 19:36:06] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:36:06] INFO     Training neural nets. Logs are in ./tmp/models/iter-19.
+[2018-06-18 19:37:58] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:37:58] INFO     (19 / 50) Updating level sets.
+[2018-06-18 19:37:58] INFO     (19 / 50) Collecting scores.
+[2018-06-18 19:37:58] INFO     (19 / 50) Scores => TR: 0.4791 VA: 0.3956 TS: 0.2964.
+[2018-06-18 19:37:58] INFO     (19 / 50) End of iteration. Ellapsed time: 0.031 hours.
+[2018-06-18 19:37:58] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:37:59] INFO     Linear trend over VA: 0.0087 (tol=0.0000).
+[2018-06-18 19:37:59] INFO     (20 / 50) Beginning iteration.
+[2018-06-18 19:37:59] INFO     Fitting nnets.
+[2018-06-18 19:37:59] INFO     Computed auto batch size is 1425.
+[2018-06-18 19:37:59] INFO     Computed auto batches per epoch is 22.
+[2018-06-18 19:37:59] INFO     Training neural nets. Logs are in ./tmp/models/iter-20.
+[2018-06-18 19:39:39] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:39:39] INFO     (20 / 50) Updating level sets.
+[2018-06-18 19:39:40] INFO     (20 / 50) Collecting scores.
+[2018-06-18 19:39:40] INFO     (20 / 50) Scores => TR: 0.4873 VA: 0.4062 TS: 0.3025.
+[2018-06-18 19:39:40] INFO     (20 / 50) End of iteration. Ellapsed time: 0.028 hours.
+[2018-06-18 19:39:40] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:39:40] INFO     Linear trend over VA: 0.0092 (tol=0.0000).
+[2018-06-18 19:39:40] INFO     (21 / 50) Beginning iteration.
+[2018-06-18 19:39:40] INFO     Fitting nnets.
+[2018-06-18 19:39:40] INFO     Computed auto batch size is 1470.
+[2018-06-18 19:39:40] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:39:40] INFO     Training neural nets. Logs are in ./tmp/models/iter-21.
+[2018-06-18 19:41:09] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:41:09] INFO     (21 / 50) Updating level sets.
+[2018-06-18 19:41:10] INFO     (21 / 50) Collecting scores.
+[2018-06-18 19:41:10] INFO     (21 / 50) Scores => TR: 0.4958 VA: 0.4156 TS: 0.3091.
+[2018-06-18 19:41:10] INFO     (21 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 19:41:10] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:41:10] INFO     Linear trend over VA: 0.0097 (tol=0.0000).
+[2018-06-18 19:41:10] INFO     (22 / 50) Beginning iteration.
+[2018-06-18 19:41:10] INFO     Fitting nnets.
+[2018-06-18 19:41:10] INFO     Computed auto batch size is 1480.
+[2018-06-18 19:41:10] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:41:10] INFO     Training neural nets. Logs are in ./tmp/models/iter-22.
+[2018-06-18 19:42:51] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:42:51] INFO     (22 / 50) Updating level sets.
+[2018-06-18 19:42:52] INFO     (22 / 50) Collecting scores.
+[2018-06-18 19:42:52] INFO     (22 / 50) Scores => TR: 0.5052 VA: 0.4239 TS: 0.3172.
+[2018-06-18 19:42:52] INFO     (22 / 50) End of iteration. Ellapsed time: 0.028 hours.
+[2018-06-18 19:42:52] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:42:52] INFO     Linear trend over VA: 0.0098 (tol=0.0000).
+[2018-06-18 19:42:52] INFO     (23 / 50) Beginning iteration.
+[2018-06-18 19:42:52] INFO     Fitting nnets.
+[2018-06-18 19:42:52] INFO     Computed auto batch size is 1485.
+[2018-06-18 19:42:52] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:42:52] INFO     Training neural nets. Logs are in ./tmp/models/iter-23.
+[2018-06-18 19:44:14] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:44:14] INFO     (23 / 50) Updating level sets.
+[2018-06-18 19:44:14] INFO     (23 / 50) Collecting scores.
+[2018-06-18 19:44:15] INFO     (23 / 50) Scores => TR: 0.5143 VA: 0.4336 TS: 0.3257.
+[2018-06-18 19:44:15] INFO     (23 / 50) End of iteration. Ellapsed time: 0.023 hours.
+[2018-06-18 19:44:15] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:44:15] INFO     Linear trend over VA: 0.0094 (tol=0.0000).
+[2018-06-18 19:44:15] INFO     (24 / 50) Beginning iteration.
+[2018-06-18 19:44:15] INFO     Fitting nnets.
+[2018-06-18 19:44:15] INFO     Computed auto batch size is 1490.
+[2018-06-18 19:44:15] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:44:15] INFO     Training neural nets. Logs are in ./tmp/models/iter-24.
+[2018-06-18 19:45:41] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:45:41] INFO     (24 / 50) Updating level sets.
+[2018-06-18 19:45:41] INFO     (24 / 50) Collecting scores.
+[2018-06-18 19:45:42] INFO     (24 / 50) Scores => TR: 0.5228 VA: 0.4410 TS: 0.3326.
+[2018-06-18 19:45:42] INFO     (24 / 50) End of iteration. Ellapsed time: 0.024 hours.
+[2018-06-18 19:45:42] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:45:42] INFO     Linear trend over VA: 0.0088 (tol=0.0000).
+[2018-06-18 19:45:42] INFO     (25 / 50) Beginning iteration.
+[2018-06-18 19:45:42] INFO     Fitting nnets.
+[2018-06-18 19:45:42] INFO     Computed auto batch size is 1510.
+[2018-06-18 19:45:42] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:45:42] INFO     Training neural nets. Logs are in ./tmp/models/iter-25.
+[2018-06-18 19:47:21] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:47:21] INFO     (25 / 50) Updating level sets.
+[2018-06-18 19:47:22] INFO     (25 / 50) Collecting scores.
+[2018-06-18 19:47:22] INFO     (25 / 50) Scores => TR: 0.5303 VA: 0.4484 TS: 0.3420.
+[2018-06-18 19:47:22] INFO     (25 / 50) End of iteration. Ellapsed time: 0.028 hours.
+[2018-06-18 19:47:22] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:47:22] INFO     Linear trend over VA: 0.0083 (tol=0.0000).
+[2018-06-18 19:47:22] INFO     (26 / 50) Beginning iteration.
+[2018-06-18 19:47:22] INFO     Fitting nnets.
+[2018-06-18 19:47:22] INFO     Computed auto batch size is 1515.
+[2018-06-18 19:47:22] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:47:22] INFO     Training neural nets. Logs are in ./tmp/models/iter-26.
+[2018-06-18 19:48:47] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:48:47] INFO     (26 / 50) Updating level sets.
+[2018-06-18 19:48:48] INFO     (26 / 50) Collecting scores.
+[2018-06-18 19:48:48] INFO     (26 / 50) Scores => TR: 0.5380 VA: 0.4577 TS: 0.3491.
+[2018-06-18 19:48:48] INFO     (26 / 50) End of iteration. Ellapsed time: 0.024 hours.
+[2018-06-18 19:48:48] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:48:48] INFO     Linear trend over VA: 0.0082 (tol=0.0000).
+[2018-06-18 19:48:48] INFO     (27 / 50) Beginning iteration.
+[2018-06-18 19:48:48] INFO     Fitting nnets.
+[2018-06-18 19:48:48] INFO     Computed auto batch size is 1525.
+[2018-06-18 19:48:48] INFO     Computed auto batches per epoch is 21.
+[2018-06-18 19:48:48] INFO     Training neural nets. Logs are in ./tmp/models/iter-27.
+[2018-06-18 19:50:22] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:50:22] INFO     (27 / 50) Updating level sets.
+[2018-06-18 19:50:23] INFO     (27 / 50) Collecting scores.
+[2018-06-18 19:50:23] INFO     (27 / 50) Scores => TR: 0.5473 VA: 0.4658 TS: 0.3566.
+[2018-06-18 19:50:23] INFO     (27 / 50) End of iteration. Ellapsed time: 0.026 hours.
+[2018-06-18 19:50:23] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:50:23] INFO     Linear trend over VA: 0.0081 (tol=0.0000).
+[2018-06-18 19:50:23] INFO     (28 / 50) Beginning iteration.
+[2018-06-18 19:50:23] INFO     Fitting nnets.
+[2018-06-18 19:50:23] INFO     Computed auto batch size is 1535.
+[2018-06-18 19:50:23] INFO     Computed auto batches per epoch is 20.
+[2018-06-18 19:50:23] INFO     Training neural nets. Logs are in ./tmp/models/iter-28.
+[2018-06-18 19:51:38] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:51:38] INFO     (28 / 50) Updating level sets.
+[2018-06-18 19:51:39] INFO     (28 / 50) Collecting scores.
+[2018-06-18 19:51:39] INFO     (28 / 50) Scores => TR: 0.5547 VA: 0.4733 TS: 0.3663.
+[2018-06-18 19:51:39] INFO     (28 / 50) End of iteration. Ellapsed time: 0.021 hours.
+[2018-06-18 19:51:39] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:51:39] INFO     Linear trend over VA: 0.0082 (tol=0.0000).
+[2018-06-18 19:51:39] INFO     (29 / 50) Beginning iteration.
+[2018-06-18 19:51:39] INFO     Fitting nnets.
+[2018-06-18 19:51:39] INFO     Computed auto batch size is 1545.
+[2018-06-18 19:51:39] INFO     Computed auto batches per epoch is 20.
+[2018-06-18 19:51:39] INFO     Training neural nets. Logs are in ./tmp/models/iter-29.
+[2018-06-18 19:53:02] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:53:02] INFO     (29 / 50) Updating level sets.
+[2018-06-18 19:53:03] INFO     (29 / 50) Collecting scores.
+[2018-06-18 19:53:03] INFO     (29 / 50) Scores => TR: 0.5615 VA: 0.4810 TS: 0.3742.
+[2018-06-18 19:53:03] INFO     (29 / 50) End of iteration. Ellapsed time: 0.023 hours.
+[2018-06-18 19:53:03] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:53:03] INFO     Linear trend over VA: 0.0081 (tol=0.0000).
+[2018-06-18 19:53:03] INFO     (30 / 50) Beginning iteration.
+[2018-06-18 19:53:03] INFO     Fitting nnets.
+[2018-06-18 19:53:03] INFO     Computed auto batch size is 1555.
+[2018-06-18 19:53:03] INFO     Computed auto batches per epoch is 20.
+[2018-06-18 19:53:03] INFO     Training neural nets. Logs are in ./tmp/models/iter-30.
+[2018-06-18 19:54:24] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:54:24] INFO     (30 / 50) Updating level sets.
+[2018-06-18 19:54:25] INFO     (30 / 50) Collecting scores.
+[2018-06-18 19:54:25] INFO     (30 / 50) Scores => TR: 0.5698 VA: 0.4926 TS: 0.3822.
+[2018-06-18 19:54:25] INFO     (30 / 50) End of iteration. Ellapsed time: 0.023 hours.
+[2018-06-18 19:54:25] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:54:25] INFO     Linear trend over VA: 0.0085 (tol=0.0000).
+[2018-06-18 19:54:25] INFO     (31 / 50) Beginning iteration.
+[2018-06-18 19:54:25] INFO     Fitting nnets.
+[2018-06-18 19:54:25] INFO     Computed auto batch size is 1565.
+[2018-06-18 19:54:26] INFO     Computed auto batches per epoch is 20.
+[2018-06-18 19:54:26] INFO     Training neural nets. Logs are in ./tmp/models/iter-31.
+[2018-06-18 19:55:56] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:55:56] INFO     (31 / 50) Updating level sets.
+[2018-06-18 19:55:57] INFO     (31 / 50) Collecting scores.
+[2018-06-18 19:55:57] INFO     (31 / 50) Scores => TR: 0.5773 VA: 0.4981 TS: 0.3901.
+[2018-06-18 19:55:57] INFO     (31 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 19:55:57] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:55:57] INFO     Linear trend over VA: 0.0084 (tol=0.0000).
+[2018-06-18 19:55:57] INFO     (32 / 50) Beginning iteration.
+[2018-06-18 19:55:57] INFO     Fitting nnets.
+[2018-06-18 19:55:57] INFO     Computed auto batch size is 1585.
+[2018-06-18 19:55:57] INFO     Computed auto batches per epoch is 20.
+[2018-06-18 19:55:57] INFO     Training neural nets. Logs are in ./tmp/models/iter-32.
+[2018-06-18 19:57:37] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:57:37] INFO     (32 / 50) Updating level sets.
+[2018-06-18 19:57:38] INFO     (32 / 50) Collecting scores.
+[2018-06-18 19:57:38] INFO     (32 / 50) Scores => TR: 0.5841 VA: 0.5060 TS: 0.3985.
+[2018-06-18 19:57:38] INFO     (32 / 50) End of iteration. Ellapsed time: 0.028 hours.
+[2018-06-18 19:57:38] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:57:38] INFO     Linear trend over VA: 0.0082 (tol=0.0000).
+[2018-06-18 19:57:38] INFO     (33 / 50) Beginning iteration.
+[2018-06-18 19:57:38] INFO     Fitting nnets.
+[2018-06-18 19:57:38] INFO     Computed auto batch size is 1585.
+[2018-06-18 19:57:39] INFO     Computed auto batches per epoch is 20.
+[2018-06-18 19:57:39] INFO     Training neural nets. Logs are in ./tmp/models/iter-33.
+[2018-06-18 19:59:08] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 19:59:08] INFO     (33 / 50) Updating level sets.
+[2018-06-18 19:59:09] INFO     (33 / 50) Collecting scores.
+[2018-06-18 19:59:09] INFO     (33 / 50) Scores => TR: 0.5897 VA: 0.5131 TS: 0.4064.
+[2018-06-18 19:59:09] INFO     (33 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 19:59:09] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 19:59:09] INFO     Linear trend over VA: 0.0077 (tol=0.0000).
+[2018-06-18 19:59:09] INFO     (34 / 50) Beginning iteration.
+[2018-06-18 19:59:09] INFO     Fitting nnets.
+[2018-06-18 19:59:09] INFO     Computed auto batch size is 1595.
+[2018-06-18 19:59:09] INFO     Computed auto batches per epoch is 20.
+[2018-06-18 19:59:09] INFO     Training neural nets. Logs are in ./tmp/models/iter-34.
+[2018-06-18 20:01:22] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:01:22] INFO     (34 / 50) Updating level sets.
+[2018-06-18 20:01:23] INFO     (34 / 50) Collecting scores.
+[2018-06-18 20:01:23] INFO     (34 / 50) Scores => TR: 0.5969 VA: 0.5203 TS: 0.4151.
+[2018-06-18 20:01:23] INFO     (34 / 50) End of iteration. Ellapsed time: 0.037 hours.
+[2018-06-18 20:01:23] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:01:23] INFO     Linear trend over VA: 0.0070 (tol=0.0000).
+[2018-06-18 20:01:23] INFO     (35 / 50) Beginning iteration.
+[2018-06-18 20:01:23] INFO     Fitting nnets.
+[2018-06-18 20:01:23] INFO     Computed auto batch size is 1605.
+[2018-06-18 20:01:24] INFO     Computed auto batches per epoch is 19.
+[2018-06-18 20:01:24] INFO     Training neural nets. Logs are in ./tmp/models/iter-35.
+[2018-06-18 20:02:52] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:02:52] INFO     (35 / 50) Updating level sets.
+[2018-06-18 20:02:52] INFO     (35 / 50) Collecting scores.
+[2018-06-18 20:02:52] INFO     (35 / 50) Scores => TR: 0.6038 VA: 0.5265 TS: 0.4237.
+[2018-06-18 20:02:52] INFO     (35 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 20:02:52] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:02:53] INFO     Linear trend over VA: 0.0071 (tol=0.0000).
+[2018-06-18 20:02:53] INFO     (36 / 50) Beginning iteration.
+[2018-06-18 20:02:53] INFO     Fitting nnets.
+[2018-06-18 20:02:53] INFO     Computed auto batch size is 1620.
+[2018-06-18 20:02:53] INFO     Computed auto batches per epoch is 19.
+[2018-06-18 20:02:53] INFO     Training neural nets. Logs are in ./tmp/models/iter-36.
+[2018-06-18 20:04:46] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:04:46] INFO     (36 / 50) Updating level sets.
+[2018-06-18 20:04:47] INFO     (36 / 50) Collecting scores.
+[2018-06-18 20:04:47] INFO     (36 / 50) Scores => TR: 0.6105 VA: 0.5335 TS: 0.4284.
+[2018-06-18 20:04:47] INFO     (36 / 50) End of iteration. Ellapsed time: 0.032 hours.
+[2018-06-18 20:04:47] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:04:47] INFO     Linear trend over VA: 0.0068 (tol=0.0000).
+[2018-06-18 20:04:47] INFO     (37 / 50) Beginning iteration.
+[2018-06-18 20:04:47] INFO     Fitting nnets.
+[2018-06-18 20:04:47] INFO     Computed auto batch size is 1630.
+[2018-06-18 20:04:47] INFO     Computed auto batches per epoch is 19.
+[2018-06-18 20:04:47] INFO     Training neural nets. Logs are in ./tmp/models/iter-37.
+[2018-06-18 20:06:07] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:06:07] INFO     (37 / 50) Updating level sets.
+[2018-06-18 20:06:07] INFO     (37 / 50) Collecting scores.
+[2018-06-18 20:06:07] INFO     (37 / 50) Scores => TR: 0.6161 VA: 0.5401 TS: 0.4367.
+[2018-06-18 20:06:07] INFO     (37 / 50) End of iteration. Ellapsed time: 0.022 hours.
+[2018-06-18 20:06:07] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:06:08] INFO     Linear trend over VA: 0.0067 (tol=0.0000).
+[2018-06-18 20:06:08] INFO     (38 / 50) Beginning iteration.
+[2018-06-18 20:06:08] INFO     Fitting nnets.
+[2018-06-18 20:06:08] INFO     Computed auto batch size is 1640.
+[2018-06-18 20:06:08] INFO     Computed auto batches per epoch is 19.
+[2018-06-18 20:06:08] INFO     Training neural nets. Logs are in ./tmp/models/iter-38.
+[2018-06-18 20:07:46] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:07:46] INFO     (38 / 50) Updating level sets.
+[2018-06-18 20:07:46] INFO     (38 / 50) Collecting scores.
+[2018-06-18 20:07:46] INFO     (38 / 50) Scores => TR: 0.6223 VA: 0.5466 TS: 0.4451.
+[2018-06-18 20:07:46] INFO     (38 / 50) End of iteration. Ellapsed time: 0.027 hours.
+[2018-06-18 20:07:46] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:07:47] INFO     Linear trend over VA: 0.0066 (tol=0.0000).
+[2018-06-18 20:07:47] INFO     (39 / 50) Beginning iteration.
+[2018-06-18 20:07:47] INFO     Fitting nnets.
+[2018-06-18 20:07:47] INFO     Computed auto batch size is 1655.
+[2018-06-18 20:07:47] INFO     Computed auto batches per epoch is 19.
+[2018-06-18 20:07:47] INFO     Training neural nets. Logs are in ./tmp/models/iter-39.
+[2018-06-18 20:09:49] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:09:49] INFO     (39 / 50) Updating level sets.
+[2018-06-18 20:09:50] INFO     (39 / 50) Collecting scores.
+[2018-06-18 20:09:50] INFO     (39 / 50) Scores => TR: 0.6276 VA: 0.5543 TS: 0.4540.
+[2018-06-18 20:09:50] INFO     (39 / 50) End of iteration. Ellapsed time: 0.034 hours.
+[2018-06-18 20:09:50] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:09:50] INFO     Linear trend over VA: 0.0069 (tol=0.0000).
+[2018-06-18 20:09:50] INFO     (40 / 50) Beginning iteration.
+[2018-06-18 20:09:50] INFO     Fitting nnets.
+[2018-06-18 20:09:50] INFO     Computed auto batch size is 1670.
+[2018-06-18 20:09:50] INFO     Computed auto batches per epoch is 19.
+[2018-06-18 20:09:50] INFO     Training neural nets. Logs are in ./tmp/models/iter-40.
+[2018-06-18 20:11:27] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:11:27] INFO     (40 / 50) Updating level sets.
+[2018-06-18 20:11:28] INFO     (40 / 50) Collecting scores.
+[2018-06-18 20:11:28] INFO     (40 / 50) Scores => TR: 0.6321 VA: 0.5610 TS: 0.4601.
+[2018-06-18 20:11:28] INFO     (40 / 50) End of iteration. Ellapsed time: 0.027 hours.
+[2018-06-18 20:11:28] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:11:28] INFO     Linear trend over VA: 0.0069 (tol=0.0000).
+[2018-06-18 20:11:28] INFO     (41 / 50) Beginning iteration.
+[2018-06-18 20:11:28] INFO     Fitting nnets.
+[2018-06-18 20:11:28] INFO     Computed auto batch size is 1675.
+[2018-06-18 20:11:29] INFO     Computed auto batches per epoch is 19.
+[2018-06-18 20:11:29] INFO     Training neural nets. Logs are in ./tmp/models/iter-41.
+[2018-06-18 20:13:00] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:13:00] INFO     (41 / 50) Updating level sets.
+[2018-06-18 20:13:01] INFO     (41 / 50) Collecting scores.
+[2018-06-18 20:13:01] INFO     (41 / 50) Scores => TR: 0.6381 VA: 0.5657 TS: 0.4664.
+[2018-06-18 20:13:01] INFO     (41 / 50) End of iteration. Ellapsed time: 0.026 hours.
+[2018-06-18 20:13:01] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:13:01] INFO     Linear trend over VA: 0.0065 (tol=0.0000).
+[2018-06-18 20:13:01] INFO     (42 / 50) Beginning iteration.
+[2018-06-18 20:13:01] INFO     Fitting nnets.
+[2018-06-18 20:13:01] INFO     Computed auto batch size is 1690.
+[2018-06-18 20:13:01] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:13:01] INFO     Training neural nets. Logs are in ./tmp/models/iter-42.
+[2018-06-18 20:14:36] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:14:36] INFO     (42 / 50) Updating level sets.
+[2018-06-18 20:14:36] INFO     (42 / 50) Collecting scores.
+[2018-06-18 20:14:37] INFO     (42 / 50) Scores => TR: 0.6433 VA: 0.5717 TS: 0.4747.
+[2018-06-18 20:14:37] INFO     (42 / 50) End of iteration. Ellapsed time: 0.027 hours.
+[2018-06-18 20:14:37] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:14:37] INFO     Linear trend over VA: 0.0062 (tol=0.0000).
+[2018-06-18 20:14:37] INFO     (43 / 50) Beginning iteration.
+[2018-06-18 20:14:37] INFO     Fitting nnets.
+[2018-06-18 20:14:37] INFO     Computed auto batch size is 1700.
+[2018-06-18 20:14:37] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:14:37] INFO     Training neural nets. Logs are in ./tmp/models/iter-43.
+[2018-06-18 20:16:31] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:16:31] INFO     (43 / 50) Updating level sets.
+[2018-06-18 20:16:32] INFO     (43 / 50) Collecting scores.
+[2018-06-18 20:16:32] INFO     (43 / 50) Scores => TR: 0.6488 VA: 0.5784 TS: 0.4817.
+[2018-06-18 20:16:32] INFO     (43 / 50) End of iteration. Ellapsed time: 0.032 hours.
+[2018-06-18 20:16:32] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:16:32] INFO     Linear trend over VA: 0.0059 (tol=0.0000).
+[2018-06-18 20:16:32] INFO     (44 / 50) Beginning iteration.
+[2018-06-18 20:16:32] INFO     Fitting nnets.
+[2018-06-18 20:16:32] INFO     Computed auto batch size is 1705.
+[2018-06-18 20:16:32] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:16:32] INFO     Training neural nets. Logs are in ./tmp/models/iter-44.
+[2018-06-18 20:18:02] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:18:02] INFO     (44 / 50) Updating level sets.
+[2018-06-18 20:18:03] INFO     (44 / 50) Collecting scores.
+[2018-06-18 20:18:03] INFO     (44 / 50) Scores => TR: 0.6539 VA: 0.5840 TS: 0.4874.
+[2018-06-18 20:18:03] INFO     (44 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 20:18:03] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:18:03] INFO     Linear trend over VA: 0.0059 (tol=0.0000).
+[2018-06-18 20:18:03] INFO     (45 / 50) Beginning iteration.
+[2018-06-18 20:18:03] INFO     Fitting nnets.
+[2018-06-18 20:18:04] INFO     Computed auto batch size is 1715.
+[2018-06-18 20:18:04] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:18:04] INFO     Training neural nets. Logs are in ./tmp/models/iter-45.
+[2018-06-18 20:19:32] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:19:32] INFO     (45 / 50) Updating level sets.
+[2018-06-18 20:19:33] INFO     (45 / 50) Collecting scores.
+[2018-06-18 20:19:33] INFO     (45 / 50) Scores => TR: 0.6585 VA: 0.5898 TS: 0.4953.
+[2018-06-18 20:19:33] INFO     (45 / 50) End of iteration. Ellapsed time: 0.025 hours.
+[2018-06-18 20:19:33] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:19:33] INFO     Linear trend over VA: 0.0061 (tol=0.0000).
+[2018-06-18 20:19:33] INFO     (46 / 50) Beginning iteration.
+[2018-06-18 20:19:33] INFO     Fitting nnets.
+[2018-06-18 20:19:34] INFO     Computed auto batch size is 1720.
+[2018-06-18 20:19:34] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:19:34] INFO     Training neural nets. Logs are in ./tmp/models/iter-46.
+[2018-06-18 20:21:15] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:21:15] INFO     (46 / 50) Updating level sets.
+[2018-06-18 20:21:15] INFO     (46 / 50) Collecting scores.
+[2018-06-18 20:21:16] INFO     (46 / 50) Scores => TR: 0.6620 VA: 0.5950 TS: 0.5015.
+[2018-06-18 20:21:16] INFO     (46 / 50) End of iteration. Ellapsed time: 0.028 hours.
+[2018-06-18 20:21:16] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:21:16] INFO     Linear trend over VA: 0.0058 (tol=0.0000).
+[2018-06-18 20:21:16] INFO     (47 / 50) Beginning iteration.
+[2018-06-18 20:21:16] INFO     Fitting nnets.
+[2018-06-18 20:21:16] INFO     Computed auto batch size is 1735.
+[2018-06-18 20:21:16] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:21:16] INFO     Training neural nets. Logs are in ./tmp/models/iter-47.
+[2018-06-18 20:22:52] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:22:52] INFO     (47 / 50) Updating level sets.
+[2018-06-18 20:22:52] INFO     (47 / 50) Collecting scores.
+[2018-06-18 20:22:52] INFO     (47 / 50) Scores => TR: 0.6672 VA: 0.6009 TS: 0.5105.
+[2018-06-18 20:22:52] INFO     (47 / 50) End of iteration. Ellapsed time: 0.027 hours.
+[2018-06-18 20:22:52] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:22:53] INFO     Linear trend over VA: 0.0056 (tol=0.0000).
+[2018-06-18 20:22:53] INFO     (48 / 50) Beginning iteration.
+[2018-06-18 20:22:53] INFO     Fitting nnets.
+[2018-06-18 20:22:53] INFO     Computed auto batch size is 1745.
+[2018-06-18 20:22:53] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:22:53] INFO     Training neural nets. Logs are in ./tmp/models/iter-48.
+[2018-06-18 20:24:50] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:24:50] INFO     (48 / 50) Updating level sets.
+[2018-06-18 20:24:50] INFO     (48 / 50) Collecting scores.
+[2018-06-18 20:24:50] INFO     (48 / 50) Scores => TR: 0.6717 VA: 0.6045 TS: 0.5156.
+[2018-06-18 20:24:50] INFO     (48 / 50) End of iteration. Ellapsed time: 0.033 hours.
+[2018-06-18 20:24:50] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:24:51] INFO     Linear trend over VA: 0.0052 (tol=0.0000).
+[2018-06-18 20:24:51] INFO     (49 / 50) Beginning iteration.
+[2018-06-18 20:24:51] INFO     Fitting nnets.
+[2018-06-18 20:24:51] INFO     Computed auto batch size is 1710.
+[2018-06-18 20:24:51] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:24:51] INFO     Training neural nets. Logs are in ./tmp/models/iter-49.
+[2018-06-18 20:26:30] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:26:30] INFO     (49 / 50) Updating level sets.
+[2018-06-18 20:26:31] INFO     (49 / 50) Collecting scores.
+[2018-06-18 20:26:31] INFO     (49 / 50) Scores => TR: 0.6763 VA: 0.6093 TS: 0.5220.
+[2018-06-18 20:26:31] INFO     (49 / 50) End of iteration. Ellapsed time: 0.028 hours.
+[2018-06-18 20:26:31] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:26:31] INFO     Linear trend over VA: 0.0049 (tol=0.0000).
+[2018-06-18 20:26:31] INFO     (50 / 50) Beginning iteration.
+[2018-06-18 20:26:31] INFO     Fitting nnets.
+[2018-06-18 20:26:31] INFO     Computed auto batch size is 1755.
+[2018-06-18 20:26:31] INFO     Computed auto batches per epoch is 18.
+[2018-06-18 20:26:31] INFO     Training neural nets. Logs are in ./tmp/models/iter-50.
+[2018-06-18 20:28:22] INFO     Nnet train done. Best nhidden is 8.
+[2018-06-18 20:28:22] INFO     (50 / 50) Updating level sets.
+[2018-06-18 20:28:23] INFO     (50 / 50) Collecting scores.
+[2018-06-18 20:28:23] INFO     (50 / 50) Scores => TR: 0.6810 VA: 0.6149 TS: 0.5284.
+[2018-06-18 20:28:23] INFO     (50 / 50) End of iteration. Ellapsed time: 0.031 hours.
+[2018-06-18 20:28:23] INFO     Saving model to ./slls_model.pkl.
+[2018-06-18 20:28:23] INFO     Linear trend over VA: 0.0048 (tol=0.0000).
+[2018-06-18 20:28:23] INFO     Fitting complete.
+[2018-06-18 20:28:23] INFO     Saving model to ./slls_model.pkl.

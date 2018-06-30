@@ -38,6 +38,8 @@ void get_samples(
                              sqr(dj*(j-com[1])) +
                              sqr(dk*(k-com[2])));
 
+//                printf("%.7f\n", cdist);
+
                 // dt is the step length along in the normal directions.
                 dt = cdist / (nsamples+1.0);
 
@@ -47,8 +49,7 @@ void get_samples(
 
                 // The gradient vector is zero, so we can't compute
                 // the feature for this coordinate, (i,j,k).
-                is_zero = false;
-                if (a == 0 && b == 0 && c == 0) is_zero = true;
+                is_zero = (a == 0 && b == 0 && c == 0);
 
                 // _i = inward normal
                 ii_i = i*di;
@@ -96,6 +97,9 @@ void get_samples(
                                                             di, dj, dk,
                                                             m, n, p);
                     }
+
+                    //printf("%d %d %d %.7f %.7f %.7f\n", i, j, k, ii_i, jj_i, kk_i);
+                    //printf("%d %d %d %.7f %.7f %.7f\n", i, j, k, ii_o, jj_o, kk_o);
 
                     // Advance one step along ray.
                     ii_i += a;

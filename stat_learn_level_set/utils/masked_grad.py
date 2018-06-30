@@ -1,11 +1,3 @@
-"""
-The module is a wrapper for the f2py wrapper. It's purely
-a convenience wrapper. For more precision, use the `_masked_grad`
-module directly, or tweak the C code!
-
--Matt Hancock, 2018
-
-"""
 import numpy as np
 import _masked_grad
 
@@ -15,6 +7,10 @@ def gradient_centered(A, mask=None, dx=None, return_gmag=True,
     Compute the centered difference approximations of the partial 
     derivatives of `A` along each coordinate axis, computed only 
     where `mask` is true.
+
+    Note
+    ----
+    Only dimensions 1, 2, and 3 are supported.
 
     Parameters
     ----------
@@ -40,7 +36,7 @@ def gradient_centered(A, mask=None, dx=None, return_gmag=True,
 
     Returns
     -------
-    Gradients, Gradient Magnitude : [D1, ..., Dn], gmag 
+    [D1, ..., Dn], gmag: list, ndarray
         Returns the gradient along each axis approximated by centered
         differences (only computed where mask is True). The gradient magnitude 
         is optionally returned.
@@ -131,7 +127,7 @@ def gmag_os(A, nu, mask=None, dx=None):
 
     Returns
     -------
-    Gradient Magnitude :  gmag 
+    gmag: ndarray
         The velocity-dependent gradient magnitude approximation.
     """
     ndim = A.ndim

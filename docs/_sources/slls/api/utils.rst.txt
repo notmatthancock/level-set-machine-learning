@@ -1,5 +1,8 @@
 Utils
 -----
 
+.. automodule:: stat_learn_level_set.utils.masked_grad
+    :members:
+
 .. automodule:: stat_learn_level_set.utils.visualize
     :members:

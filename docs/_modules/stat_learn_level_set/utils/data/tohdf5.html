@@ -1,0 +1,203 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>stat_learn_level_set.utils.data.tohdf5 &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for stat_learn_level_set.utils.data.tohdf5</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">skfmm</span>
+
+
+<div class="viewcode-block" id="convert"><a class="viewcode-back" href="../../../../slls/api/utils/data/tohdf5.html#stat_learn_level_set.utils.data.tohdf5.convert">[docs]</a><span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="n">imgs</span><span class="p">,</span> <span class="n">segs</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a dataset of images and boolean segmentations</span>
+<span class="sd">    to hdf5 format, which is required for the level set routine.</span>
+
+<span class="sd">    The format assuming `hf` is and h5py `File` is as follows::</span>
+<span class="sd">        </span>
+<span class="sd">        i</span>
+<span class="sd">        |_ img</span>
+<span class="sd">        |_ seg</span>
+<span class="sd">        |_ dist</span>
+<span class="sd">        |_ attrs</span>
+<span class="sd">           |_ dx</span>
+
+<span class="sd">    In other words, the 17th image example would be accessed like::</span>
+
+<span class="sd">        img17 = hf[&quot;17/img&quot;][...]</span>
+
+<span class="sd">    The attributes (`attrs`) are special and accessed like::</span>
+<span class="sd">        </span>
+<span class="sd">        hf[&quot;17&quot;].attrs[&quot;dx&quot;]</span>
+
+<span class="sd">    The format above is the one necessary for level set routine; however,</span>
+<span class="sd">    additional information can be stored in the dataset if desired by </span>
+<span class="sd">    writing separate scripts to append the dataset. For example, the center</span>
+<span class="sd">    of mass of the ground truth might be useful meta (attribute) information </span>
+<span class="sd">    to store.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    imgs: ndarray, shape=(nexamples,) + img.shape</span>
+<span class="sd">        The list of image examples for the dataset.</span>
+
+<span class="sd">    segs: ndarray, shape=(nexamples,) + seg.shape</span>
+<span class="sd">        The list of image examples for the dataset.</span>
+
+<span class="sd">    path: str</span>
+<span class="sd">        The file path and file name to store the hdf5 data file, e.g.::</span>
+
+<span class="sd">            &quot;/home/user/Data/my_dataset.h5&quot;</span>
+
+<span class="sd">    dx: ndarray, shape=(nexamples, img.ndim), default=None</span>
+<span class="sd">        The resolutions along each axis for each image. The default (None)</span>
+<span class="sd">        assumes the resolution is 1 along each axis direction, but this </span>
+<span class="sd">        might not be the case for anisotropic data (e.g., CT scan data).</span>
+
+<span class="sd">    verbose: bool, default=True</span>
+<span class="sd">        Print progress if True.</span>
+
+<span class="sd">    compress: bool, default=True</span>
+<span class="sd">        If True, `gzip` compression with default compression options (level=4)</span>
+<span class="sd">        is used for the image and segmentations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check if the file already exists and abort if so.</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Dataset already exists at </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">)</span>
+
+    <span class="c1"># Ensure imgs and segs are proper.</span>
+    <span class="k">if</span> <span class="n">imgs</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;`imgs` should be float dtype.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">segs</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;`segs` should be bool dtype.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">imgs</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">segs</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`imgs` shape doesn&#39;t match `segs`&quot;</span><span class="p">)</span>
+    
+    <span class="n">N</span> <span class="o">=</span> <span class="n">imgs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ndim</span> <span class="o">=</span> <span class="n">imgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ndim</span>
+
+    <span class="c1"># Check dx if provided and is correct shape.</span>
+    <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dx</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">ndim</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`dx` is wrong shape.&quot;</span><span class="p">)</span>
+
+    <span class="n">hf</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+    <span class="n">compress</span> <span class="o">=</span> <span class="s2">&quot;gzip&quot;</span> <span class="k">if</span> <span class="n">compress</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">N</span><span class="p">))</span>
+        <span class="n">pstr</span> <span class="o">=</span> <span class="s2">&quot;Creating hdf5 dataset ... </span><span class="si">%%</span><span class="s2">0</span><span class="si">%d</span><span class="s2">d / </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+
+    <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">ndim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">pstr</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Create a group for the i&#39;th example</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+        <span class="c1"># Store the i&#39;th image and segmentation.</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;img&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">imgs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">compression</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;seg&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">segs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">compression</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span>
+
+        <span class="c1"># Compute the signed distance transform of the ground-truth</span>
+        <span class="c1"># segmentation and store it.</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">skfmm</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">segs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                              <span class="n">dx</span><span class="o">=</span><span class="p">(</span><span class="n">o</span> <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">dx</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+        <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;dist&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">dist</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span>
+
+        <span class="c1"># Store the delta terms as an attribute.</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;dx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">o</span> <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">dx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="n">hf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Success: hdf5 dataset saved at </span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../../../index.html">Table Of Contents</a></h3>
+<p class="caption"><span class="caption-text">LIDC</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../lidc/setup.html">Setup and Dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../lidc/create-dataset.html">Making a dataset for segmentation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../slls/examples/2d-hamburger.html">Segment 2d images</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Full documentation and specs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../slls/api/index.html">SLLS API</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Matt Hancock.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

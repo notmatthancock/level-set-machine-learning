@@ -1,18 +1,15 @@
-"""
-Utilities for converting Numpy datasets to hdf5
-"""
-
 import os
 import h5py
 import numpy as np
 import skfmm
+
 
 def convert(imgs, segs, path, dx=None, verbose=True, compress=True):
     """
     Convert a dataset of images and boolean segmentations
     to hdf5 format, which is required for the level set routine.
 
-    Format assuming `hf` is and h5py `File`:
+    The format assuming `hf` is and h5py `File` is as follows::
         
         i
         |_ img
