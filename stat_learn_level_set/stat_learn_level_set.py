@@ -78,13 +78,19 @@ class stat_learn_level_set(object):
             self._ndim = df[df.keys()[0]+"/img"].ndim
 
         if not isinstance(feature_map, feature_map_base):
-            raise ValueError(("`feature_map` should be a class derived from"
-                              " `stat_learn_level_set.feature_maps.feature_map_base`.")) 
+            raise ValueError(
+                "`feature_map` should be a class derived from "
+                "`stat_learn_level_set.feature_maps.feature_map_base`."
+            ) 
+
         self.feature_map = feature_map
 
         if not isinstance(init_func, init_func_base):
-            raise ValueError(("`init_func` should be a class derived from"
-                              " `stat_learn_level_set.init_funcs.init_func_base`.")) 
+            raise ValueError(
+                "`init_func` should be a class derived from "
+                "`stat_learn_level_set.init_funcs.init_func_base`."
+            )
+
         self.init_func = init_func
 
         self.score_func = jaccard if score_func is None else score_func
@@ -96,10 +102,11 @@ class stat_learn_level_set(object):
 
         if rs is None:
             rs = np.random.RandomState()
-            warnings.warn(("No RandomState provided. Results will not be"
-                           " reproducible."))
-        self._rs = rs
+            warnings.warn(
+                "No RandomState provided. Results will not be reproducible."
+            )
 
+        self._rs = rs
 
         self._is_fitted    = False
         self._fit_opts_set = False
@@ -108,6 +115,7 @@ class stat_learn_level_set(object):
     @property
     def _data_file(self):
         return h5py.File(self._data_file_name, 'r')
+
     @property
     def _tmp_file(self):
         return h5py.File(os.path.join(self._fopts_tmp_dir, "tmp.h5"))
@@ -125,7 +133,6 @@ class stat_learn_level_set(object):
             for key,iseed,seed in self._iter_seeds(ds):
                 yield ds,key,iseed,seed
 
-
     def _initialize(self):
         df = self._data_file
         tf = self._tmp_file
@@ -141,9 +148,15 @@ class stat_learn_level_set(object):
             if ds not in tf:
                 tf.create_group(ds)
 
+            img = df[key+'/img'][...]
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
             # Compute the initialization for this example and seed value.
-            u0,dist,mask = self.init_func(df[key+"/img"][...], self.band,
-                                          dx=df[key].attrs['dx'], seed=seed)
+            u0, dist, mask = self.init_func(img, self.band,
+                                            dx=df[key].attrs['dx'],
+                                            seed=seed)
 
             # "Auto" step: only use training and validation datasets.
             if ds in ['tr','va']:
@@ -193,9 +206,9 @@ class stat_learn_level_set(object):
 
             dx = df[key].attrs['dx']
 
-            u    = tf["%s/%s/seed-%d/u"    % (ds,key,iseed)][...]
-            dist = tf["%s/%s/seed-%d/dist" % (ds,key,iseed)][...]
-            mask = tf["%s/%s/seed-%d/mask" % (ds,key,iseed)][...]
+            u    = tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...]
+            dist = tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...]
+            mask = tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...]
 
             # Don't update if the mask is empty.
             if not mask.any():
@@ -337,10 +350,13 @@ class stat_learn_level_set(object):
                 target = df[key+"/dist"][...]
                 dx     = df[key].attrs['dx']
 
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
             with self._tmp_file as tf:
-                u    = tf["%s/%s/seed-%d/u"    % (dataset,key,iseed)][...]
-                dist = tf["%s/%s/seed-%d/dist" % (dataset,key,iseed)][...]
-                mask = tf["%s/%s/seed-%d/mask" % (dataset,key,iseed)][...]
+                u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
+                dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
+                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
 
             if mask.any():
                 break # Otherwise, repeat the loop until a non-empty mask.
@@ -978,20 +994,26 @@ class stat_learn_level_set(object):
         if not self._is_fitted:
             raise RuntimeError("This model hasn't been fit yet.")
 
-        iters = len(self.models)
-        dx = np.ones(img.ndim) if dx is None else dx
+        # If normalize, assign to `img_` so as to not overwrite `img`.
+        if self._fopts_normalize_images:
+            img_ = (img - img.mean()) / img.std()
+        else:
+            img_ = img
 
-        if dx.shape[0] != img.ndim:
+        iters = len(self.models)
+        dx = np.ones(img_.ndim) if dx is None else dx
+
+        if dx.shape[0] != img_.ndim:
             raise ValueError("`dx` has incorrect number of elements.")
 
-        u = np.zeros((iters+1,) + img.shape)
-        u[0],dist,mask = self.init_func(img, self.band, dx=dx)
+        u = np.zeros((iters+1,) + img_.shape)
+        u[0], dist, mask = self.init_func(img_, self.band, dx=dx)
 
         if seg is not None:
             scores = np.zeros((iters+1,))
             scores[0] = self.score_func(u[0], seg)
 
-        nu = np.zeros(img.shape)
+        nu = np.zeros(img_.shape)
 
         if verbose:
             if seg is None:
@@ -1009,7 +1031,7 @@ class stat_learn_level_set(object):
                 mem = 'create' if i == 0 else 'use'
                 mem = mem if memoize else None
 
-                features = self.feature_map(u[i], img, dist=dist,
+                features = self.feature_map(u[i], img_, dist=dist,
                                             mask=mask, memoize=mem, dx=dx)
 
                 nu[mask] = self.models[i].predict(features[mask])
