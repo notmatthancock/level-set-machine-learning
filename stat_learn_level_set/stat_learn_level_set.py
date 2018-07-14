@@ -790,7 +790,7 @@ class stat_learn_level_set(object):
             60/20/20% is made using the 
             `stat_learn_level_set.utils.data.splitter` utility.
 
-        seeds: tuple, len=3, default=None
+        seeds: dict, default=None
             The seeds are used in the `init_func` supplied at initialization.
             Note that seed coordinates must be given in *index* coordinates, 
             i.e., they should *not* take into account pixel spacing / 
@@ -811,7 +811,6 @@ class stat_learn_level_set(object):
             If None (default), then a single seed for each example is used 
             and computed automatically: the center-of-mass of the ground-
             truth segmentation of the respective examples.
-
 
         save_file: str, default=None
             The model (the total RBLS object) will be pickled to this path.
@@ -1095,8 +1094,12 @@ class stat_learn_level_set(object):
 
     def _validate_seeds(self, seeds):
         if seeds is None:
+            # Default behavior: use compute and use a single seed
+            # (the ground truth center of mass) for each.
+
             df = self._data_file
             seeds = dict(tr={}, va={}, ts={})
+
             for ds in ['tr','va','ts']:
                 for key in self._datasets[ds]:
                     seg = df[key+"/seg"][...]

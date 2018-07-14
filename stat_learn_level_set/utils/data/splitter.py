@@ -2,6 +2,10 @@ import numpy as np
 
 def split(keys, p=[0.6, 0.2, 0.2], subset_size=None, rs=None):
     """
+    Split a list `keys` randomly into training, validation, and testing sets.
+
+    Parameters
+    ----------
     keys: list of strings
         List of keys to split into training, validation, and testing.
     
@@ -15,6 +19,13 @@ def split(keys, p=[0.6, 0.2, 0.2], subset_size=None, rs=None):
 
     rs: numpy.random.RandomState
         For reproducible results.
+
+    Returns
+    -------
+    split_keys: dict
+        split_keys['tr'] = [training_key1, ...]
+        split_keys['va'] = [validation_key1, ...]
+        split_keys['ts'] = [testing_key1, ...]
     """
     if subset_size is not None and subset_size > len(keys):
         raise ValueError("`subset_size` must be <= `len(keys)`.")
