@@ -55,8 +55,16 @@ def sample_from_distance_map(h5file, seeds_per_image=10,
         # Subsample of indices into `seg_inds`
         seed_inds = rs.choice(N, size=seeds_per_image, replace=True, p=prob)
 
-        seeds[key] = seg_inds[seed_inds,:]
-
-        if ikey == 10: break
+        seeds[key] = [tuple(seed) for seed in seg_inds[seed_inds,:]]
 
     return seeds
+
+
+def organize_seeds_by_datasets(seeds, datasets):
+    seeds_new = {ds: {} for ds in datasets}
+
+    for ds in datasets:
+        for key in datasets[ds]:
+            seeds_new[ds][key] = seeds[key]
+
+    return seeds_new
