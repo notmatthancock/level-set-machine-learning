@@ -1,8 +1,8 @@
 import numpy as np
 
-from stat_learn_level_set import stat_learn_level_set as SLLS
-from stat_learn_level_set.feature_maps.dim2 import simple_feature_map as sfm
-from stat_learn_level_set.init_funcs import random as rand_init
+from slls import stat_learn_level_set as SLLS
+from slls.feature_maps.dim2 import simple_feature_map as sfm
+from slls.init_funcs import random as rand_init
 
 # Seed a random number generator.
 rs = np.random.RandomState(1234)

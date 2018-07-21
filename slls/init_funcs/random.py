@@ -1,4 +1,4 @@
-from stat_learn_level_set.init_funcs import init_func_base
+from slls.init_funcs import init_func_base
 import numpy as np
 import skfmm
 

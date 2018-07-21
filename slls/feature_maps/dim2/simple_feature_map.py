@@ -1,7 +1,7 @@
 import numpy as np
-from stat_learn_level_set.feature_maps import feature_map_base
+from slls.feature_maps import feature_map_base
 from scipy.ndimage import gaussian_filter1d as gf1d
-from stat_learn_level_set.utils import masked_grad as mg
+from slls.utils import masked_grad as mg
 
 class simple_feature_map(feature_map_base):
     """

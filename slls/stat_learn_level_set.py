@@ -31,14 +31,14 @@ class stat_learn_level_set(object):
                 some/path/to/data.h5
 
             where `data.h5` is formatted as specified in the 
-            :meth:`stat_learn_level_set.utils.tohdf5` module. 
+            :meth:`slls.utils.tohdf5` module.
             `data.h5` contains the image and ground truth data.
 
         feature_map: feature map class
-            See :class:`stat_learn_level_set.feature_maps.feature_map_base`.
+            See :class:`slls.feature_maps.feature_map_base`.
 
         init_func: init func class
-            See :class:`stat_learn_level_set.init_funcs.init_func_base`.
+            See :class:`slls.init_funcs.init_func_base`.
 
         score_func: function, default=None
             Has signature::
@@ -80,7 +80,7 @@ class stat_learn_level_set(object):
         if not isinstance(feature_map, feature_map_base):
             raise ValueError(
                 "`feature_map` should be a class derived from "
-                "`stat_learn_level_set.feature_maps.feature_map_base`."
+                "`slls.feature_maps.feature_map_base`."
             ) 
 
         self.feature_map = feature_map
@@ -88,7 +88,7 @@ class stat_learn_level_set(object):
         if not isinstance(init_func, init_func_base):
             raise ValueError(
                 "`init_func` should be a class derived from "
-                "`stat_learn_level_set.init_funcs.init_func_base`."
+                "`slls.init_funcs.init_func_base`."
             )
 
         self.init_func = init_func
@@ -788,7 +788,7 @@ class stat_learn_level_set(object):
 
             If `datasets` is None (default), then an auto split of 
             60/20/20% is made using the 
-            `stat_learn_level_set.utils.data.splitter` utility.
+            `slls.utils.data.splitter` utility.
 
         seeds: dict, default=None
             The seeds are used in the `init_func` supplied at initialization.

@@ -1,10 +1,10 @@
 import os
 
-import stat_learn_level_set as slls
+import slls as slls
 
 base = os.path.dirname(slls.__file__)
 
-s = "stat_learn_level_set"
+s = "slls"
 
 contents = """\
 {module}

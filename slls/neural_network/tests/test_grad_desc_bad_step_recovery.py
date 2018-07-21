@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from stat_learn_level_set.neural_network import neural_network as nn
+from slls.neural_network import neural_network as nn
 
 
 class TestStepRecovery(unittest.TestCase):

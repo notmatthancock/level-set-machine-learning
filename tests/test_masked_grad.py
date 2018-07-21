@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from stat_learn_level_set.utils import masked_grad as mg
+from slls.utils import masked_grad as mg
 
 class TestMaskedGrad(unittest.TestCase):
     def test_linear(self):
