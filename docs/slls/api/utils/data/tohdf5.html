@@ -32,60 +32,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-stat_learn_level_set.utils.data.tohdf5">
-<span id="stat-learn-level-set-utils-data-tohdf5"></span><h1>stat_learn_level_set.utils.data.tohdf5<a class="headerlink" href="#module-stat_learn_level_set.utils.data.tohdf5" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="stat_learn_level_set.utils.data.tohdf5.convert">
-<code class="descclassname">stat_learn_level_set.utils.data.tohdf5.</code><code class="descname">convert</code><span class="sig-paren">(</span><em>imgs</em>, <em>segs</em>, <em>path</em>, <em>dx=None</em>, <em>verbose=True</em>, <em>compress=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/stat_learn_level_set/utils/data/tohdf5.html#convert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.utils.data.tohdf5.convert" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a dataset of images and boolean segmentations
-to hdf5 format, which is required for the level set routine.</p>
-<p>The format assuming <cite>hf</cite> is and h5py <cite>File</cite> is as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">i</span>
-<span class="o">|</span><span class="n">_</span> <span class="n">img</span>
-<span class="o">|</span><span class="n">_</span> <span class="n">seg</span>
-<span class="o">|</span><span class="n">_</span> <span class="n">dist</span>
-<span class="o">|</span><span class="n">_</span> <span class="n">attrs</span>
-   <span class="o">|</span><span class="n">_</span> <span class="n">dx</span>
-</pre></div>
-</div>
-<p>In other words, the 17th image example would be accessed like:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">img17</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="s2">&quot;17/img&quot;</span><span class="p">][</span><span class="o">...</span><span class="p">]</span>
-</pre></div>
-</div>
-<p>The attributes (<cite>attrs</cite>) are special and accessed like:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hf</span><span class="p">[</span><span class="s2">&quot;17&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;dx&quot;</span><span class="p">]</span>
-</pre></div>
-</div>
-<p>The format above is the one necessary for level set routine; however,
-additional information can be stored in the dataset if desired by
-writing separate scripts to append the dataset. For example, the center
-of mass of the ground truth might be useful meta (attribute) information
-to store.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>imgs</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nexamples</em><em>,</em><em>) </em><em>+ img.shape</em>) – The list of image examples for the dataset.</li>
-<li><strong>segs</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nexamples</em><em>,</em><em>) </em><em>+ seg.shape</em>) – The list of image examples for the dataset.</li>
-<li><strong>path</strong> (<em>str</em>) – <p>The file path and file name to store the hdf5 data file, e.g.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;/home/user/Data/my_dataset.h5&quot;</span>
-</pre></div>
-</div>
-</li>
-<li><strong>dx</strong> (<em>ndarray</em><em>, </em><em>shape=</em><em>(</em><em>nexamples</em><em>, </em><em>img.ndim</em><em>)</em><em>, </em><em>default=None</em>) – The resolutions along each axis for each image. The default (None)
-assumes the resolution is 1 along each axis direction, but this
-might not be the case for anisotropic data (e.g., CT scan data).</li>
-<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Print progress if True.</li>
-<li><strong>compress</strong> (<em>bool</em><em>, </em><em>default=True</em>) – If True, <cite>gzip</cite> compression with default compression options (level=4)
-is used for the image and segmentations.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+  <div class="section" id="stat-learn-level-set-utils-data-tohdf5">
+<h1>stat_learn_level_set.utils.data.tohdf5<a class="headerlink" href="#stat-learn-level-set-utils-data-tohdf5" title="Permalink to this headline">¶</a></h1>
 </div>
 
 

@@ -30,7 +30,7 @@ class ray_trim(init_func_base):
             provided `dx` values when `__call__` is called.
 
         pr: float, default=60
-            The radius percentile in range [0,100]. Radii outside the 
+            The radius percentile in range [0, 100]. Radii outside the 
             computed `pr` percentile are clipped from the initial segmentation.
 
         ntpr: int, default=1000
@@ -51,7 +51,7 @@ class ray_trim(init_func_base):
             Provide for reproducibility.
         """
         if isinstance(sigma, int) or isinstance(sigma, int):
-            self.sigma = np.array([sigma,sigma,sigma], dtype=np.float)
+            self.sigma = np.array([sigma, sigma, sigma], dtype=np.float)
         elif np.iterable(sigma):
             if len(sigma) != 3:
                 raise ValueError("`sigma` should be length 3.")
@@ -62,7 +62,7 @@ class ray_trim(init_func_base):
         self.adjust_sigma = adjust_sigma
 
         if pr <= 0 or pr > 100:
-            raise ValueError("`pr` should be in range (0,100]")
+            raise ValueError("`pr` should be in range (0, 100]")
         self.pr = pr
 
         self.ntpr        = ntpr
@@ -74,19 +74,19 @@ class ray_trim(init_func_base):
         # ... End input variable checking.
 
         self.X = self.rs.randn(ntpr, 3)
-        self.X /= np.linalg.norm(self.X, axis=1).reshape(-1,1)
+        self.X /= np.linalg.norm(self.X, axis=1).reshape(-1, 1)
 
         # This variable will be re-used in the `__call__` function.
         self.radii = np.zeros(ntpr)
 
         # Compute thetas.
-        self.thetas = np.arctan2(self.X[:,1], self.X[:,0])
+        self.thetas = np.arctan2(self.X[:, 1], self.X[:, 0])
 
-        # Move thetas from range [-pi,pi] to [0,2*pi].
+        # Move thetas from range [-pi, pi] to [0, 2*pi].
         self.thetas[self.thetas < 0] = self.thetas[self.thetas < 0] + 2*np.pi
 
         # Compute phis.
-        self.phis = np.arccos(self.X[:,2])
+        self.phis = np.arccos(self.X[:, 2])
 
     def __call__(self, img, band, dx=None, seed=None, only_seg=False):
         """
@@ -105,7 +105,7 @@ class ray_trim(init_func_base):
         # Some local variables.
         grids = [np.arange(img.shape[i], dtype=np.float)*dx[i]
                   for i in range(3)]
-        ii,jj,kk = np.meshgrid(*grids, indexing='ij')
+        ii, jj, kk = np.meshgrid(*grids, indexing='ij')
         dist = np.sqrt((ii-seed[0]*dx[0])**2 + 
                        (jj-seed[1]*dx[1])**2 + 
                        (kk-seed[2]*dx[2])**2)
@@ -132,7 +132,7 @@ class ray_trim(init_func_base):
         B[dist > rad_thresh] = False
 
         # Remove non-connected components that arise from the radius clip.
-        L,num = label(B, return_num=True)
+        L, num = label(B, return_num=True)
         if num > 1: B = (L == L[tuple(seed.round().astype(np.int))])
 
         # If B is too small, initialize to a ball of volume ~ `min_vol`.

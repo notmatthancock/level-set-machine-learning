@@ -32,52 +32,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-stat_learn_level_set.feature_maps.dim2.simple_feature_map">
-<span id="stat-learn-level-set-feature-maps-dim2-simple-feature-map"></span><h1>stat_learn_level_set.feature_maps.dim2.simple_feature_map<a class="headerlink" href="#module-stat_learn_level_set.feature_maps.dim2.simple_feature_map" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="stat_learn_level_set.feature_maps.dim2.simple_feature_map.simple_feature_map">
-<em class="property">class </em><code class="descclassname">stat_learn_level_set.feature_maps.dim2.simple_feature_map.</code><code class="descname">simple_feature_map</code><span class="sig-paren">(</span><em>sigmas=[0, 3]</em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/stat_learn_level_set/feature_maps/dim2/simple_feature_map.html#simple_feature_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.feature_maps.dim2.simple_feature_map.simple_feature_map" title="Permalink to this definition">¶</a></dt>
-<dd><p>A simple feature map with local and global, shape and image features,
-with image features computed at multiple scales.</p>
-<p>The feature map computation is implemented in the <cite>__call__</cite> member
-function so that the object can be called like in the example below.</p>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TODO</span>
-</pre></div>
-</div>
-<p>Documentation for <cite>__call__</cite>:</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>u</strong> (<em>ndarrary</em>) – The “level set function”.</li>
-<li><strong>img</strong> (<em>ndarray</em>) – The image.</li>
-<li><strong>dist</strong> (<em>ndarray</em>) – The signed distance transform to the level set <cite>u</cite> (only computed
-necessarily in the narrow band region).</li>
-<li><strong>mask</strong> (<em>ndarray</em><em>, </em><em>dtype=bool</em>) – The boolean mask indicating the narrow band region of <cite>u</cite>.</li>
-<li><strong>dx</strong> (<em>ndarray</em><em>, </em><em>shape=img.ndim</em>) – The “delta” spacing terms for each image axis. If None, then
-1.0 is used for each axis.</li>
-<li><strong>memoize</strong> (<em>flag</em><em>, </em><em>default=None</em>) – Should be one of [None, ‘create’, ‘use’]. This variable will be None
-always during training, but during run-time (where the feature
-map is called for many iterations on the same image), it is
-‘create’ at the first iteration and ‘use’ for all iterations
-thereafter. Use this to create more efficient run-time
-performance by storing features that can be re-used
-in subsequent iterations.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="attribute">
-<dt id="stat_learn_level_set.feature_maps.dim2.simple_feature_map.simple_feature_map.names">
-<code class="descname">names</code><a class="headerlink" href="#stat_learn_level_set.feature_maps.dim2.simple_feature_map.simple_feature_map.names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the list of feature names.</p>
-</dd></dl>
-
-</dd></dl>
-
+  <div class="section" id="stat-learn-level-set-feature-maps-dim2-simple-feature-map">
+<h1>stat_learn_level_set.feature_maps.dim2.simple_feature_map<a class="headerlink" href="#stat-learn-level-set-feature-maps-dim2-simple-feature-map" title="Permalink to this headline">¶</a></h1>
 </div>
 
 

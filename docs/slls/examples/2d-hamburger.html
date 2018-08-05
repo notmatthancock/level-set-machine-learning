@@ -39,7 +39,7 @@ two-dimensional images like the one shown below (which we are calling
 ‘hamburger images’ since it looks like hamburger buns).</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
-<span class="kn">from</span> <span class="nn">stat_learn_level_set.utils.data.synth.dim2</span> <span class="kn">import</span> <span class="n">hamburger</span>
+<span class="kn">from</span> <span class="nn">slls.utils.data.synth.dim2</span> <span class="kn">import</span> <span class="n">hamburger</span>
 
 <span class="n">img</span><span class="p">,</span> <span class="n">seg</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">hamburger</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">101</span><span class="p">,</span> <span class="n">cut_theta</span><span class="o">=</span><span class="mf">3.14159</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span>
 
@@ -68,8 +68,8 @@ routines. This is accomplished using the
 <cite>stat_learn_level_set.utils.tohdf5</cite> utility.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>  <span class="c1"># from RandomState</span>
 
-<span class="kn">from</span> <span class="nn">stat_learn_level_set.utils.data.synth.dim2</span> <span class="kn">import</span> <span class="n">hamburger</span>
-<span class="kn">from</span> <span class="nn">stat_learn_level_set.utils.data</span> <span class="kn">import</span> <span class="n">tohdf5</span>
+<span class="kn">from</span> <span class="nn">slls.utils.data.synth.dim2</span> <span class="kn">import</span> <span class="n">hamburger</span>
+<span class="kn">from</span> <span class="nn">slls.utils.data</span> <span class="kn">import</span> <span class="n">tohdf5</span>
 
 
 <span class="c1"># Create the random number generator.</span>
@@ -100,9 +100,9 @@ process (which happens at each iteration of the global fitting process).</p>
 <p>An example of the fitting routine is given in the following block of code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">stat_learn_level_set</span> <span class="kn">import</span> <span class="n">stat_learn_level_set</span> <span class="k">as</span> <span class="n">SLLS</span>
-<span class="kn">from</span> <span class="nn">stat_learn_level_set.feature_maps.dim2</span> <span class="kn">import</span> <span class="n">simple_feature_map</span> <span class="k">as</span> <span class="n">sfm</span>
-<span class="kn">from</span> <span class="nn">stat_learn_level_set.init_funcs</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">rand_init</span>
+<span class="kn">from</span> <span class="nn">slls</span> <span class="kn">import</span> <span class="n">stat_learn_level_set</span> <span class="k">as</span> <span class="n">SLLS</span>
+<span class="kn">from</span> <span class="nn">slls.feature_maps.dim2</span> <span class="kn">import</span> <span class="n">simple_feature_map</span> <span class="k">as</span> <span class="n">sfm</span>
+<span class="kn">from</span> <span class="nn">slls.init_funcs</span> <span class="kn">import</span> <span class="n">random</span> <span class="k">as</span> <span class="n">rand_init</span>
 
 <span class="c1"># Seed a random number generator.</span>
 <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>

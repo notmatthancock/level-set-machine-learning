@@ -32,57 +32,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-stat_learn_level_set.feature_maps">
-<span id="stat-learn-level-set-feature-maps"></span><h1>stat_learn_level_set.feature_maps<a class="headerlink" href="#module-stat_learn_level_set.feature_maps" title="Permalink to this headline">¶</a></h1>
-<p>Abstract base class for feature map functions.</p>
-<p>Use this class is a “template” for creating feature map classes.</p>
-<p>For a specific example, see the <cite>dim2/simple_feature_map.py</cite> class.</p>
-<p>-Matt Hancock, 2018</p>
-<dl class="class">
-<dt id="stat_learn_level_set.feature_maps.feature_map_base">
-<em class="property">class </em><code class="descclassname">stat_learn_level_set.feature_maps.</code><code class="descname">feature_map_base</code><span class="sig-paren">(</span><em>sigmas=[0, 3]</em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/stat_learn_level_set/feature_maps.html#feature_map_base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.feature_maps.feature_map_base" title="Permalink to this definition">¶</a></dt>
-<dd><p>The is a template class for creating new feature maps.</p>
-<p>The <cite>__call__</cite> member function implements the feature map computation.</p>
-<p>Documentation for <cite>__call__</cite>:</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>u</strong> (<em>ndarrary</em>) – The “level set function”.</li>
-<li><strong>img</strong> (<em>ndarray</em>) – The image/image volume/image hypervolume.</li>
-<li><strong>dist</strong> (<em>ndarray</em>) – The signed distance transform to the level set <cite>u</cite> (only computed
-necessarily in the narrow band region).</li>
-<li><strong>mask</strong> (<em>ndarray</em><em>, </em><em>dtype=bool</em>) – The boolean mask indicating the narrow band region of <cite>u</cite>.</li>
-<li><strong>dx</strong> (<em>ndarray</em><em>, </em><em>shape=img.ndim</em>) – The “delta” spacing terms for each image axis. If None, then
-1.0 is used for each axis.</li>
-<li><strong>memoize</strong> (<em>flag</em><em>, </em><em>default=None</em>) – Should be one of [None, ‘create’, ‘use’]. This variable will be False
-always during training, but during run-time (where the feature
-map is called for many iterations on the same image), it is
-‘create’ at the first iteration and ‘use’ for all iterations
-thereafter. Use this to create more efficient run-time
-performance by storing features that can be re-used in the
-first iteration which are then used in subsequent iterations.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="attribute">
-<dt id="stat_learn_level_set.feature_maps.feature_map_base.names">
-<code class="descname">names</code><a class="headerlink" href="#stat_learn_level_set.feature_maps.feature_map_base.names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of the feature names as strings. While not strictly
-necessary, you’ll probably thank yourself for creating this.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="stat_learn_level_set.feature_maps.feature_map_base.types">
-<code class="descname">types</code><a class="headerlink" href="#stat_learn_level_set.feature_maps.feature_map_base.types" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of feature types (local or global, shape or image).</p>
-</dd></dl>
-
-</dd></dl>
-
+  <div class="section" id="stat-learn-level-set-feature-maps">
+<h1>stat_learn_level_set.feature_maps<a class="headerlink" href="#stat-learn-level-set-feature-maps" title="Permalink to this headline">¶</a></h1>
 </div>
 
 

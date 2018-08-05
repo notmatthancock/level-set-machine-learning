@@ -1,15 +1,23 @@
+from cStringIO import StringIO
 import os, shutil, time, warnings, pickle, h5py
-import sys, datetime, logging
+import datetime, logging
+
 import numpy as np
 import multiprocessing as mp
 import skfmm
+from sklearn.tree import DecisionTreeRegressor
 
 from feature_maps import feature_map_base
 from init_funcs import init_func_base
 from utils.data import splitter
+from utils.stdout_redirector import stdout_redirector
 
 import utils.masked_grad as mg
 from neural_network import neural_network as nn
+
+
+MODEL_FIT_METHODS = ('nnet', 'rf')
+
 
 class stat_learn_level_set(object):
     def __init__(self, data_file, feature_map, init_func, score_func=None,
@@ -131,7 +139,7 @@ class stat_learn_level_set(object):
     def _iter_tmp(self):
         for ds in ['tr','va','ts']:
             for key,iseed,seed in self._iter_seeds(ds):
-                yield ds,key,iseed,seed
+                yield ds, key, iseed, seed
 
     def _initialize(self):
         df = self._data_file
@@ -159,7 +167,7 @@ class stat_learn_level_set(object):
                                             seed=seed)
 
             # "Auto" step: only use training and validation datasets.
-            if ds in ['tr','va']:
+            if ds in ['tr', 'va']:
                 # Compute the maximum velocity for the i'th example
                 mx = np.abs(df[key+"/dist"][mask]).max()
 
@@ -181,6 +189,11 @@ class stat_learn_level_set(object):
             seed_group.create_dataset("u",    data=u0,   compression='gzip')
             seed_group.create_dataset("dist", data=dist, compression='gzip')
             seed_group.create_dataset("mask", data=mask, compression='gzip')
+
+            if not self._fopts_model_fit_method == 'rf':
+                nu = np.zeros_like(dist)
+                seed_group.create_dataset("nu", data=nu,
+                                          compression='gzip')
 
         if self.step == 'auto':
             self.step = step
@@ -214,12 +227,15 @@ class stat_learn_level_set(object):
             if not mask.any():
                 continue
 
-            # Compute features.
-            F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
+            if self._fopts_model_fit_method != 'rf':
+                # Compute features.
+                F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
 
-            # Compute approximate velocity from features.
-            nu = np.zeros_like(u)
-            nu[mask] = nnet.predict(F[mask])
+                # Compute approximate velocity from features.
+                nu = np.zeros_like(u)
+                nu[mask] = nnet.predict(F[mask])
+            else:
+                nu = tf["%s/%s/seed-%d/nu" % (ds, key, iseed)][...]
 
             # Compute gradient magnitude using upwind Osher/Sethian method.
             gmag = mg.gmag_os(u, nu, mask=mask, dx=dx)
@@ -245,9 +261,9 @@ class stat_learn_level_set(object):
                     mask = np.ones(dist.shape, dtype=np.bool)
 
             # Update the data in the hdf5 file.
-            tf["%s/%s/seed-%d/u"    % (ds,key,iseed)][...] = u
-            tf["%s/%s/seed-%d/dist" % (ds,key,iseed)][...] = dist
-            tf["%s/%s/seed-%d/mask" % (ds,key,iseed)][...] = mask
+            tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...] = u
+            tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...] = dist
+            tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...] = mask
 
         df.close()
         tf.close()
@@ -322,6 +338,96 @@ class stat_learn_level_set(object):
             mask = np.ones(y.shape, dtype=np.bool)
 
         return mask
+
+    def _featurize_all_images(self, dataset, balance, rs):
+        """
+        dataset: str
+            Should be in ['tr','va','ts']
+
+        balance: bool
+            Balance by neg/pos of target value.
+
+        rs: numpy.RandomState
+            To make results reproducible. The random state
+            should be passed here rather than using the `self._rs`
+            attribute, since in the multiprocessing setting we can't
+            rely on `self._rs`.
+        """
+        assert dataset in ['tr','va','ts']
+        who = ['tr','va','ts'].index(dataset)
+
+        tf = self._tmp_file
+
+        for ds,key,iseed,seed in self._iter_tmp():
+            if ds != dataset: continue
+
+            with self._data_file as df:
+                img    = df[key+"/img"][...]
+                target = df[key+"/dist"][...]
+                dx     = df[key].attrs['dx']
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
+            u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
+            dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
+            mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
+
+            if not mask.any():
+                continue # Otherwise, repeat the loop until a non-empty mask.
+
+            # Precompute data size.
+            if balance:
+                npos = (target[mask] > 0).sum()
+                nneg = (target[mask] < 0).sum()
+                if min(npos,nneg) > 0:
+                    count += 2*min(npos,nneg)
+                else:
+                    count += max(npos, nneg)
+            else:
+                count = mask.sum()
+
+        X = np.zeros((count, self.feature_map.nfeatures))
+        y = np.zeros((count,))
+
+        index = 0
+
+        for ds,key,iseed,seed in self._iter_tmp():
+            if ds != dataset: continue
+
+            with self._data_file as df:
+                img    = df[key+"/img"][...]
+                target = df[key+"/dist"][...]
+                dx     = df[key].attrs['dx']
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
+            u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
+            dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
+            mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
+
+            if not mask.any():
+                continue # Otherwise, repeat the loop until a non-empty mask.
+
+            # Compute features.
+            features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
+
+            if balance:
+                bmask = self._balance_mask(target[mask], rs=rs)
+                next_index = index + (mask&bmask).sum()
+                X[index:next_index] = features[mask][bmask]
+                y[index:next_index] =   target[mask][bmask]
+            else:
+                next_index = index + mask.sum()
+                X[index:next_index] = features[mask]
+                y[index:next_index] =   target[mask]
+
+            index = next_index
+
+        tf.close()
+
+        return X, y
 
     def _featurize_random_image(self, dataset, balance, rs):
         """
@@ -576,72 +682,128 @@ class stat_learn_level_set(object):
         
     def _fit_model(self):
         """
-        Obtain the best model over all hidden units tested and over all
-        number of parameter initializations.
+        Fit a regression model for advancing the level set.
         """
         self._iter_dir = os.path.join(self._models_path, 
                                       "iter-%d" % self._iter)
         os.mkdir(self._iter_dir)
 
-        if self._nopts_batch_size_auto:
-            self._compute_auto_batch_size()
+        if self._fopts_model_fit_method == 'nnet':
+            if self._nopts_batch_size_auto:
+                self._compute_auto_batch_size()
 
-        if self._nopts_batches_per_epoch is None:
-            self._compute_auto_batches_per_epoch()
+            if self._nopts_batches_per_epoch is None:
+                self._compute_auto_batches_per_epoch()
 
-        # We'll start a process for each trial of 
-        # hidden unit number and init.
-        procs = []
-        self._logger.info("Training neural nets. Logs are in %s."
-                                % self._iter_dir)
-        for nh in self._nopts_nhidden:
-            for init in range(self._nopts_ninits):
-                p = mp.Process(target=self._fit_nnet,
-                               args=(nh, init),
-                               name="nnet: nh=%d, init=%d" % (nh, init))
+            # We'll start a process for each trial of 
+            # hidden unit number and init.
+            procs = []
+            self._logger.info("Training neural nets. Logs are in %s."
+                                    % self._iter_dir)
+            for nh in self._nopts_nhidden:
+                for init in range(self._nopts_ninits):
+                    p = mp.Process(target=self._fit_nnet,
+                                   args=(nh, init),
+                                   name="nnet: nh=%d, init=%d" % (nh, init))
+                    p.start()
+                    procs.append(p)
+            for p in procs:
+                p.join()
+                if p.exitcode != 0:
+                    msg = "An error occured during nnet training (%s)." % p.name
+                    self._logger.error(msg)
+                    for q in procs: q.terminate()
+                    raise RuntimeError(msg)
+
+            bestnh    = None
+            bestinit  = None
+            bestscore = -np.inf
+
+            # Determine best model over validation data scores.
+            for inh,nh in enumerate(self._nopts_nhidden):
+                for init in range(self._nopts_ninits):
+                    score = np.load(os.path.join(self._iter_dir,
+                                                 "nnet-nh=%d-init=%d.npy"
+                                                 % (nh, init)))
+                    score = np.asscalar(score) # because we saved as numpy array.
+                    if score > bestscore:
+                        bestnh    = nh
+                        bestinit  = init
+                        bestscore = score
+
+            self._logger.info("Nnet train done. Best nhidden is %d." % bestnh)
+
+            # Load the best model and add it to the model list.
+            nnet = np.load(os.path.join(self._iter_dir,
+                                        "nnet-nh=%d-init=%d.pkl"
+                                        % (bestnh, bestinit)))
+
+            if hasattr(self, 'models'):
+                self.models.append(nnet)
+            else:
+                self.models = [nnet]
+        elif self._fopts_model_fit_method == 'rf':
+
+            self._set_all_nu_zero()
+
+            for itree in range(self._rf_opts_n_estimators):
+
+                self.logger.progress("Fitting tree.", itree+1,
+                                     self._rf_opts_n_estimators)
+
+                # Fit in a new process for memory release
+                p = mp.Process(target=self._fit_tree,
+                               args=(itree,),
+                               name="tree fit (%d)" % (itree+1))
                 p.start()
-                procs.append(p)
-        for p in procs:
-            p.join()
-            if p.exitcode != 0:
-                msg = "An error occured during nnet training (%s)." % p.name
-                self._logger.error(msg)
-                for q in procs: q.terminate()
-                raise RuntimeError(msg)
+                p.join()
 
-        bestnh    = None
-        bestinit  = None
-        bestscore = -np.inf
-
-        # Determine best model over validation data scores.
-        for inh,nh in enumerate(self._nopts_nhidden):
-            for init in range(self._nopts_ninits):
-                score = np.load(os.path.join(self._iter_dir,
-                                             "nnet-nh=%d-init=%d.npy"
-                                             % (nh, init)))
-                score = np.asscalar(score) # because we saved as numpy array.
-                if score > bestscore:
-                    bestnh    = nh
-                    bestinit  = init
-                    bestscore = score
-
-        self._logger.info("Nnet train done. Best nhidden is %d." % bestnh)
-
-        # Load the best model and add it to the model list.
-        nnet = np.load(os.path.join(self._iter_dir,
-                                    "nnet-nh=%d-init=%d.pkl"
-                                    % (bestnh, bestinit)))
-
-        if hasattr(self, 'models'):
-            self.models.append(nnet)
         else:
-            self.models = [nnet]
+            raise NotImplementedError
 
         # Remove the temporary neural net files if necessary.
         if self._fopts_remove_tmp:
             self._logger.info("Removing tmp files at %s." % self._iter_dir)
             shutil.rmtree(self._iter_dir)
         del self._iter_dir
+
+    def _fit_tree(self, itree):
+
+        rs = np.random.RandomState(itree)
+
+        # Get input and output variables
+        X, y = self._featurize_all_images('ds', self._rf_opts_balance, rs)
+
+        dtr = DecisionTreeRegressor(
+            max_features=self._rfopts_max_features,
+            max_depth=self._rfopts_max_depth,
+            criterion=self._rfopts_criterion,
+            n_jobs=self._rf_opts_n_jobs,
+            random_state=rs,
+            verbose=2
+        )
+
+        # Hijack the stdout produced by the fit call.
+        stream = StringIO()
+        with stdout_redirector(stream):
+            dtr.fit(X, y)
+        # Record the print statements from the logger
+        self.logger.info(stream.getvalue())
+
+        # Update nu
+
+        self._update_nu(dtr)
+
+    def _update_nu(self, dtr):
+        raise NotImplementedError
+
+    def _set_all_nu_zero(self):
+        tf = self._tmp_file
+
+        for ds,key,iseed,seed in self._iter_tmp():
+            tf[ds][key]['seed-%d'%iseed] = 0.
+
+        tf.close()
 
     def _check_early_exit(self):
         i = self._iter
@@ -665,39 +827,39 @@ class stat_learn_level_set(object):
         else:
             return False, None
 
-    def fit(self, warm_start=False):
+    def fit(self):
         """
         Run `set_fit_options` and `set_net_opts` before calling `fit`.
         """
         if not self._fit_opts_set:
             raise RuntimeError("Run `set_fit_options` before fitting.")
-        if not self._net_opts_set:
+        if self._fopts_model_fit_method == 'nnet' and self._net_opts_set:
             raise RuntimeError("Run `set_net_opts` before fitting.")
+        if self._fopts_model_fit_method == 'rf' and self._rf_opts_set:
+            raise RuntimeError("Run `set_rf_opts` before fitting.")
         if self._is_fitted:
             raise RuntimeError("This model has already been fitted.")
-
         
-        if not warm_start:
-            self._logger.info("Initializing.")
-            self._initialize()
-            self._iter = 0
 
-            self._logger.info("Collecting scores.")
-            self._collect_scores()
-            self._logger.progress(
-                "Scores => TR: %.4f VA: %.4f TS: %.4f."
-                    % tuple(self._get_mean_scores_at_iter(self._iter)),
-                self._iter,
-                self._fopts_maxiters
-            )
+        self._logger.info("Initializing.")
+        self._initialize()
+        self._iter = 0
 
-            self._models_path = os.path.join(self._fopts_tmp_dir, "models")
-            os.mkdir(self._models_path)
+        self._logger.info("Collecting scores.")
+        self._collect_scores()
+        self._logger.progress(
+            "Scores => TR: %.4f VA: %.4f TS: %.4f."
+                % tuple(self._get_mean_scores_at_iter(self._iter)),
+            self._iter,
+            self._fopts_maxiters
+        )
 
-            maxiters = self._fopts_maxiters
-            start_iter = 1
-        else: # warm_start
-            start_iter = self._iter
+        self._models_path = os.path.join(self._fopts_tmp_dir, "models")
+        os.mkdir(self._models_path)
+
+        maxiters = self._fopts_maxiters
+        start_iter = 1
+
 
         for self._iter in range(start_iter, maxiters+1):
             self._logger.progress("Beginning iteration.",
@@ -768,6 +930,7 @@ class stat_learn_level_set(object):
 
 
     def set_fit_options(self, datasets=None, seeds=None, save_file=None,
+                        model_fit_method="nnet",
                         normalize_images=True, tmp_dir=None, remove_tmp=False,
                         maxiters=100, va_hist_len=5, va_hist_tol=0.0,
                         logfile=None, logstamp=True, logstdout=True):
@@ -813,9 +976,16 @@ class stat_learn_level_set(object):
             truth segmentation of the respective examples.
 
         save_file: str, default=None
-            The model (the total RBLS object) will be pickled to this path.
+            The model will be pickled to this path.
             The default (None) uses the file `slls_model.pkl` at the current
             working directory.
+
+        model_fit_method: str, default='nnet'
+            'nnet': uses neural network regression with online stocastic
+                    gradient descent for optimization.
+            'rf': uses random forest regression. NOTE: in this
+                  case, the regression models are *not* saved since tree
+                  models tend to be quite large in terms of data storage.
 
         normalize_images: bool, default=True
             If True, then whenever an image is loaded, we normalize it, i.e.,
@@ -859,6 +1029,10 @@ class stat_learn_level_set(object):
         logstdout: bool, default=True
             If True, the log will print to stdout (as well as logging to file).
         """
+        if model_fit_method not in MODEL_FIT_METHODS:
+            msg = 'model_fit_method ({}) must be one of {}.'
+            raise ValueError(msg.format(model_fit_method, MODEL_FIT_METHODS))
+
         # This is hackish. It just sets most the arguments to member variables.
         L = locals(); L.pop('self'); L.pop('datasets'); L.pop('seeds')
         for l in L: setattr(self, "_fopts_%s"%l, L[l])
@@ -961,6 +1135,13 @@ class stat_learn_level_set(object):
                            "> 50. This could result in excessive train "
                            "times and/or memory consumption."))
 
+    def set_rf_opts(self, n_estimators=100, max_features="auto",
+                    max_depth=None, criterion="mse", n_jobs=1,
+                    balance=True):
+        L = locals(); L.pop('self')
+        for l in L: setattr(self, "_rfopts_%s"%l, L[l])
+        self._rf_opts_set = True
+
     def segment(self, img, seg=None, dx=None, verbose=True, memoize=True):
         """
         Segment `img`.
@@ -992,6 +1173,8 @@ class stat_learn_level_set(object):
         """
         if not self._is_fitted:
             raise RuntimeError("This model hasn't been fit yet.")
+        if self._fopts_model_fit_method == 'rf':
+            raise RuntimeError("Model are not stored for `rf` fit method.")
 
         # If normalize, assign to `img_` so as to not overwrite `img`.
         if self._fopts_normalize_images:

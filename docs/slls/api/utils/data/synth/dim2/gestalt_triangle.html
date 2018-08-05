@@ -32,62 +32,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle">
-<span id="stat-learn-level-set-utils-data-synth-dim2-gestalt-triangle"></span><h1>stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle<a class="headerlink" href="#module-stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle.make">
-<code class="descclassname">stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle.</code><code class="descname">make</code><span class="sig-paren">(</span><em>n</em>, <em>side_len</em>, <em>circ_rad</em>, <em>theta</em>, <em>ishift=0</em>, <em>jshift=0</em>, <em>sigma_smooth=0.0</em>, <em>sigma_noise=0.0</em>, <em>rs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../../_modules/stat_learn_level_set/utils/data/synth/dim2/gestalt_triangle.html#make"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle.make" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create an illusory triangle contour [1] image with random
-size and orientation.</p>
-<p>[1]: <a class="reference external" href="https://en.wikipedia.org/wiki/Illusory_contours">https://en.wikipedia.org/wiki/Illusory_contours</a></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>n</strong> (<em>int</em>) – Image shape will be (n,n)</li>
-<li><strong>side_len</strong> (<em>float</em>) – Side length of the triangle in pixels.</li>
-<li><strong>circ_rad</strong> (<em>float</em>) – Radius of the circles at the vertices
-of the triangle in pixels.</li>
-<li><strong>theta</strong> (<em>float</em><em> (</em><em>radians</em><em>)</em>) – Rotation of the triangle. Zero points the triangle to the right.</li>
-<li><strong>ishift</strong><strong>,</strong><strong>jshift</strong> (<em>integers</em>) – Translate the center of the triangle by ishift and jshift.</li>
-<li><strong>sigma_smooth</strong> (<em>float</em>) – Gaussian smoothing parameter (make image borders more diffuse).</li>
-<li><strong>sigma_noise</strong> (<em>float</em>) – Additive noise amplitude.</li>
-<li><strong>rs</strong> (<em>numpy.random.RandomState</em><em>, </em><em>default=None</em>) – Include for reproducible results.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle.make_dataset">
-<code class="descclassname">stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle.</code><code class="descname">make_dataset</code><span class="sig-paren">(</span><em>N, n=101, slen=[40, 60], crad=[10, 20], shift=[0, 0], nsig=[0.05, 0.15], ssig=[1, 1], theta=[0, 2.0943951023931953], rs=None, verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../../_modules/stat_learn_level_set/utils/data/synth/dim2/gestalt_triangle.html#make_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle.make_dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make a randomly generated dataset of illusory triangle data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>N</strong> (<em>int</em>) – The number of examples.</li>
-<li><strong>n</strong> (<em>int</em>) – The image size.</li>
-<li><strong>slen</strong> (<em>list</em><em>, </em><em>len=2</em>) – Interval of triangle side lengths from which to sample.</li>
-<li><strong>crad</strong> (<em>list</em><em>, </em><em>len=2</em>) – Interval of circle radii from which to sample.</li>
-<li><strong>shift</strong> (<em>list</em><em>, </em><em>len=2</em>) – The interval of shift values from which to sample.</li>
-<li><strong>nsig</strong> (<em>list</em><em>, </em><em>len=2</em>) – The interval of values from which to sample <cite>sigma_noise</cite>.</li>
-<li><strong>ssig</strong> (<em>list</em><em>, </em><em>len=2</em>) – The interval of values from which to sample <cite>sigma_smooth</cite>.</li>
-<li><strong>ctheta</strong> (<em>list</em><em>, </em><em>len=2</em>) – The interval of values form which to sample <cite>theta</cite>.</li>
-<li><strong>return_meta</strong> (<em>bool</em><em>, </em><em>default=False</em>) – Return a list of meta data attributes for each example if True.</li>
-<li><strong>rs</strong> (<em>numpy.random.RandomState</em><em>, </em><em>default=None</em>) – Include a for reproducible results.</li>
-<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Print progress.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+  <div class="section" id="stat-learn-level-set-utils-data-synth-dim2-gestalt-triangle">
+<h1>stat_learn_level_set.utils.data.synth.dim2.gestalt_triangle<a class="headerlink" href="#stat-learn-level-set-utils-data-synth-dim2-gestalt-triangle" title="Permalink to this headline">¶</a></h1>
 </div>
 
 
