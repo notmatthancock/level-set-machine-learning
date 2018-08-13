@@ -1,4 +1,3 @@
-from cStringIO import StringIO
 import os, shutil, time, warnings, pickle, h5py
 import datetime, logging
 
@@ -190,7 +189,7 @@ class stat_learn_level_set(object):
             seed_group.create_dataset("dist", data=dist, compression='gzip')
             seed_group.create_dataset("mask", data=mask, compression='gzip')
 
-            if not self._fopts_model_fit_method == 'rf':
+            if self._fopts_model_fit_method == 'rf':
                 nu = np.zeros_like(dist)
                 seed_group.create_dataset("nu", data=nu,
                                           compression='gzip')
@@ -208,7 +207,8 @@ class stat_learn_level_set(object):
         df = self._data_file
         tf = self._tmp_file
 
-        nnet = self.models[-1]
+        if self._fopts_model_fit_method == 'nnet':
+            nnet = self.models[-1]
 
         # Loop over all indices in the validation dataset.
         for ds,key,iseed,seed in self._iter_tmp():
@@ -293,14 +293,18 @@ class stat_learn_level_set(object):
             mask = tf["va/%s/seed-%d/mask" % (key,iseed)][...]
 
             if mask.any():
-                # Compute features.
-                F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
+                if self._fopts_model_fit_method != 'rf':
+                    # Compute features.
+                    F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
 
-                # Compute approximate velocity from features.
-                nu = np.zeros_like(u)
-                nu[mask] = nnet.predict(F[mask])
+                    # Compute approximate velocity from features.
+                    nu = np.zeros_like(u)
+                    nu[mask] = nnet.predict(F[mask])
+                else:
+                    nu = tf["%s/%s/seed-%d/nu" % (ds, key, iseed)][...]
 
-                # Compute gradient magnitude using upwind Osher/Sethian method.
+                # Compute gradient magnitude using 
+                # upwind Osher/Sethian method.
                 gmag = mg.gmag_os(u, nu, mask=mask, dx=dx)
 
                 # Here's the dummy update.
@@ -358,6 +362,9 @@ class stat_learn_level_set(object):
 
         tf = self._tmp_file
 
+        # Count the number of points collected
+        count = 0
+
         for ds,key,iseed,seed in self._iter_tmp():
             if ds != dataset: continue
 
@@ -385,7 +392,7 @@ class stat_learn_level_set(object):
                 else:
                     count += max(npos, nneg)
             else:
-                count = mask.sum()
+                count += mask.sum()
 
         X = np.zeros((count, self.feature_map.nfeatures))
         y = np.zeros((count,))
@@ -415,7 +422,7 @@ class stat_learn_level_set(object):
 
             if balance:
                 bmask = self._balance_mask(target[mask], rs=rs)
-                next_index = index + (mask&bmask).sum()
+                next_index = index + target[mask][bmask].shape[0]
                 X[index:next_index] = features[mask][bmask]
                 y[index:next_index] =   target[mask][bmask]
             else:
@@ -707,10 +714,12 @@ class stat_learn_level_set(object):
                                    name="nnet: nh=%d, init=%d" % (nh, init))
                     p.start()
                     procs.append(p)
+
             for p in procs:
                 p.join()
                 if p.exitcode != 0:
-                    msg = "An error occured during nnet training (%s)." % p.name
+                    msg = ("An error occured during nnet training (%s)." 
+                            % p.name)
                     self._logger.error(msg)
                     for q in procs: q.terminate()
                     raise RuntimeError(msg)
@@ -742,14 +751,15 @@ class stat_learn_level_set(object):
                 self.models.append(nnet)
             else:
                 self.models = [nnet]
+
         elif self._fopts_model_fit_method == 'rf':
 
             self._set_all_nu_zero()
 
-            for itree in range(self._rf_opts_n_estimators):
+            for itree in range(self._rfopts_n_estimators):
 
-                self.logger.progress("Fitting tree.", itree+1,
-                                     self._rf_opts_n_estimators)
+                self._logger.progress("Fitting tree.", itree+1,
+                                      self._rfopts_n_estimators)
 
                 # Fit in a new process for memory release
                 p = mp.Process(target=self._fit_tree,
@@ -757,6 +767,13 @@ class stat_learn_level_set(object):
                                name="tree fit (%d)" % (itree+1))
                 p.start()
                 p.join()
+
+                if p.exitcode != 0:
+                    msg = ("An error occured during tree training (%s)." 
+                            % p.name)
+                    self._logger.error(msg)
+                    raise RuntimeError(msg)
+
 
         else:
             raise NotImplementedError
@@ -772,36 +789,53 @@ class stat_learn_level_set(object):
         rs = np.random.RandomState(itree)
 
         # Get input and output variables
-        X, y = self._featurize_all_images('ds', self._rf_opts_balance, rs)
+        X, y = self._featurize_all_images('tr', self._rfopts_balance, rs)
 
         dtr = DecisionTreeRegressor(
             max_features=self._rfopts_max_features,
             max_depth=self._rfopts_max_depth,
             criterion=self._rfopts_criterion,
-            n_jobs=self._rf_opts_n_jobs,
             random_state=rs,
-            verbose=2
         )
 
-        # Hijack the stdout produced by the fit call.
-        stream = StringIO()
-        with stdout_redirector(stream):
-            dtr.fit(X, y)
-        # Record the print statements from the logger
-        self.logger.info(stream.getvalue())
+        # Fit the decision tree regression model
+        dtr.fit(X, y)
 
         # Update nu
-
         self._update_nu(dtr)
 
     def _update_nu(self, dtr):
-        raise NotImplementedError
+        df = self._data_file
+        tf = self._tmp_file
+        n_estimators = self._rfopts_n_estimators
+
+        for ds,key,iseed,seed in self._iter_tmp():
+            dx = df[key].attrs['dx']
+            img = df[key + '/img'][...]
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
+            u    = tf[ds][key]['seed-%d'%iseed]['u'   ][...]
+            mask = tf[ds][key]['seed-%d'%iseed]['mask'][...]
+            dist = tf[ds][key]['seed-%d'%iseed]['dist'][...]
+
+            features = self.feature_map(u=u, img=img, 
+                                        mask=mask, dist=dist,
+                                        dx=dx)
+
+            tf[ds][key]['seed-%d'%iseed]['nu'][mask] += \
+                    dtr.predict(features[mask]) /n_estimators
+
+
+        tf.close()
+        df.close()
 
     def _set_all_nu_zero(self):
         tf = self._tmp_file
 
         for ds,key,iseed,seed in self._iter_tmp():
-            tf[ds][key]['seed-%d'%iseed] = 0.
+            tf[ds][key]['seed-%d'%iseed]['nu'][...] = 0.
 
         tf.close()
 
@@ -833,9 +867,9 @@ class stat_learn_level_set(object):
         """
         if not self._fit_opts_set:
             raise RuntimeError("Run `set_fit_options` before fitting.")
-        if self._fopts_model_fit_method == 'nnet' and self._net_opts_set:
+        if self._fopts_model_fit_method == 'nnet' and not self._net_opts_set:
             raise RuntimeError("Run `set_net_opts` before fitting.")
-        if self._fopts_model_fit_method == 'rf' and self._rf_opts_set:
+        if self._fopts_model_fit_method == 'rf' and not self._rf_opts_set:
             raise RuntimeError("Run `set_rf_opts` before fitting.")
         if self._is_fitted:
             raise RuntimeError("This model has already been fitted.")
@@ -1136,7 +1170,7 @@ class stat_learn_level_set(object):
                            "times and/or memory consumption."))
 
     def set_rf_opts(self, n_estimators=100, max_features="auto",
-                    max_depth=None, criterion="mse", n_jobs=1,
+                    max_depth=None, criterion="mse",
                     balance=True):
         L = locals(); L.pop('self')
         for l in L: setattr(self, "_rfopts_%s"%l, L[l])
