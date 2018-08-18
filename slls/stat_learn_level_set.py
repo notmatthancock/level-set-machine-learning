@@ -947,7 +947,9 @@ class stat_learn_level_set(object):
 
         scores = self._scores_over_iters('va')[0].mean(0)
         nmax = scores.argmax()
-        self.models = self.models[:nmax] if nmax > 0 else []
+
+        if self._fopts_model_fit_method != 'rf':
+            self.models = self.models[:nmax] if nmax > 0 else []
 
         self._is_fitted = True
         self._logger.info("Fitting complete.")
