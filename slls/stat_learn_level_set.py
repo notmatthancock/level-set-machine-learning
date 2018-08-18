@@ -79,7 +79,7 @@ class stat_learn_level_set(object):
         rs: numpy.random.RandomState, default=None
             Provide for reproducible results.
         """
-        self._data_file_name = data_file
+        self._data_file_name = os.path.abspath(data_file)
 
         with self._data_file as df:
             self._ndim = df[df.keys()[0]+"/img"].ndim
@@ -175,7 +175,7 @@ class stat_learn_level_set(object):
 
                 # Assign tmp to step if it is the smallest observed so far.
                 step = tmp if tmp < step else step
-            
+
             # Create a group for the i'th example.
             if key not in tf[ds]:
                 tf[ds].create_group(key)
@@ -1085,10 +1085,16 @@ class stat_learn_level_set(object):
             self._fopts_save_file = os.path.join(os.path.curdir,
                                                  "slls_model.pkl")
 
+        self._fopts_save_file = os.path.abspath(
+            self._fopts_save_file
+        )
+
         if self._fopts_tmp_dir is None:
             self._fopts_tmp_dir = os.path.join(os.path.curdir, 'tmp')
         else:
             self._fopts_tmp_dir = os.path.join(self._fopts_tmp_dir, 'tmp')
+
+        self._fopts_tmp_dir = os.path.abspath(self._fopts_tmp_dir)
 
         os.mkdir(self._fopts_tmp_dir)
 
