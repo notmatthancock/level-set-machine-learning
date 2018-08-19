@@ -820,6 +820,9 @@ class stat_learn_level_set(object):
             mask = tf[ds][key]['seed-%d'%iseed]['mask'][...]
             dist = tf[ds][key]['seed-%d'%iseed]['dist'][...]
 
+            if not mask.any():
+                continue
+
             features = self.feature_map(u=u, img=img, 
                                         mask=mask, dist=dist,
                                         dx=dx)
@@ -900,10 +903,12 @@ class stat_learn_level_set(object):
                                   self._iter, maxiters)
             iter_start = time.time()
 
-            self._logger.info("Fitting nnets.")
+            self._logger.info("Fitting model with method %s."
+                                % self._fopts_model_fit_method)
             self._fit_model()
 
-            self._logger.progress("Updating level sets.", self._iter, maxiters)
+            self._logger.progress("Updating level sets.",
+                                  self._iter, maxiters)
             self._update_level_sets()
 
             self._logger.progress("Collecting scores.", self._iter, maxiters)
