@@ -784,6 +784,12 @@ class stat_learn_level_set(object):
                     self._logger.error(msg)
                     raise RuntimeError(msg)
 
+            # Append the computed feature importances
+            fimp = np.load(os.path.join(self._fopts_tmp_dir, 'fimp.npy'))
+            if not hasattr(self, 'feature_importances'):
+                self.feature_importances = [fimp]
+            else:
+                self.feature_importances.append(fimp)
 
         else:
             raise NotImplementedError
@@ -813,6 +819,14 @@ class stat_learn_level_set(object):
 
         # Update nu
         self._update_nu(dtr)
+
+        if itree == 0:
+            np.save(os.path.join(self._fopts_tmp_dir, 'fimp.npy'),
+                    dtr.feature_importances_)
+        else:
+            fimp = np.load(os.path.join(self._fopts_tmp_dir, 'fimp.npy'))
+            fimp += dtr.feature_importances_ / self._rfopts_n_estimators
+            np.save(os.path.join(self._fopts_tmp_dir, 'fimp.npy'), fimp)
 
     def _update_nu(self, dtr):
         df = self._data_file
