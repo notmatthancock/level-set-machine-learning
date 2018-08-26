@@ -756,6 +756,16 @@ class stat_learn_level_set(object):
 
             self._set_all_nu_zero()
 
+            self._logger.info('Featurizing training images.')
+
+            # Get input and output variables
+            X, y = self._featurize_all_images('tr',
+                                              self._rfopts_balance,
+                                              self._rs)
+
+            np.save(os.path.join(self._fopts_tmp_dir, 'X.npy'), X)
+            np.save(os.path.join(self._fopts_tmp_dir, 'y.npy'), y)
+
             for itree in range(self._rfopts_n_estimators):
 
                 self._logger.progress("Fitting tree.", itree+1,
@@ -786,10 +796,10 @@ class stat_learn_level_set(object):
 
     def _fit_tree(self, itree):
 
-        rs = np.random.RandomState(itree)
+        X = np.load(os.path.join(self._fopts_tmp_dir, 'X.npy'))
+        y = np.load(os.path.join(self._fopts_tmp_dir, 'y.npy'))
 
-        # Get input and output variables
-        X, y = self._featurize_all_images('tr', self._rfopts_balance, rs)
+        rs = np.random.RandomState(itree)
 
         dtr = DecisionTreeRegressor(
             max_features=self._rfopts_max_features,
