@@ -3,7 +3,6 @@ from scipy.ndimage import gaussian_filter1d as gf1d
 from scipy.spatial.distance import pdist
 
 from slls.feature_maps import feature_map_base
-from slls.feature_maps.dim3.utils import normal_samples as ns
 from slls.feature_maps.dim3.utils import to_com_samples as ts
 from slls.utils import masked_grad as mg
 
@@ -53,13 +52,13 @@ class lidc_glocal_feature_map(feature_map_base):
     nlocalimg  = 2 # img, grad
     nlocalseg  = 1 # dist from com
 
-    nglocalimg = 4 # (2*2) normal samples, com samples [in/out]
+    nglocalimg = 2 # com samples [in/out]
     nglocalseg = 6 # slice*3, (slice diff)*3
 
     nglobalimg = 3  # mean, std, edge
     nglobalseg = 12 # area, len, iso, moments*2*3, (dist to com stats)*3
 
-    def __init__(self, sigmas=[0, 3], nglocal_samples=10):
+    def __init__(self, sigmas=[0, 3], nglocal_samples=20):
         self.sigmas = sigmas
         self.nglocal_samples = nglocal_samples
         self.nglocalimg *= nglocal_samples
@@ -212,17 +211,6 @@ class lidc_glocal_feature_map(feature_map_base):
             F[mask,ijump+2] = blur[H].mean() # Global image mean.
             F[mask,ijump+3] = blur[H].std()  # Global image std.
             F[mask,ijump+4] = (gmag*gmagH).sum() / S # Global image edge.
-            
-            # Compute and store the normal ray samples.
-            ns.get_samples(img=blur, com=com, nsamples=self.nglocal_samples,
-                           ni=ddi, nj=ddj, nk=ddk,
-                           di=dx[0], dj=dx[1], dk=dx[2],
-                           mask=mask, samples=samples)
-            sample_vals = samples[mask].reshape(nmask, 2*self.nglocal_samples)
-
-            start = ijump+5
-            stop  = ijump+5+2*self.nglocal_samples
-            F[mask,start:stop] = sample_vals
 
             # Compute and store the center of mass ray samples.
             ts.get_samples(img=blur, com=com, nsamples=self.nglocal_samples,
@@ -230,8 +218,8 @@ class lidc_glocal_feature_map(feature_map_base):
                            mask=mask, samples=samples)
             sample_vals = samples[mask].reshape(nmask, 2*self.nglocal_samples)
 
-            start = ijump+5+2*self.nglocal_samples
-            stop  = ijump+5+2*self.nglocal_samples+2*self.nglocal_samples
+            start = ijump+5
+            stop  = ijump+5+2*self.nglocal_samples
             F[mask,start:stop] = sample_vals
 
         return F
@@ -253,9 +241,6 @@ class lidc_glocal_feature_map(feature_map_base):
         img_feats = ['local img val', 'local img edge', 
                      'glob img avg', 'glob img std', 'glob edge']
 
-        for i in range(self.nglocal_samples):
-            img_feats += ['img normal(+)%d'%(i+1)]
-            img_feats += ['img normal(-)%d'%(i+1)]
         for i in range(self.nglocal_samples):
             img_feats += ['img to com(+)%d'%(i+1)]
             img_feats += ['img to com(-)%d'%(i+1)]

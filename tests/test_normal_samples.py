@@ -50,7 +50,7 @@ print com1, com2
 samples1 = np.zeros(dist1.shape + (nsamples,2))
 samples2 = np.zeros(dist2.shape + (nsamples,2))
 
-ns.get_samples(dist1, grad1[0], grad1[1], grad1[2], dx1[0], dx1[1], dx1[2], 
+ns.get_samples(dist1, grad1[0], grad1[1], grad1[2], dx1[0], dx1[1], dx1[2],
                com1, samples1, mask=mask1, nsamples=nsamples)
 
 ns.get_samples(dist2, grad2[0], grad2[1], grad2[2], dx2[0], dx2[1], dx2[2], 

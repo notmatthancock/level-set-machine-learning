@@ -46,8 +46,7 @@ void get_samples(
 
                 // The gradient vector is zero, so we can't compute
                 // the feature for this coordinate, (i,j,k).
-                is_zero = false;
-                if (a == 0 && b == 0 && c == 0) is_zero = true;
+                is_zero = (a == 0 && b == 0 && c == 0);
 
                 // _i = inward normal
                 ii_i = i*di;
