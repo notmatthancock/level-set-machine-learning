@@ -4,7 +4,7 @@ import datetime, logging
 import numpy as np
 import multiprocessing as mp
 import skfmm
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 from feature_maps import feature_map_base
 from init_funcs import init_func_base
@@ -547,21 +547,26 @@ class stat_learn_level_set(object):
         # Stochastic gradient descent.
         for epoch in range(self._nopts_maxepochs+1):
             for batch in range(bpe):
+
                 if self._nopts_log_batch:
                     logger.info(lstr % (epoch,
                                         self._nopts_maxepochs,
                                         batch+1,
                                         self._nopts_batches_per_epoch))
 
-                while len(bqtr) == 0:
-                    x,y = self._featurize_random_image(dataset='tr', 
-                                                       balance=balance, rs=rs)
-                    bqtr.update(x,y)
+                try:
+                    while len(bqtr) == 0:
+                        x,y = self._featurize_random_image(dataset='tr', 
+                                                           balance=balance, rs=rs)
+                        bqtr.update(x,y)
 
-                while len(bqva) == 0:
-                    x,y = self._featurize_random_image(dataset='va',
-                                                       balance=balance, rs=rs)
-                    bqva.update(x,y)
+                    while len(bqva) == 0:
+                        x,y = self._featurize_random_image(dataset='va',
+                                                           balance=balance, rs=rs)
+                        bqva.update(x,y)
+                except Exception as e:
+                    logger.info(repr(e))
+                    raise e
 
                 Xtr,ytr = bqtr.next()
                 Xva,yva = bqva.next()
@@ -766,26 +771,23 @@ class stat_learn_level_set(object):
             np.save(os.path.join(self._fopts_tmp_dir, 'X.npy'), X)
             np.save(os.path.join(self._fopts_tmp_dir, 'y.npy'), y)
 
-            for itree in range(self._rfopts_n_estimators):
+            self._logger.info("Fitting random forest.")
 
-                self._logger.progress("Fitting tree.", itree+1,
-                                      self._rfopts_n_estimators)
+            # Fit in a new process for memory release
+            p = mp.Process(target=self._fit_rf, args=(), name='rf fit')
 
-                # Fit in a new process for memory release
-                p = mp.Process(target=self._fit_tree,
-                               args=(itree,),
-                               name="tree fit (%d)" % (itree+1))
-                p.start()
-                p.join()
+            p.start()
+            p.join()
 
-                if p.exitcode != 0:
-                    msg = ("An error occured during tree training (%s)." 
-                            % p.name)
-                    self._logger.error(msg)
-                    raise RuntimeError(msg)
+            if p.exitcode != 0:
+                msg = ("An error occured during tree training (%s)." 
+                        % p.name)
+                self._logger.error(msg)
+                raise RuntimeError(msg)
 
             # Append the computed feature importances
             fimp = np.load(os.path.join(self._fopts_tmp_dir, 'fimp.npy'))
+
             if not hasattr(self, 'feature_importances'):
                 self.feature_importances = [fimp]
             else:
@@ -800,33 +802,28 @@ class stat_learn_level_set(object):
             shutil.rmtree(self._iter_dir)
         del self._iter_dir
 
-    def _fit_tree(self, itree):
+    def _fit_rf(self):
 
         X = np.load(os.path.join(self._fopts_tmp_dir, 'X.npy'))
         y = np.load(os.path.join(self._fopts_tmp_dir, 'y.npy'))
 
-        rs = np.random.RandomState(itree)
+        rs = np.random.RandomState(1234)
 
-        dtr = DecisionTreeRegressor(
-            max_features=self._rfopts_max_features,
-            max_depth=self._rfopts_max_depth,
-            criterion=self._rfopts_criterion,
+        rf = RandomForestRegressor(
+            #max_features=self._rfopts_max_features,
+            #max_depth=self._rfopts_max_depth,
+            #criterion=lambda est, X, y: -((est.predict(X)-y)**2).mean(),
             random_state=rs,
         )
 
         # Fit the decision tree regression model
-        dtr.fit(X, y)
+        rf.fit(X, y)
 
         # Update nu
-        self._update_nu(dtr)
+        self._update_nu(rf)
 
-        if itree == 0:
-            np.save(os.path.join(self._fopts_tmp_dir, 'fimp.npy'),
-                    dtr.feature_importances_)
-        else:
-            fimp = np.load(os.path.join(self._fopts_tmp_dir, 'fimp.npy'))
-            fimp += dtr.feature_importances_ / self._rfopts_n_estimators
-            np.save(os.path.join(self._fopts_tmp_dir, 'fimp.npy'), fimp)
+        np.save(os.path.join(self._fopts_tmp_dir, 'fimp.npy'),
+                rf.feature_importances_)
 
     def _update_nu(self, dtr):
         df = self._data_file
@@ -890,7 +887,7 @@ class stat_learn_level_set(object):
 
     def fit(self):
         """
-        Run `set_fit_options` and `set_net_opts` before calling `fit`.
+        Run `set_fit_options` and `set_net_options` before calling `fit`.
         """
         if not self._fit_opts_set:
             raise RuntimeError("Run `set_fit_options` before fitting.")
