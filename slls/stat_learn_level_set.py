@@ -81,7 +81,7 @@ class stat_learn_level_set(object):
         """
         self._data_file_name = os.path.abspath(data_file)
 
-        with self._data_file as df:
+        with self._data_file() as df:
             self._ndim = df[df.keys()[0]+"/img"].ndim
 
         if not isinstance(feature_map, feature_map_base):
@@ -119,13 +119,30 @@ class stat_learn_level_set(object):
         self._fit_opts_set = False
         self._net_opts_set = False
 
-    @property
     def _data_file(self):
         return h5py.File(self._data_file_name, 'r')
 
-    @property
-    def _tmp_file(self):
-        return h5py.File(os.path.join(self._fopts_tmp_dir, "tmp.h5"))
+    def _tmp_file(self, mode):
+        path = os.path.join(self._fopts_tmp_dir, "tmp.h5")
+
+        return h5py.File(path, mode=mode)
+
+    def _tmp_file_write_lock(self):
+
+        while True:
+            lock_path = os.path.join(self._fopts_tmp_dir, 'tmp.lock')
+            if not os.path.exists(lock_path):
+                # lock the tmp file
+                with open(lock_path, 'w') as f: pass
+                # open the tmp file in write mode
+                return self._tmp_file(mode='a')
+            else:
+                # wait a bit and check the lock
+                time.sleep(0.1)
+
+    def _tmp_file_write_unlock(self):
+        lock_path = os.path.join(self._fopts_tmp_dir, 'tmp.lock')
+        os.remove(lock_path)
 
     def _iter_seeds(self, ds):
         assert ds in ['tr','va','ts']
@@ -141,8 +158,8 @@ class stat_learn_level_set(object):
                 yield ds, key, iseed, seed
 
     def _initialize(self):
-        df = self._data_file
-        tf = self._tmp_file
+        df = self._data_file()
+        tf = self._tmp_file_write_lock()
 
         step = np.inf
 
@@ -202,10 +219,11 @@ class stat_learn_level_set(object):
                                 % (step, self.step))
         df.close()
         tf.close()
+        self._tmp_file_write_unlock()
 
     def _update_level_sets(self):
-        df = self._data_file
-        tf = self._tmp_file
+        df = self._data_file()
+        tf = self._tmp_file_write_lock()
 
         if self._fopts_model_fit_method == 'nnet':
             nnet = self.models[-1]
@@ -241,7 +259,10 @@ class stat_learn_level_set(object):
             gmag = mg.gmag_os(u, nu, mask=mask, dx=dx)
 
             # Here's the actual level set update.
+            utmp = u.copy()
             u[mask] += self.step*nu[mask]*gmag[mask]
+
+            #np.save('nu{}{}.npy'.format(ds, key), nu)
 
             # Update the distance transform and mask,
             # checking if the zero level set has vanished.
@@ -267,14 +288,15 @@ class stat_learn_level_set(object):
 
         df.close()
         tf.close()
+        self._tmp_file_write_unlock()
 
     def _validation_dummy_update(self, nnet):
         """
         Do a "dummy" update over the validation dataset to 
         record segmentation scores.
         """
-        df = self._data_file
-        tf = self._tmp_file
+        df = self._data_file()
+        tf = self._tmp_file(mode='r')
 
         mu = 0.
 
@@ -360,7 +382,7 @@ class stat_learn_level_set(object):
         assert dataset in ['tr','va','ts']
         who = ['tr','va','ts'].index(dataset)
 
-        tf = self._tmp_file
+        tf = self._tmp_file(mode='r')
 
         # Count the number of points collected
         count = 0
@@ -368,7 +390,7 @@ class stat_learn_level_set(object):
         for ds,key,iseed,seed in self._iter_tmp():
             if ds != dataset: continue
 
-            with self._data_file as df:
+            with self._data_file() as df:
                 img    = df[key+"/img"][...]
                 target = df[key+"/dist"][...]
                 dx     = df[key].attrs['dx']
@@ -402,7 +424,7 @@ class stat_learn_level_set(object):
         for ds,key,iseed,seed in self._iter_tmp():
             if ds != dataset: continue
 
-            with self._data_file as df:
+            with self._data_file() as df:
                 img    = df[key+"/img"][...]
                 target = df[key+"/dist"][...]
                 dx     = df[key].attrs['dx']
@@ -458,7 +480,7 @@ class stat_learn_level_set(object):
             key   = rs.choice(self._seeds[dataset].keys())
             iseed = rs.choice(len(self._seeds[dataset][key]))
 
-            with self._data_file as df:
+            with self._data_file() as df:
                 img    = df[key+"/img"][...]
                 target = df[key+"/dist"][...]
                 dx     = df[key].attrs['dx']
@@ -466,7 +488,7 @@ class stat_learn_level_set(object):
             if self._fopts_normalize_images:
                 img = (img - img.mean()) / img.std()
 
-            with self._tmp_file as tf:
+            with self._tmp_file(mode='r') as tf:
                 u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
                 dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
                 mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
@@ -554,19 +576,23 @@ class stat_learn_level_set(object):
                                         batch+1,
                                         self._nopts_batches_per_epoch))
 
-                try:
-                    while len(bqtr) == 0:
+                while len(bqtr) == 0:
+                    try:
                         x,y = self._featurize_random_image(dataset='tr', 
                                                            balance=balance, rs=rs)
-                        bqtr.update(x,y)
+                    except Exception as e:
+                        logger.info(repr(e))
+                        raise e
+                    bqtr.update(x,y)
 
-                    while len(bqva) == 0:
+                while len(bqva) == 0:
+                    try:
                         x,y = self._featurize_random_image(dataset='va',
                                                            balance=balance, rs=rs)
-                        bqva.update(x,y)
-                except Exception as e:
-                    logger.info(repr(e))
-                    raise e
+                    except Exception as e:
+                        logger.info(repr(e))
+                        raise e
+                    bqva.update(x,y)
 
                 Xtr,ytr = bqtr.next()
                 Xva,yva = bqva.next()
@@ -624,8 +650,8 @@ class stat_learn_level_set(object):
         del logger
 
     def _compute_auto_batch_size(self):
-        df = self._data_file
-        tf = self._tmp_file
+        df = self._data_file()
+        tf = self._tmp_file(mode='r')
 
         mu = 0.0
         balance = self._nopts_balance
@@ -655,8 +681,8 @@ class stat_learn_level_set(object):
         tf.close()
 
     def _compute_auto_batches_per_epoch(self):
-        df = self._data_file
-        tf = self._tmp_file
+        df = self._data_file()
+        tf = self._tmp_file(mode='r')
 
         total = 0.0
         balance = self._nopts_balance
@@ -764,8 +790,7 @@ class stat_learn_level_set(object):
             self._logger.info('Featurizing training images.')
 
             # Get input and output variables
-            X, y = self._featurize_all_images('tr',
-                                              self._rfopts_balance,
+            X, y = self._featurize_all_images('tr', self._rfopts_balance,
                                               self._rs)
 
             np.save(os.path.join(self._fopts_tmp_dir, 'X.npy'), X)
@@ -819,15 +844,25 @@ class stat_learn_level_set(object):
         # Fit the decision tree regression model
         rf.fit(X, y)
 
+        err = ((rf.predict(X) - y)**2).mean()
+        self._logger.info("Estimated tr MSE: {:.4f}".format(err))
+
         # Update nu
         self._update_nu(rf)
+
+        X, y = self._featurize_all_images('va', True, rs)
+
+        err = ((rf.predict(X) - y)**2).mean()
+
+        self._logger.info("Estimated va MSE: {:.4f}".format(err))
 
         np.save(os.path.join(self._fopts_tmp_dir, 'fimp.npy'),
                 rf.feature_importances_)
 
     def _update_nu(self, dtr):
-        df = self._data_file
-        tf = self._tmp_file
+        df = self._data_file()
+        tf = self._tmp_file_write_lock()
+
         n_estimators = self._rfopts_n_estimators
 
         for ds,key,iseed,seed in self._iter_tmp():
@@ -849,19 +884,20 @@ class stat_learn_level_set(object):
                                         dx=dx)
 
             tf[ds][key]['seed-%d'%iseed]['nu'][mask] += \
-                    dtr.predict(features[mask]) /n_estimators
-
+                    dtr.predict(features[mask])# / n_estimators
 
         tf.close()
+        self._tmp_file_write_unlock()
         df.close()
 
     def _set_all_nu_zero(self):
-        tf = self._tmp_file
+        tf = self._tmp_file_write_lock()
 
         for ds,key,iseed,seed in self._iter_tmp():
             tf[ds][key]['seed-%d'%iseed]['nu'][...] = 0.
 
         tf.close()
+        self._tmp_file_write_unlock()
 
     def _check_early_exit(self):
         i = self._iter
@@ -1320,7 +1356,7 @@ class stat_learn_level_set(object):
     
     def _validate_datasets(self, datasets):
         if datasets is None:
-            df = self._data_file
+            df = self._data_file()
             datasets = splitter.split(df.keys(), rs=self._rs)
             df.close()
 
@@ -1348,7 +1384,7 @@ class stat_learn_level_set(object):
             # Default behavior: use compute and use a single seed
             # (the ground truth center of mass) for each.
 
-            df = self._data_file
+            df = self._data_file()
             seeds = dict(tr={}, va={}, ts={})
 
             for ds in ['tr','va','ts']:
@@ -1393,8 +1429,8 @@ class stat_learn_level_set(object):
         self._seeds = seeds
 
     def _collect_scores(self):
-        df = self._data_file
-        tf = self._tmp_file
+        df = self._data_file()
+        tf = self._tmp_file(mode='r')
 
         if not hasattr(self, '_scores'):
             self._scores = {}
