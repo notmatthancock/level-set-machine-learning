@@ -574,7 +574,7 @@ class stat_learn_level_set(object):
                     logger.info(lstr % (epoch,
                                         self._nopts_maxepochs,
                                         batch+1,
-                                        self._nopts_batches_per_epoch))
+                                        bpe))
 
                 while len(bqtr) == 0:
                     try:
