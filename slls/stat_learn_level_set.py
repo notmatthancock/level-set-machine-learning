@@ -548,15 +548,10 @@ class stat_learn_level_set(object):
         for epoch in range(self._nopts_maxepochs+1):
             for batch in range(bpe):
                 if self._nopts_log_batch:
-
-                    if self._nopts_batches_per_epoch:
-                        bpe = self._nopts_batches_per_epoch
-                    else:
-
                     logger.info(lstr % (epoch,
                                         self._nopts_maxepochs,
                                         batch+1,
-                                        bpe))
+                                        self._nopts_batches_per_epoch))
 
                 while len(bqtr) == 0:
                     x,y = self._featurize_random_image(dataset='tr', 
