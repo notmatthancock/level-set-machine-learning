@@ -145,15 +145,17 @@ class stat_learn_level_set(object):
         os.remove(lock_path)
 
     def _iter_seeds(self, ds):
-        assert ds in ['tr','va','ts']
+        assert ds in ['tr', 'va', 'ts']
+
         if not hasattr(self, '_seeds'):
-            raise RuntimeError("Can't iter seeds without seeds initialized.")
+            raise RuntimeError("Cannot iter seeds without seeds initialized.")
+        
         for key in self._seeds[ds]:
             for iseed,seed in enumerate(self._seeds[ds][key]):
-                yield key,iseed,seed
+                yield key, iseed, seed
 
     def _iter_tmp(self):
-        for ds in ['tr','va','ts']:
+        for ds in ['tr', 'va', 'ts']:
             for key,iseed,seed in self._iter_seeds(ds):
                 yield ds, key, iseed, seed
 
@@ -178,9 +180,12 @@ class stat_learn_level_set(object):
                 img = (img - img.mean()) / img.std()
 
             # Compute the initialization for this example and seed value.
-            u0, dist, mask = self.init_func(img, self.band,
-                                            dx=df[key].attrs['dx'],
-                                            seed=seed)
+            try:
+                u0, dist, mask = self.init_func(img, self.band,
+                                                dx=df[key].attrs['dx'],
+                                                seed=seed)
+            except Exception as e:
+                import ipdb; ipdb.set_trace()
 
             # "Auto" step: only use training and validation datasets.
             if ds in ['tr', 'va']:
@@ -366,7 +371,8 @@ class stat_learn_level_set(object):
         return mask
 
     def _featurize_all_images(self, dataset, balance, rs):
-        """
+        """ Featurize all the images in the dataset given by the argument
+        
         dataset: str
             Should be in ['tr','va','ts']
 
@@ -378,41 +384,41 @@ class stat_learn_level_set(object):
             should be passed here rather than using the `self._rs`
             attribute, since in the multiprocessing setting we can't
             rely on `self._rs`.
+
+        Returns
+        -------
+        X, y: ndarray (n_examples, n_features), ndarray (n_examples,)
+            X is a matrix storing the feature vector in each row, whereas
+            y is a vector storing the corresponding target value for
+            each feature vector (i.e., the ground-truth signed distance
+            value at the spatial coordinate for which the feature vector
+            was computed).
         """
         assert dataset in ['tr','va','ts']
-        who = ['tr','va','ts'].index(dataset)
 
-        tf = self._tmp_file(mode='r')
+        ###########################################################
+        # Precompute total number of feature vector examples
 
         # Count the number of points collected
         count = 0
 
-        for ds,key,iseed,seed in self._iter_tmp():
-            if ds != dataset: continue
+        if balance:
+            balance_masks = []
 
-            with self._data_file() as df:
-                img    = df[key+"/img"][...]
-                target = df[key+"/dist"][...]
-                dx     = df[key].attrs['dx']
+        for key, iseed, seed in self._iter_seeds(dataset):
 
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
+            with self._tmp_file(mode='r') as tf:
+                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
 
-            u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
-            dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
-            mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
-
-            if not mask.any():
-                continue # Otherwise, repeat the loop until a non-empty mask.
-
-            # Precompute data size.
             if balance:
-                npos = (target[mask] > 0).sum()
-                nneg = (target[mask] < 0).sum()
-                if min(npos,nneg) > 0:
-                    count += 2*min(npos,nneg)
-                else:
-                    count += max(npos, nneg)
+
+                with self._data_file() as df:
+                    target = df[key+"/dist"][...]
+
+                balance_mask = self._balance_mask(target[mask], rs=rs)
+                balance_masks.append(balance_mask)
+                count += balance_mask.sum()
+
             else:
                 count += mask.sum()
 
@@ -421,8 +427,11 @@ class stat_learn_level_set(object):
 
         index = 0
 
-        for ds,key,iseed,seed in self._iter_tmp():
-            if ds != dataset: continue
+        ###########################################################
+        # Compute the feature vectors and place them in
+        # the feature matrix
+
+        for i, (key, iseed, seed) in enumerate(self._iter_seeds(dataset)):
 
             with self._data_file() as df:
                 img    = df[key+"/img"][...]
@@ -432,9 +441,10 @@ class stat_learn_level_set(object):
             if self._fopts_normalize_images:
                 img = (img - img.mean()) / img.std()
 
-            u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
-            dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
-            mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
+            with self._tmp_file(mode='r') as tf:
+                u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
+                dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
+                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
 
             if not mask.any():
                 continue # Otherwise, repeat the loop until a non-empty mask.
@@ -443,7 +453,7 @@ class stat_learn_level_set(object):
             features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
 
             if balance:
-                bmask = self._balance_mask(target[mask], rs=rs)
+                bmask = balance_masks[i]
                 next_index = index + target[mask][bmask].shape[0]
                 X[index:next_index] = features[mask][bmask]
                 y[index:next_index] =   target[mask][bmask]
@@ -453,8 +463,6 @@ class stat_learn_level_set(object):
                 y[index:next_index] =   target[mask]
 
             index = next_index
-
-        tf.close()
 
         return X, y
 
@@ -933,7 +941,6 @@ class stat_learn_level_set(object):
             raise RuntimeError("Run `set_rf_opts` before fitting.")
         if self._is_fitted:
             raise RuntimeError("This model has already been fitted.")
-        
 
         self._logger.info("Initializing.")
         self._initialize()
@@ -1143,7 +1150,6 @@ class stat_learn_level_set(object):
         self._nva = len([_ for _ in self._iter_seeds('va')])
         self._nts = len([_ for _ in self._iter_seeds('ts')])
         self._ntotal = self._ntr + self._nva + self._nts
-
 
         if self._fopts_save_file is None:
             self._fopts_save_file = os.path.join(os.path.curdir,

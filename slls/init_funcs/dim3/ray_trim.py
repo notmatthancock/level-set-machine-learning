@@ -141,6 +141,11 @@ class ray_trim(init_func_base):
             rad = (self.min_vol / (4/3.) / np.pi)**(1./3)
             B[dist <= rad] = True
 
+            # If the resolution doesn't permit a ball of radius `min_vol`
+            # then set the seed pixel to true
+            if B.sum() == 0:
+                B[seed[0], seed[1], seed[2]] = True
+
             if self.alert_small:
                 print("Volume less than `min_vol`. Small ball is used.")
 
