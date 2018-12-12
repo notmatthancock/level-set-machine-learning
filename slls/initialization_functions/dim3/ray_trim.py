@@ -4,8 +4,8 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d as gf1d
 from skimage.measure import label
 
-from slls.init_funcs import init_func_base
-from slls.init_funcs.dim3.utils import radii_from_mask as rfm
+from slls.initialization_functions import init_func_base
+from slls.initialization_functions.dim3.utils import radii_from_mask as rfm
 
 
 class ray_trim(init_func_base):

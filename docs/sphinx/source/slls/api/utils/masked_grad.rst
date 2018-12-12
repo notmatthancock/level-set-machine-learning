@@ -1,5 +1,5 @@
-stat_learn_level_set.utils.masked_grad
+LevelSetLearn.utils.masked_grad
 --------------------------------------
 
-.. automodule:: stat_learn_level_set.utils.masked_grad
+.. automodule:: LevelSetLearn.utils.masked_grad
     :members:

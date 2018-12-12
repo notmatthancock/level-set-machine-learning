@@ -1,4 +1,4 @@
-from slls.init_funcs import init_func_base
+from slls.initialization_functions import init_func_base
 import numpy as np
 import skfmm
 

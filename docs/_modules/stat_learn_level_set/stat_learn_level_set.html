@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>stat_learn_level_set.stat_learn_level_set &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <title>LevelSetLearn.LevelSetLearn &#8212; LIDC Dataset and Segmentation  documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -30,7 +30,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for stat_learn_level_set.stat_learn_level_set</h1><div class="highlight"><pre>
+  <h1>Source code for LevelSetLearn.LevelSetLearn</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">shutil</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">warnings</span><span class="o">,</span> <span class="nn">pickle</span><span class="o">,</span> <span class="nn">h5py</span>
 <span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">datetime</span><span class="o">,</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -44,7 +44,7 @@
 <span class="kn">import</span> <span class="nn">utils.masked_grad</span> <span class="k">as</span> <span class="nn">mg</span>
 <span class="kn">from</span> <span class="nn">neural_network</span> <span class="k">import</span> <span class="n">neural_network</span> <span class="k">as</span> <span class="n">nn</span>
 
-<div class="viewcode-block" id="stat_learn_level_set"><a class="viewcode-back" href="../../slls/api/stat_learn_level_set.html#stat_learn_level_set.stat_learn_level_set">[docs]</a><span class="k">class</span> <span class="nc">stat_learn_level_set</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="LevelSetLearn"><a class="viewcode-back" href="../../slls/api/LevelSetLearn.html#LevelSetLearn.LevelSetLearn">[docs]</a><span class="k">class</span> <span class="nc">LevelSetLearn</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_file</span><span class="p">,</span> <span class="n">feature_map</span><span class="p">,</span> <span class="n">init_func</span><span class="p">,</span> <span class="n">score_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">step</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">rs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> 
         <span class="sd">&quot;&quot;&quot;</span>
@@ -64,14 +64,14 @@
 <span class="sd">                some/path/to/data.h5</span>
 
 <span class="sd">            where `data.h5` is formatted as specified in the </span>
-<span class="sd">            :meth:`stat_learn_level_set.utils.tohdf5` module. </span>
+<span class="sd">            :meth:`LevelSetLearn.utils.tohdf5` module. </span>
 <span class="sd">            `data.h5` contains the image and ground truth data.</span>
 
 <span class="sd">        feature_map: feature map class</span>
-<span class="sd">            See :class:`stat_learn_level_set.feature_maps.feature_map_base`.</span>
+<span class="sd">            See :class:`LevelSetLearn.feature_maps.feature_map_base`.</span>
 
 <span class="sd">        init_func: init func class</span>
-<span class="sd">            See :class:`stat_learn_level_set.init_funcs.init_func_base`.</span>
+<span class="sd">            See :class:`LevelSetLearn.init_funcs.init_func_base`.</span>
 
 <span class="sd">        score_func: function, default=None</span>
 <span class="sd">            Has signature::</span>
@@ -112,12 +112,12 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature_map</span><span class="p">,</span> <span class="n">feature_map_base</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s2">&quot;`feature_map` should be a class derived from&quot;</span>
-                              <span class="s2">&quot; `stat_learn_level_set.feature_maps.feature_map_base`.&quot;</span><span class="p">))</span> 
+                              <span class="s2">&quot; `LevelSetLearn.feature_maps.feature_map_base`.&quot;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feature_map</span> <span class="o">=</span> <span class="n">feature_map</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">init_func</span><span class="p">,</span> <span class="n">init_func_base</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s2">&quot;`init_func` should be a class derived from&quot;</span>
-                              <span class="s2">&quot; `stat_learn_level_set.init_funcs.init_func_base`.&quot;</span><span class="p">))</span> 
+                              <span class="s2">&quot; `LevelSetLearn.init_funcs.init_func_base`.&quot;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">init_func</span> <span class="o">=</span> <span class="n">init_func</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">score_func</span> <span class="o">=</span> <span class="n">jaccard</span> <span class="k">if</span> <span class="n">score_func</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">score_func</span>
@@ -674,7 +674,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="stat_learn_level_set.fit"><a class="viewcode-back" href="../../slls/api/stat_learn_level_set.html#stat_learn_level_set.stat_learn_level_set.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="LevelSetLearn.fit"><a class="viewcode-back" href="../../slls/api/LevelSetLearn.html#LevelSetLearn.LevelSetLearn.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">warm_start</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run `set_fit_options` and `set_net_opts` before calling `fit`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -776,7 +776,7 @@
             <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="stat_learn_level_set.set_fit_options"><a class="viewcode-back" href="../../slls/api/stat_learn_level_set.html#stat_learn_level_set.stat_learn_level_set.set_fit_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_fit_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seeds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<div class="viewcode-block" id="LevelSetLearn.set_fit_options"><a class="viewcode-back" href="../../slls/api/LevelSetLearn.html#LevelSetLearn.LevelSetLearn.set_fit_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_fit_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seeds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                         <span class="n">tmp_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">remove_tmp</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                         <span class="n">maxiters</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">va_hist_len</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">va_hist_tol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                         <span class="n">logfile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logstamp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logstdout</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -797,7 +797,7 @@
 
 <span class="sd">            If `datasets` is None (default), then an auto split of </span>
 <span class="sd">            60/20/20% is made using the </span>
-<span class="sd">            `stat_learn_level_set.utils.data.splitter` utility.</span>
+<span class="sd">            `LevelSetLearn.utils.data.splitter` utility.</span>
 
 <span class="sd">        seeds: tuple, len=3, default=None</span>
 <span class="sd">            The seeds are used in the `init_func` supplied at initialization.</span>
@@ -893,7 +893,7 @@
                                   <span class="n">stdout</span><span class="o">=</span><span class="n">logstdout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit_opts_set</span> <span class="o">=</span> <span class="kc">True</span></div>
 
-<div class="viewcode-block" id="stat_learn_level_set.set_net_options"><a class="viewcode-back" href="../../slls/api/stat_learn_level_set.html#stat_learn_level_set.stat_learn_level_set.set_net_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_net_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nhidden</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="n">ninits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<div class="viewcode-block" id="LevelSetLearn.set_net_options"><a class="viewcode-back" href="../../slls/api/LevelSetLearn.html#LevelSetLearn.LevelSetLearn.set_net_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_net_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nhidden</span><span class="o">=</span><span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="n">ninits</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
                         <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">maxepochs</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
                         <span class="n">batch_size_auto</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="n">batches_per_epoch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iters_per_batch</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
@@ -966,7 +966,7 @@
                            <span class="s2">&quot;&gt; 50. This could result in excessive train &quot;</span>
                            <span class="s2">&quot;times and/or memory consumption.&quot;</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="stat_learn_level_set.segment"><a class="viewcode-back" href="../../slls/api/stat_learn_level_set.html#stat_learn_level_set.stat_learn_level_set.segment">[docs]</a>    <span class="k">def</span> <span class="nf">segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">seg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">memoize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="LevelSetLearn.segment"><a class="viewcode-back" href="../../slls/api/LevelSetLearn.html#LevelSetLearn.LevelSetLearn.segment">[docs]</a>    <span class="k">def</span> <span class="nf">segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">seg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">memoize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Segment `img`.</span>
 

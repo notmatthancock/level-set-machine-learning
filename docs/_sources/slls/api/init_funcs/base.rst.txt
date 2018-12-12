@@ -1,5 +1,5 @@
-stat_learn_level_set.init_funcs
+LevelSetLearn.init_funcs
 ----------------------------------------
 
-.. automodule:: stat_learn_level_set.init_funcs
+.. automodule:: LevelSetLearn.init_funcs
     :members:

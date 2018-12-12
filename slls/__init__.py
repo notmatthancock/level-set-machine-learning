@@ -1,1 +1,1 @@
-from stat_learn_level_set import stat_learn_level_set
+from level_set_learn import LevelSetLearn
