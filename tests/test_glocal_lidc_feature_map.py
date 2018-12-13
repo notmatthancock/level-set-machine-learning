@@ -3,7 +3,7 @@ import numpy as np
 
 import pylidc.utils as pu
 
-from slls.feature_maps.dim3 import \
+from level_set_learn.feature_maps.dim3 import \
         lidc_glocal_feature_map
 
 with h5py.File('/home/matt/LIDC/3d/no-interp/dataset.h5', 'r') as hf:

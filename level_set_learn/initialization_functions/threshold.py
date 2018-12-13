@@ -1,6 +1,6 @@
 import skfmm
 import numpy as np
-from slls.initialization_functions import init_func_base
+from level_set_learn.initialization_functions import init_func_base
 from scipy.ndimage import gaussian_filter as gf
 from skimage.filters.thresholding import threshold_otsu as otsu
 
@@ -12,7 +12,7 @@ class threshold(init_func_base):
 
     Example::
         
-        >>> from slls.initialization_functions import threshold as th
+        >>> from level_set_learn.initialization_functions import threshold as th
 
         >>> ifnc = th.threshold(sigma=2)
         >>> img = np.random.randn(46, 67, 81)

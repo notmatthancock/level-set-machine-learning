@@ -1,7 +1,7 @@
 import numpy as np  # from RandomState
 
-from slls.utils.data.synth.dim2 import hamburger
-from slls.utils.data import tohdf5
+from level_set_learn.utils.data.synth.dim2 import hamburger
+from level_set_learn.utils.data import tohdf5
 
 
 # Create the random number generator.

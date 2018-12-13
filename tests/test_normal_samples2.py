@@ -4,8 +4,8 @@ import numpy as np
 import skfmm
 from skimage.morphology import disk, ball
 
-from slls.feature_maps.dim3.utils import normal_samples as ns
-from slls.utils import masked_grad as mg
+from level_set_learn.feature_maps.dim3.utils import normal_samples as ns
+from level_set_learn.utils import masked_grad as mg
 
 #class TestNormalSamplesBall(unittest.TestCase):
 #    def test_normal_samples_ball(self):

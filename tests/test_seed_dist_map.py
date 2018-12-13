@@ -4,7 +4,7 @@ import numpy as np
 import h5py
 import skfmm
 
-from slls.utils import seed
+from level_set_learn.utils import seed
 
 
 ii,jj = np.indices((101, 75), dtype=np.float)

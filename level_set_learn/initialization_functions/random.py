@@ -1,4 +1,4 @@
-from slls.initialization_functions import init_func_base
+from level_set_learn.initialization_functions import init_func_base
 import numpy as np
 import skfmm
 

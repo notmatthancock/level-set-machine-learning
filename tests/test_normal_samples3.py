@@ -4,8 +4,8 @@ import numpy as np
 import skfmm
 from skimage.morphology import disk, ball
 
-from slls.feature_maps.dim3.utils import normal_samples as ns
-from slls.utils import masked_grad as mg
+from level_set_learn.feature_maps.dim3.utils import normal_samples as ns
+from level_set_learn.utils import masked_grad as mg
 
 img = np.indices((71,71), dtype=np.float)[0] - 35
 img = np.repeat(img[:,:,np.newaxis], 3, axis=2)
