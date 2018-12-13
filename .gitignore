@@ -71,3 +71,4 @@ target/
 *.h5
 *.pkl
 tmp/
+*log*.txt

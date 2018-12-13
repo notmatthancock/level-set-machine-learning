@@ -15,6 +15,9 @@ from utils.data import splitter
 import utils.masked_grad as mg
 
 
+DEFAULT_SAVE_NAME = 'lsl_model.pkl'
+
+
 class LevelSetLearn(object):
     def __init__(self, data_file, feature_map, init_func,
                  model=LinearRegression, model_kwargs={},
@@ -165,6 +168,10 @@ class LevelSetLearn(object):
                 yield ds, key, iseed, seed
 
     def _initialize(self):
+        """ TODO """
+
+        self.models = []
+
         df = self._data_file()
         tf = self._tmp_file_write_lock()
 
@@ -729,13 +736,14 @@ class LevelSetLearn(object):
                                       "iter-%d" % self._iter)
         os.mkdir(self._iter_dir)
 
-        self._set_all_nu_zero()
         self._logger.info('Featurizing training images.')
 
         # Get input and output variables
         X, y = self._featurize_all_images('tr', balance=True,
                                           rs=self._rs)
+        # Create and fit the model
         model = self.model(**self.model_kwargs)
+        model.fit(X, y)
         self.models.append(model)
 
         #np.save(os.path.join(self._fopts_tmp_dir, 'X.npy'), X)
@@ -861,10 +869,6 @@ class LevelSetLearn(object):
         """
         if not self._fit_opts_set:
             raise RuntimeError("Run `set_fit_options` before fitting.")
-        if self._fopts_model_fit_method == 'nnet' and not self._net_opts_set:
-            raise RuntimeError("Run `set_net_opts` before fitting.")
-        if self._fopts_model_fit_method == 'rf' and not self._rf_opts_set:
-            raise RuntimeError("Run `set_rf_opts` before fitting.")
         if self._is_fitted:
             raise RuntimeError("This model has already been fitted.")
 
@@ -1007,7 +1011,7 @@ class LevelSetLearn(object):
 
         save_file: str, default=None
             The model will be pickled to this path.
-            The default (None) uses the file `slls_model.pkl` at the current
+            The default (None) uses the file `lsl_model.pkl` at the current
             working directory.
 
         model_fit_method: str, default='nnet'
@@ -1059,10 +1063,6 @@ class LevelSetLearn(object):
         logstdout: bool, default=True
             If True, the log will print to stdout (as well as logging to file).
         """
-        if model_fit_method not in MODEL_FIT_METHODS:
-            msg = 'model_fit_method ({}) must be one of {}.'
-            raise ValueError(msg.format(model_fit_method, MODEL_FIT_METHODS))
-
         # This is hackish. It just sets most the arguments to member variables.
         L = locals(); L.pop('self'); L.pop('datasets'); L.pop('seeds')
         for l in L: setattr(self, "_fopts_%s"%l, L[l])
@@ -1078,7 +1078,7 @@ class LevelSetLearn(object):
 
         if self._fopts_save_file is None:
             self._fopts_save_file = os.path.join(os.path.curdir,
-                                                 "slls_model.pkl")
+                                                 DEFAULT_SAVE_NAME)
 
         self._fopts_save_file = os.path.abspath(
             self._fopts_save_file
