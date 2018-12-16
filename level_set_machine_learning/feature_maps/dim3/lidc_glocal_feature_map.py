@@ -2,12 +2,12 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d as gf1d
 from scipy.spatial.distance import pdist
 
-from level_set_machine_learning.feature_maps import feature_map_base
+from level_set_machine_learning.feature_maps.feature_map_base import FeatureMapBase
 from level_set_machine_learning.feature_maps.dim3.utils import normal_samples as ns
 from level_set_machine_learning.feature_maps.dim3.utils import to_com_samples as ts
 from level_set_machine_learning.utils import masked_grad as mg
 
-class lidc_glocal_feature_map(feature_map_base):
+class lidc_glocal_feature_map(FeatureMapBase):
     """
     A simple feature map with local and global, shape and image features,
     with image features computed at multiple scales.

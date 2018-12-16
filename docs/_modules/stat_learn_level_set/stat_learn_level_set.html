@@ -37,7 +37,7 @@
 <span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
 <span class="kn">import</span> <span class="nn">skfmm</span>
 
-<span class="kn">from</span> <span class="nn">feature_maps</span> <span class="k">import</span> <span class="n">feature_map_base</span>
+<span class="kn">from</span> <span class="nn">feature_maps</span> <span class="k">import</span> <span class="n">FeatureMapBase</span>
 <span class="kn">from</span> <span class="nn">init_funcs</span> <span class="k">import</span> <span class="n">init_func_base</span>
 <span class="kn">from</span> <span class="nn">utils.data</span> <span class="k">import</span> <span class="n">splitter</span>
 
@@ -68,7 +68,7 @@
 <span class="sd">            `data.h5` contains the image and ground truth data.</span>
 
 <span class="sd">        feature_map: feature map class</span>
-<span class="sd">            See :class:`LevelSetMachineLearning.feature_maps.feature_map_base`.</span>
+<span class="sd">            See :class:`LevelSetMachineLearning.feature_maps.FeatureMapBase`.</span>
 
 <span class="sd">        init_func: init func class</span>
 <span class="sd">            See :class:`LevelSetMachineLearning.init_funcs.init_func_base`.</span>
@@ -110,9 +110,9 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_file</span> <span class="k">as</span> <span class="n">df</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;/img&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">ndim</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature_map</span><span class="p">,</span> <span class="n">feature_map_base</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature_map</span><span class="p">,</span> <span class="n">FeatureMapBase</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s2">&quot;`feature_map` should be a class derived from&quot;</span>
-                              <span class="s2">&quot; `LevelSetMachineLearning.feature_maps.feature_map_base`.&quot;</span><span class="p">))</span>
+                              <span class="s2">&quot; `LevelSetMachineLearning.feature_maps.FeatureMapBase`.&quot;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feature_map</span> <span class="o">=</span> <span class="n">feature_map</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">init_func</span><span class="p">,</span> <span class="n">init_func_base</span><span class="p">):</span>

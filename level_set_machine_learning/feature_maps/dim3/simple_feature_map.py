@@ -1,9 +1,9 @@
 import numpy as np
-from level_set_machine_learning.feature_maps import feature_map_base
+from level_set_machine_learning.feature_maps.feature_map_base import FeatureMapBase
 from scipy.ndimage import gaussian_filter1d as gf1d
 from level_set_machine_learning.utils import masked_grad as mg
 
-class simple_feature_map(feature_map_base):
+class simple_feature_map(FeatureMapBase):
     """
     A simple feature map with local and global, shape and image features,
     with image features computed at multiple scales.
