@@ -1,5 +1,5 @@
-LevelSetLearn.neural_network.stats_recorder
+LevelSetMachineLearning.neural_network.stats_recorder
 --------------------------------------------------
 
-.. automodule:: LevelSetLearn.neural_network.stats_recorder
+.. automodule:: LevelSetMachineLearning.neural_network.stats_recorder
     :members:

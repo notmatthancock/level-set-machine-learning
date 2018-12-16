@@ -1,5 +1,5 @@
-LevelSetLearn.init_funcs.random
+LevelSetMachineLearning.init_funcs.random
 --------------------------------------
 
-.. automodule:: LevelSetLearn.init_funcs.random
+.. automodule:: LevelSetMachineLearning.init_funcs.random
     :members:

@@ -4,7 +4,7 @@ SLLS API
 .. toctree::
     :maxdepth: 1
 
-    LevelSetLearn
+    LevelSetMachineLearning
     utils/visualize
     utils/masked_grad
     utils/data/tohdf5

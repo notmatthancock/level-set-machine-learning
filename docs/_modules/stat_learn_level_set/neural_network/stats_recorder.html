@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>LevelSetLearn.neural_network.stats_recorder &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <title>LevelSetMachineLearning.neural_network.stats_recorder &#8212; LIDC Dataset and Segmentation  documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
@@ -30,10 +30,10 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for LevelSetLearn.neural_network.stats_recorder</h1><div class="highlight"><pre>
+  <h1>Source code for LevelSetMachineLearning.neural_network.stats_recorder</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<div class="viewcode-block" id="stats_recorder"><a class="viewcode-back" href="../../../slls/api/neural_network/stats_recorder.html#LevelSetLearn.neural_network.stats_recorder.stats_recorder">[docs]</a><span class="k">class</span> <span class="nc">stats_recorder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="stats_recorder"><a class="viewcode-back" href="../../../slls/api/neural_network/stats_recorder.html#LevelSetMachineLearning.neural_network.stats_recorder.stats_recorder">[docs]</a><span class="k">class</span> <span class="nc">stats_recorder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class records online updates of empirical mean</span>
 <span class="sd">    and standard deviation.</span>
@@ -52,7 +52,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nobservations</span> <span class="o">=</span> <span class="mi">0</span>
 
-<div class="viewcode-block" id="stats_recorder.update"><a class="viewcode-back" href="../../../slls/api/neural_network/stats_recorder.html#LevelSetLearn.neural_network.stats_recorder.stats_recorder.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="stats_recorder.update"><a class="viewcode-back" href="../../../slls/api/neural_network/stats_recorder.html#LevelSetMachineLearning.neural_network.stats_recorder.stats_recorder.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the mean and variance with provided data.</span>
 
@@ -81,7 +81,7 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">nobservations</span> <span class="o">+=</span> <span class="n">n</span></div>
 
-<div class="viewcode-block" id="stats_recorder.reset"><a class="viewcode-back" href="../../../slls/api/neural_network/stats_recorder.html#LevelSetLearn.neural_network.stats_recorder.stats_recorder.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="stats_recorder.reset"><a class="viewcode-back" href="../../../slls/api/neural_network/stats_recorder.html#LevelSetMachineLearning.neural_network.stats_recorder.stats_recorder.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reset the number of observations to zero. Mean and std are removed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

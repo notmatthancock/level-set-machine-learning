@@ -18,7 +18,7 @@ import utils.masked_grad as mg
 DEFAULT_SAVE_NAME = 'lsl_model.pkl'
 
 
-class LevelSetLearn(object):
+class LevelSetMachineLearning(object):
     def __init__(self, data_file, feature_map, init_func,
                  model=LinearRegression, model_kwargs={},
                  score_func=jaccard, step='auto', band=3, rs=None):

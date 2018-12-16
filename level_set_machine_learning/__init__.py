@@ -1,1 +1,1 @@
-from level_set_learn import LevelSetLearn
+from core import LevelSetMachineLearning

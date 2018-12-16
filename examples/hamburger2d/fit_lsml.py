@@ -1,6 +1,6 @@
 import numpy as np
 
-from level_set_machine_learning import LevelSetLearn as LSL
+from level_set_machine_learning import LevelSetMachineLearning as LSL
 from level_set_machine_learning.feature_maps.dim2 import simple_feature_map as sfm
 from level_set_machine_learning.initialization_functions import random as rand_init
 

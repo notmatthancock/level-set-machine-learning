@@ -1,5 +1,5 @@
-LevelSetLearn.LevelSetLearn
+LevelSetMachineLearning.LevelSetMachineLearning
 -----------------------------------------
 
-.. autoclass:: LevelSetLearn.LevelSetLearn
+.. autoclass:: LevelSetMachineLearning.LevelSetMachineLearning
     :members:

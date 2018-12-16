@@ -33,17 +33,17 @@
   <div class="section" id="stat-learn-level-set">
 <h1>Stat Learn Level Set<a class="headerlink" href="#stat-learn-level-set" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="LevelSetLearn.LevelSetLearn">
-<em class="property">class </em><code class="descclassname">LevelSetLearn.</code><code class="descname">LevelSetLearn</code><span class="sig-paren">(</span><em>data_file</em>, <em>feature_map</em>, <em>init_func</em>, <em>score_func=None</em>, <em>step='auto'</em>, <em>band=3</em>, <em>rs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetLearn/LevelSetLearn.html#LevelSetLearn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetLearn.LevelSetLearn" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.LevelSetMachineLearning">
+<em class="property">class </em><code class="descclassname">LevelSetMachineLearning.</code><code class="descname">LevelSetMachineLearning</code><span class="sig-paren">(</span><em>data_file</em>, <em>feature_map</em>, <em>init_func</em>, <em>score_func=None</em>, <em>step='auto'</em>, <em>band=3</em>, <em>rs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetMachineLearning/LevelSetMachineLearning.html#LevelSetMachineLearning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetMachineLearning.LevelSetMachineLearning" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
-<dt id="LevelSetLearn.LevelSetLearn.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>warm_start=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetLearn/LevelSetLearn.html#LevelSetLearn.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetLearn.LevelSetLearn.fit" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.LevelSetMachineLearning.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>warm_start=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetMachineLearning/LevelSetMachineLearning.html#LevelSetMachineLearning.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetMachineLearning.LevelSetMachineLearning.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run <cite>set_fit_options</cite> and <cite>set_net_opts</cite> before calling <cite>fit</cite>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="LevelSetLearn.LevelSetLearn.segment">
-<code class="descname">segment</code><span class="sig-paren">(</span><em>img</em>, <em>seg=None</em>, <em>dx=None</em>, <em>verbose=True</em>, <em>memoize=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetLearn/LevelSetLearn.html#LevelSetLearn.segment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetLearn.LevelSetLearn.segment" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.LevelSetMachineLearning.segment">
+<code class="descname">segment</code><span class="sig-paren">(</span><em>img</em>, <em>seg=None</em>, <em>dx=None</em>, <em>verbose=True</em>, <em>memoize=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetMachineLearning/LevelSetMachineLearning.html#LevelSetMachineLearning.segment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetMachineLearning.LevelSetMachineLearning.segment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Segment <cite>img</cite>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -74,8 +74,8 @@ the i’th iteration.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="LevelSetLearn.LevelSetLearn.set_fit_options">
-<code class="descname">set_fit_options</code><span class="sig-paren">(</span><em>datasets=None</em>, <em>seeds=None</em>, <em>save_file=None</em>, <em>tmp_dir=None</em>, <em>remove_tmp=False</em>, <em>maxiters=100</em>, <em>va_hist_len=5</em>, <em>va_hist_tol=0.0</em>, <em>logfile=None</em>, <em>logstamp=True</em>, <em>logstdout=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetLearn/LevelSetLearn.html#LevelSetLearn.set_fit_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetLearn.LevelSetLearn.set_fit_options" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.LevelSetMachineLearning.set_fit_options">
+<code class="descname">set_fit_options</code><span class="sig-paren">(</span><em>datasets=None</em>, <em>seeds=None</em>, <em>save_file=None</em>, <em>tmp_dir=None</em>, <em>remove_tmp=False</em>, <em>maxiters=100</em>, <em>va_hist_len=5</em>, <em>va_hist_tol=0.0</em>, <em>logfile=None</em>, <em>logstamp=True</em>, <em>logstdout=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetMachineLearning/LevelSetMachineLearning.html#LevelSetMachineLearning.set_fit_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetMachineLearning.LevelSetMachineLearning.set_fit_options" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -93,7 +93,7 @@ So for example, <cite>datasets[‘tr’][0]</cite> yields a string that is a
 key into the dataset file for the first training example.</p>
 <p>If <cite>datasets</cite> is None (default), then an auto split of
 60/20/20% is made using the
-<cite>LevelSetLearn.utils.data.splitter</cite> utility.</p>
+<cite>LevelSetMachineLearning.utils.data.splitter</cite> utility.</p>
 </li>
 <li><strong>seeds</strong> (<em>tuple</em><em>, </em><em>len=3</em><em>, </em><em>default=None</em>) – <p>The seeds are used in the <cite>init_func</cite> supplied at initialization.
 Note that seed coordinates must be given in <em>index</em> coordinates,
@@ -155,8 +155,8 @@ than <cite>va_hist_tol</cite>, or when <cite>maxiters</cite> has been reached.</
 </dd></dl>
 
 <dl class="method">
-<dt id="LevelSetLearn.LevelSetLearn.set_net_options">
-<code class="descname">set_net_options</code><span class="sig-paren">(</span><em>nhidden=[64, 128, 256, 512], ninits=3, step=0.1, maxepochs=1000, batch_size=5, batch_size_auto=True, batches_per_epoch=None, iters_per_batch=1, log_batch=False, balance=True, va_hist_len=25, va_hist_tol=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetLearn/LevelSetLearn.html#LevelSetLearn.set_net_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetLearn.LevelSetLearn.set_net_options" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.LevelSetMachineLearning.set_net_options">
+<code class="descname">set_net_options</code><span class="sig-paren">(</span><em>nhidden=[64, 128, 256, 512], ninits=3, step=0.1, maxepochs=1000, batch_size=5, batch_size_auto=True, batches_per_epoch=None, iters_per_batch=1, log_batch=False, balance=True, va_hist_len=25, va_hist_tol=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/LevelSetMachineLearning/LevelSetMachineLearning.html#LevelSetMachineLearning.set_net_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#LevelSetMachineLearning.LevelSetMachineLearning.set_net_options" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="docutils">
 <dt>nhidden: list of ints, default=[64, 128, 256, 512]</dt>
 <dd>The number hidden hidden units to search over.</dd>

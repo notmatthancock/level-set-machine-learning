@@ -1,5 +1,5 @@
-LevelSetLearn.utils.data.tohdf5
+LevelSetMachineLearning.utils.data.tohdf5
 --------------------------------------
 
-.. automodule:: LevelSetLearn.utils.data.tohdf5
+.. automodule:: LevelSetMachineLearning.utils.data.tohdf5
     :members:

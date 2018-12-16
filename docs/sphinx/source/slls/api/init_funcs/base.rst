@@ -1,5 +1,5 @@
-LevelSetLearn.init_funcs
+LevelSetMachineLearning.init_funcs
 ----------------------------------------
 
-.. automodule:: LevelSetLearn.init_funcs
+.. automodule:: LevelSetMachineLearning.init_funcs
     :members:

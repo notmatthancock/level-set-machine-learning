@@ -1,8 +1,8 @@
 ccopy_reg
 _reconstructor
 p0
-(cstat_learn_level_set.LevelSetLearn
-LevelSetLearn
+(cstat_learn_level_set.LevelSetMachineLearning
+LevelSetMachineLearning
 p1
 c__builtin__
 object
@@ -26294,7 +26294,7 @@ p11712
 I01
 sS'score_func'
 p11713
-cstat_learn_level_set.LevelSetLearn
+cstat_learn_level_set.LevelSetMachineLearning
 jaccard
 p11714
 sS'init_func'

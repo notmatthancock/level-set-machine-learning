@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>LevelSetLearn.feature_maps.dim3.lidc_glocal_feature_map &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <title>LevelSetMachineLearning.feature_maps.dim3.lidc_glocal_feature_map &#8212; LIDC Dataset and Segmentation  documentation</title>
     <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
@@ -30,17 +30,17 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for LevelSetLearn.feature_maps.dim3.lidc_glocal_feature_map</h1><div class="highlight"><pre>
+  <h1>Source code for LevelSetMachineLearning.feature_maps.dim3.lidc_glocal_feature_map</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="k">import</span> <span class="n">gaussian_filter1d</span> <span class="k">as</span> <span class="n">gf1d</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial.distance</span> <span class="k">import</span> <span class="n">pdist</span>
 
-<span class="kn">from</span> <span class="nn">LevelSetLearn.feature_maps</span> <span class="k">import</span> <span class="n">feature_map_base</span>
-<span class="kn">from</span> <span class="nn">LevelSetLearn.feature_maps.dim3.utils</span> <span class="k">import</span> <span class="n">normal_samples</span> <span class="k">as</span> <span class="n">ns</span>
-<span class="kn">from</span> <span class="nn">LevelSetLearn.feature_maps.dim3.utils</span> <span class="k">import</span> <span class="n">to_com_samples</span> <span class="k">as</span> <span class="n">ts</span>
-<span class="kn">from</span> <span class="nn">LevelSetLearn.utils</span> <span class="k">import</span> <span class="n">masked_grad</span> <span class="k">as</span> <span class="n">mg</span>
+<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.feature_maps</span> <span class="k">import</span> <span class="n">feature_map_base</span>
+<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.feature_maps.dim3.utils</span> <span class="k">import</span> <span class="n">normal_samples</span> <span class="k">as</span> <span class="n">ns</span>
+<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.feature_maps.dim3.utils</span> <span class="k">import</span> <span class="n">to_com_samples</span> <span class="k">as</span> <span class="n">ts</span>
+<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.utils</span> <span class="k">import</span> <span class="n">masked_grad</span> <span class="k">as</span> <span class="n">mg</span>
 
-<div class="viewcode-block" id="lidc_glocal_feature_map"><a class="viewcode-back" href="../../../../slls/api/feature_maps/dim3/lidc_glocal_feature_map.html#LevelSetLearn.feature_maps.dim3.lidc_glocal_feature_map.lidc_glocal_feature_map">[docs]</a><span class="k">class</span> <span class="nc">lidc_glocal_feature_map</span><span class="p">(</span><span class="n">feature_map_base</span><span class="p">):</span>
+<div class="viewcode-block" id="lidc_glocal_feature_map"><a class="viewcode-back" href="../../../../slls/api/feature_maps/dim3/lidc_glocal_feature_map.html#LevelSetMachineLearning.feature_maps.dim3.lidc_glocal_feature_map.lidc_glocal_feature_map">[docs]</a><span class="k">class</span> <span class="nc">lidc_glocal_feature_map</span><span class="p">(</span><span class="n">feature_map_base</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A simple feature map with local and global, shape and image features,</span>
 <span class="sd">    with image features computed at multiple scales.</span>
@@ -321,7 +321,7 @@
 <ul>
   <li><a href="../../../../index.html">Documentation overview</a><ul>
   <li><a href="../../../index.html">Module code</a><ul>
-  <li><a href="../../feature_maps.html">LevelSetLearn.feature_maps</a><ul>
+  <li><a href="../../feature_maps.html">LevelSetMachineLearning.feature_maps</a><ul>
   </ul></li>
   </ul></li>
   </ul></li>

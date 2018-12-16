@@ -16,7 +16,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="Visualization utilities" href="viz-utils.html" />
-    <link rel="prev" title="Stat Learn Level Set" href="LevelSetLearn.html" />
+    <link rel="prev" title="Stat Learn Level Set" href="LevelSetMachineLearning.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
@@ -31,11 +31,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-LevelSetLearn.utils.masked_grad">
-<span id="gradient-utilities"></span><h1>Gradient Utilities<a class="headerlink" href="#module-LevelSetLearn.utils.masked_grad" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-LevelSetMachineLearning.utils.masked_grad">
+<span id="gradient-utilities"></span><h1>Gradient Utilities<a class="headerlink" href="#module-LevelSetMachineLearning.utils.masked_grad" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="LevelSetLearn.utils.masked_grad.gmag_os">
-<code class="descclassname">LevelSetLearn.utils.masked_grad.</code><code class="descname">gmag_os</code><span class="sig-paren">(</span><em>A</em>, <em>nu</em>, <em>mask=None</em>, <em>dx=None</em><span class="sig-paren">)</span><a class="headerlink" href="#LevelSetLearn.utils.masked_grad.gmag_os" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.utils.masked_grad.gmag_os">
+<code class="descclassname">LevelSetMachineLearning.utils.masked_grad.</code><code class="descname">gmag_os</code><span class="sig-paren">(</span><em>A</em>, <em>nu</em>, <em>mask=None</em>, <em>dx=None</em><span class="sig-paren">)</span><a class="headerlink" href="#LevelSetMachineLearning.utils.masked_grad.gmag_os" title="Permalink to this definition">¶</a></dt>
 <dd><p>This numerical approximation is an upwind approximation of 
 the velocity-dependent gradient magnitude term in the PDE:</p>
 <p>from Osher and Sethian [1]. This is why the function is called 
@@ -70,8 +70,8 @@ If None (default), then spacing is 1.0 along each axis.</dd>
 </dd></dl>
 
 <dl class="function">
-<dt id="LevelSetLearn.utils.masked_grad.gradient_centered">
-<code class="descclassname">LevelSetLearn.utils.masked_grad.</code><code class="descname">gradient_centered</code><span class="sig-paren">(</span><em>A</em>, <em>mask=None</em>, <em>dx=None</em>, <em>return_gmag=True</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="headerlink" href="#LevelSetLearn.utils.masked_grad.gradient_centered" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.utils.masked_grad.gradient_centered">
+<code class="descclassname">LevelSetMachineLearning.utils.masked_grad.</code><code class="descname">gradient_centered</code><span class="sig-paren">(</span><em>A</em>, <em>mask=None</em>, <em>dx=None</em>, <em>return_gmag=True</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="headerlink" href="#LevelSetMachineLearning.utils.masked_grad.gradient_centered" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the centered difference approximations of the partial 
 derivatives of <cite>A</cite> along each coordinate axis, computed only 
 where <cite>mask</cite> is true.</p>
@@ -120,7 +120,7 @@ is optionally returned.</dd>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="LevelSetLearn.html">Stat Learn Level Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LevelSetMachineLearning.html">Stat Learn Level Set</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Gradient Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="viz-utils.html">Visualization utilities</a></li>
 </ul>
@@ -128,7 +128,7 @@ is optionally returned.</dd>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="LevelSetLearn.html" title="previous chapter">Stat Learn Level Set</a></li>
+      <li>Previous: <a href="LevelSetMachineLearning.html" title="previous chapter">Stat Learn Level Set</a></li>
       <li>Next: <a href="viz-utils.html" title="next chapter">Visualization utilities</a></li>
   </ul></li>
 </ul>

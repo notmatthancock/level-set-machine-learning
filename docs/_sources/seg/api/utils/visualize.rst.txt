@@ -1,5 +1,5 @@
-LevelSetLearn.utils.visualize
+LevelSetMachineLearning.utils.visualize
 ------------------------------------
 
-.. automodule:: LevelSetLearn.utils.visualize
+.. automodule:: LevelSetMachineLearning.utils.visualize
     :members:

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>LevelSetLearn.utils.masked_grad &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <title>LevelSetMachineLearning.utils.masked_grad &#8212; LIDC Dataset and Segmentation  documentation</title>
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
@@ -30,11 +30,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for LevelSetLearn.utils.masked_grad</h1><div class="highlight"><pre>
+  <h1>Source code for LevelSetMachineLearning.utils.masked_grad</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">_masked_grad</span>
 
-<div class="viewcode-block" id="gradient_centered"><a class="viewcode-back" href="../../../slls/api/utils/masked_grad.html#LevelSetLearn.utils.masked_grad.gradient_centered">[docs]</a><span class="k">def</span> <span class="nf">gradient_centered</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_gmag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<div class="viewcode-block" id="gradient_centered"><a class="viewcode-back" href="../../../slls/api/utils/masked_grad.html#LevelSetMachineLearning.utils.masked_grad.gradient_centered">[docs]</a><span class="k">def</span> <span class="nf">gradient_centered</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_gmag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                       <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the centered difference approximations of the partial </span>
@@ -116,7 +116,7 @@
         <span class="k">return</span> <span class="n">D</span></div>
 
 
-<div class="viewcode-block" id="gmag_os"><a class="viewcode-back" href="../../../slls/api/utils/masked_grad.html#LevelSetLearn.utils.masked_grad.gmag_os">[docs]</a><span class="k">def</span> <span class="nf">gmag_os</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="gmag_os"><a class="viewcode-back" href="../../../slls/api/utils/masked_grad.html#LevelSetMachineLearning.utils.masked_grad.gmag_os">[docs]</a><span class="k">def</span> <span class="nf">gmag_os</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This numerical approximation is an upwind approximation of </span>
 <span class="sd">    the velocity-dependent gradient magnitude term in the PDE:</span>
