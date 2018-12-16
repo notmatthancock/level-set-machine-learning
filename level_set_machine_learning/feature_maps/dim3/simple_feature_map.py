@@ -1,7 +1,7 @@
 import numpy as np
-from level_set_learn.feature_maps import feature_map_base
+from level_set_machine_learning.feature_maps import feature_map_base
 from scipy.ndimage import gaussian_filter1d as gf1d
-from level_set_learn.utils import masked_grad as mg
+from level_set_machine_learning.utils import masked_grad as mg
 
 class simple_feature_map(feature_map_base):
     """
@@ -49,7 +49,7 @@ class simple_feature_map(feature_map_base):
     nlocalimg  = 2 # img, grad
     nlocalseg  = 1 # dist from com
     nglobalimg = 2 # mean, std
-    nglobalseg = 7 # area, len, iso, mi1, mj1, mi2, mj2
+    nglobalseg = 9 # area, len, iso, mi1, mj1, mk1, mi2, mj2, mk2
 
     def __init__(self, sigmas=[0, 3]):
         self.sigmas = sigmas
@@ -57,8 +57,8 @@ class simple_feature_map(feature_map_base):
                           self.nlocalseg + self.nglobalseg
 
     def __call__(self, u, img, dist, mask, dx=None, memoize=None):
-        assert u.ndim == 2 and img.ndim == 2 and \
-               dist.ndim == 2 and mask.ndim == 2
+        assert u.ndim == 3 and img.ndim == 3 and \
+               dist.ndim == 3 and mask.ndim == 3
         assert memoize in [None, 'create', 'use']
 
         dx = np.ones(img.ndim) if dx is None else dx
@@ -68,44 +68,48 @@ class simple_feature_map(feature_map_base):
         pdx = np.prod(dx)
         H = (u > 0)
 
-        # Area
-        A = H.sum() * pdx
-        F[mask,0] = A
+        # Volume
+        V = H.sum() * pdx
+        F[mask,0] = V
 
-        dHx,dHy = np.gradient(H.astype(np.float), *dx)
-        gmagH = np.sqrt(dHx**2 + dHy**2)
+        dHi,dHj,dHk = np.gradient(H.astype(np.float), *dx)
+        gmagH = np.sqrt(dHi**2 + dHj**2 + dHk**2)
 
-        # Boundary length
+        # Surface area
         # This uses a volume integral:
         # :math:`\\int\\int \\delta(u) \\| Du \\| dx dy`
-        # to compute the length of the boundary contour via Co-Area formula.
-        L = gmagH.sum() * pdx
-        F[mask,1] = L
+        # to compute the length of the surface via Co-Area formula.
+        S = gmagH.sum() * pdx
+        F[mask,1] = S
 
         # Isoperimetric ratio
-        F[mask,2] = 4*np.pi*A / L**2
+        F[mask,2] = 36*np.pi*V**2 / S**3
         
         if memoize is None:
-            ii,jj = np.indices(img.shape, dtype=np.float)
-            ii *= dx[0]; jj *= dx[1]
+            ii,jj,kk = np.indices(img.shape, dtype=np.float)
+            ii *= dx[0]; jj *= dx[1]; kk *= dx[2]
         else:
             if memoize == 'create':
-                self.ii, self.jj = np.indices(img.shape, dtype=np.float)
-                self.ii *= dx[0]; self.jj *= dx[1]
+                self.ii, self.jj, self.kk = np.indices(img.shape,
+                                                       dtype=np.float)
+                self.ii *= dx[0]; self.jj *= dx[1]; self.kk *= dx[2]
             # Handles both 'create' and 'use' cases.
-            ii,jj = self.ii, self.jj
+            ii,jj,kk = self.ii, self.jj, self.kk
 
         # First moments.
-        F[mask,3] = (ii*H.astype(np.float) / A).sum() * pdx
-        F[mask,4] = (jj*H.astype(np.float) / A).sum() * pdx
+        F[mask,3] = (ii*H.astype(np.float) / V).sum() * pdx
+        F[mask,4] = (jj*H.astype(np.float) / V).sum() * pdx
+        F[mask,5] = (kk*H.astype(np.float) / V).sum() * pdx
 
         # Second moments.
-        F[mask,5] = ((ii**2)*H.astype(np.float) / A).sum() * pdx
-        F[mask,6] = ((jj**2)*H.astype(np.float) / A).sum() * pdx
+        F[mask,6] = ((ii**2)*H.astype(np.float) / V).sum() * pdx
+        F[mask,7] = ((jj**2)*H.astype(np.float) / V).sum() * pdx
+        F[mask,8] = ((jj**2)*H.astype(np.float) / V).sum() * pdx
 
         # Distance from center of mass.
-        F[mask,7] = np.sqrt((ii[mask]-F[mask,3][0])**2 + \
-                            (jj[mask]-F[mask,4][0])**2)
+        F[mask,9] = np.sqrt((ii[mask]-F[mask,3][0])**2 + \
+                            (jj[mask]-F[mask,4][0])**2 + \
+                            (kk[mask]-F[mask,5][0])**2)
 
         for isig,sigma in enumerate(self.sigmas):
             ijump = self.nglobalseg + self.nlocalseg + \
@@ -164,9 +168,9 @@ class simple_feature_map(feature_map_base):
         """
         Return the list of feature names.
         """
-        feats = ['area', 'boundary length', 'isoperimetric',
-                 'moment 1 axis i', 'moment 1 axis j',
-                 'moment 2 axis i', 'moment 2 axis j',
+        feats = ['volume', 'surface area', 'isoperimetric',
+                 'moment 1 axis i', 'moment 1 axis j', 'moment 1 axis k',
+                 'moment 2 axis i', 'moment 2 axis j', 'moment 2 axis k',
                  'dist from center of mass']
 
         img_feats = ['img-val', 'img-edge', 'img-avg', 'img-std']

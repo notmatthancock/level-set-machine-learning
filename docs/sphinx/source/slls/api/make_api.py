@@ -1,10 +1,10 @@
 import os
 
-import level_set_learn as slls
+import level_set_machine_learning as slls
 
 base = os.path.dirname(level_set_learn.__file__)
 
-s = "level_set_learn"
+s = "level_set_machine_learning"
 
 contents = """\
 {module}

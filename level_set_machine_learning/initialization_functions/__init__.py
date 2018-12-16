@@ -16,6 +16,6 @@ class init_func_base(object):
         All initialization functions must have the above __call__ signature
         with *at least* these arguments (additional keyword arguments are
         of course allowed, but won't be used by the `fit` routine
-        in the `level_set_learn` module).
+        in the `level_set_machine_learning` module).
         """
         raise NotImplementedError

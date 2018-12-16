@@ -39,14 +39,14 @@ class LevelSetLearn(object):
                 some/path/to/data.h5
 
             where `data.h5` is formatted as specified in the 
-            :meth:`level_set_learn.utils.tohdf5` module.
+            :meth:`level_set_machine_learning.utils.tohdf5` module.
             `data.h5` contains the image and ground truth data.
 
         feature_map: feature map class
-            See :class:`level_set_learn.feature_maps.feature_map_base`.
+            See :class:`level_set_machine_learning.feature_maps.feature_map_base`.
 
         init_func: init func class
-            See :class:`level_set_learn.initialization_functions.init_func_base`.
+            See :class:`level_set_machine_learning.initialization_functions.init_func_base`.
 
         model: sklearn class
             The regression model for modeling the level set velocity
@@ -93,14 +93,14 @@ class LevelSetLearn(object):
 
         if not isinstance(feature_map, feature_map_base):
             msg = ("`feature_map` should be a class derived from "
-                   "`level_set_learn.feature_maps.feature_map_base`.")
+                   "`level_set_machine_learning.feature_maps.feature_map_base`.")
             raise ValueError(msg)
 
         self.feature_map = feature_map
 
         if not isinstance(init_func, init_func_base):
             msg = ("`init_func` should be a class derived from "
-                   "`level_set_learn.initialization_functions.init_func_base`.")
+                   "`level_set_machine_learning.initialization_functions.init_func_base`.")
             raise ValueError(msg)
 
         self.init_func = init_func
@@ -985,7 +985,7 @@ class LevelSetLearn(object):
 
             If `datasets` is None (default), then an auto split of 
             60/20/20% is made using the 
-            `level_set_learn.utils.data.splitter` utility.
+            `level_set_machine_learning.utils.data.splitter` utility.
 
         seeds: dict, default=None
             The seeds are used in the `init_func` supplied at initialization.
