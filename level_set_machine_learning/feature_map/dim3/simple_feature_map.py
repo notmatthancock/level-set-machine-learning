@@ -1,13 +1,9 @@
 import numpy as np
+from level_set_machine_learning.feature_map.feature_map_base import FeatureMapBase
 from scipy.ndimage import gaussian_filter1d as gf1d
-from scipy.spatial.distance import pdist
-
-from level_set_machine_learning.feature_maps.feature_map_base import FeatureMapBase
-from level_set_machine_learning.feature_maps.dim3.utils import normal_samples as ns
-from level_set_machine_learning.feature_maps.dim3.utils import to_com_samples as ts
 from level_set_machine_learning.utils import masked_grad as mg
 
-class lidc_glocal_feature_map(FeatureMapBase):
+class simple_feature_map(FeatureMapBase):
     """
     A simple feature map with local and global, shape and image features,
     with image features computed at multiple scales.
@@ -52,34 +48,18 @@ class lidc_glocal_feature_map(FeatureMapBase):
     """
     nlocalimg  = 2 # img, grad
     nlocalseg  = 1 # dist from com
+    nglobalimg = 2 # mean, std
+    nglobalseg = 9 # area, len, iso, mi1, mj1, mk1, mi2, mj2, mk2
 
-    nglocalimg = 4 # (2*2) normal samples, com samples [in/out]
-    nglocalseg = 6 # slice*3, (slice diff)*3
-
-    nglobalimg = 3  # mean, std, edge
-    nglobalseg = 12 # area, len, iso, moments*2*3, (dist to com stats)*3
-
-    def __init__(self, sigmas=[0, 3], nglocal_samples=10):
+    def __init__(self, sigmas=[0, 3]):
         self.sigmas = sigmas
-        self.nglocal_samples = nglocal_samples
-        self.nglocalimg *= nglocal_samples
-        imgtotal = self.nlocalimg + self.nglocalimg + self.nglobalimg
-        segtotal = self.nlocalseg + self.nglocalseg + self.nglobalseg
-        self.nfeatures = imgtotal*len(sigmas) + segtotal
+        self.nfeatures = (self.nlocalimg + self.nglobalimg)*len(sigmas) + \
+                          self.nlocalseg + self.nglobalseg
 
     def __call__(self, u, img, dist, mask, dx=None, memoize=None):
         assert u.ndim == 3 and img.ndim == 3 and \
                dist.ndim == 3 and mask.ndim == 3
         assert memoize in [None, 'create', 'use']
-
-        shp = u.shape
-        nmask = mask.sum()
-
-        # TODO: add memoization here to re-use `samples` as a container
-        samples = np.zeros(shp + (self.nglocal_samples, 2))
-
-        ddi,ddj,ddk = mg.gradient_centered(dist, mask=mask, dx=dx,
-                                           normalize=True, return_gmag=False)
 
         dx = np.ones(img.ndim) if dx is None else dx
 
@@ -87,13 +67,12 @@ class lidc_glocal_feature_map(FeatureMapBase):
 
         pdx = np.prod(dx)
         H = (u > 0)
-        Hf = H.astype(np.float)
 
         # Volume
         V = H.sum() * pdx
         F[mask,0] = V
 
-        dHi,dHj,dHk = np.gradient(Hf, *dx)
+        dHi,dHj,dHk = np.gradient(H.astype(np.float), *dx)
         gmagH = np.sqrt(dHi**2 + dHj**2 + dHk**2)
 
         # Surface area
@@ -118,53 +97,23 @@ class lidc_glocal_feature_map(FeatureMapBase):
             ii,jj,kk = self.ii, self.jj, self.kk
 
         # First moments.
-        F[mask,3] = (ii*Hf / V).sum() * pdx
-        F[mask,4] = (jj*Hf / V).sum() * pdx
-        F[mask,5] = (kk*Hf / V).sum() * pdx
-
-        com = np.array([F[mask,3][0], F[mask,4][0], F[mask,5][0]])
-        com = np.array([(i*Hf).sum() / V for i in np.indices(H.shape,
-                                                             dtype=np.float)])
+        F[mask,3] = (ii*H.astype(np.float) / V).sum() * pdx
+        F[mask,4] = (jj*H.astype(np.float) / V).sum() * pdx
+        F[mask,5] = (kk*H.astype(np.float) / V).sum() * pdx
 
         # Second moments.
-        F[mask,6] = ((ii**2)*Hf / V).sum() * pdx
-        F[mask,7] = ((jj**2)*Hf / V).sum() * pdx
-        F[mask,8] = ((jj**2)*Hf / V).sum() * pdx
-
-        pts = np.array(np.where((gmagH > 0) & mask)).T
-        cdists = pdist(pts)
-
-        # Stats of distances to center-of-mass distances along zero level set.
-        F[mask, 9] = cdists.mean()
-        F[mask,10] = cdists.std()
-        F[mask,11] = cdists.max()
+        F[mask,6] = ((ii**2)*H.astype(np.float) / V).sum() * pdx
+        F[mask,7] = ((jj**2)*H.astype(np.float) / V).sum() * pdx
+        F[mask,8] = ((jj**2)*H.astype(np.float) / V).sum() * pdx
 
         # Distance from center of mass.
-        F[mask,12] = np.sqrt((ii[mask]-F[mask,3][0])**2 + \
-                             (jj[mask]-F[mask,4][0])**2 + \
-                             (kk[mask]-F[mask,5][0])**2)
-
-        # Area sums over first axis.
-        s = np.apply_over_axes(np.sum, Hf, [1,2])
-        F[:,:,:,13] = s
-        s = np.abs(np.gradient(s, axis=0))
-        F[:,:,:,14] = s
-
-        # Area sums over second axis.
-        s = np.apply_over_axes(np.sum, Hf, [0,2])
-        F[:,:,:,15] = s
-        s = np.abs(np.gradient(s, axis=1))
-        F[:,:,:,16] = s
-
-        # Area sums over third axis.
-        s = np.apply_over_axes(np.sum, Hf, [0,1])
-        F[:,:,:,17] = s
-        s = np.abs(np.gradient(s, axis=2))
-        F[:,:,:,18] = s
+        F[mask,9] = np.sqrt((ii[mask]-F[mask,3][0])**2 + \
+                            (jj[mask]-F[mask,4][0])**2 + \
+                            (kk[mask]-F[mask,5][0])**2)
 
         for isig,sigma in enumerate(self.sigmas):
-            ijump = self.nglobalseg + self.nglocalseg + self.nlocalseg + \
-                    isig*(self.nlocalimg + self.nglocalimg + self.nglobalimg)
+            ijump = self.nglobalseg + self.nlocalseg + \
+                    isig*(self.nlocalimg + self.nglobalimg)
 
             if memoize is None:
                 if sigma > 0:
@@ -209,30 +158,8 @@ class lidc_glocal_feature_map(FeatureMapBase):
 
             F[mask,ijump+0] = blur[mask]     # Local image.
             F[mask,ijump+1] = gmag[mask]     # Local image edge.
-            F[mask,ijump+2] = blur[H].mean() # Global image mean.
-            F[mask,ijump+3] = blur[H].std()  # Global image std.
-            F[mask,ijump+4] = (gmag*gmagH).sum() / S # Global image edge.
-            
-            # Compute and store the normal ray samples.
-            ns.get_samples(img=blur, com=com, nsamples=self.nglocal_samples,
-                           ni=ddi, nj=ddj, nk=ddk,
-                           di=dx[0], dj=dx[1], dk=dx[2],
-                           mask=mask, samples=samples)
-            sample_vals = samples[mask].reshape(nmask, 2*self.nglocal_samples)
-
-            start = ijump+5
-            stop  = ijump+5+2*self.nglocal_samples
-            F[mask,start:stop] = sample_vals
-
-            # Compute and store the center of mass ray samples.
-            ts.get_samples(img=blur, com=com, nsamples=self.nglocal_samples,
-                           di=dx[0], dj=dx[1], dk=dx[2],
-                           mask=mask, samples=samples)
-            sample_vals = samples[mask].reshape(nmask, 2*self.nglocal_samples)
-
-            start = ijump+5+2*self.nglocal_samples
-            stop  = ijump+5+2*self.nglocal_samples+2*self.nglocal_samples
-            F[mask,start:stop] = sample_vals
+            F[mask,ijump+2] = blur[H].mean() # Global image.
+            F[mask,ijump+3] = blur[H].std()  # Global image edge.
 
         return F
 
@@ -244,22 +171,9 @@ class lidc_glocal_feature_map(FeatureMapBase):
         feats = ['volume', 'surface area', 'isoperimetric',
                  'moment 1 axis i', 'moment 1 axis j', 'moment 1 axis k',
                  'moment 2 axis i', 'moment 2 axis j', 'moment 2 axis k',
-                 'com dist mean', 'com dist std', 'com dist max',
-                 'dist from center of mass',
-                 'slice area axis i', 'slice area diff axis i',
-                 'slice area axis j', 'slice area diff axis j',
-                 'slice area axis k', 'slice area diff axis k']
+                 'dist from center of mass']
 
-        img_feats = ['local img val', 'local img edge', 
-                     'glob img avg', 'glob img std', 'glob edge']
-
-        for i in range(self.nglocal_samples):
-            img_feats += ['img normal(+)%d'%(i+1)]
-            img_feats += ['img normal(-)%d'%(i+1)]
-        for i in range(self.nglocal_samples):
-            img_feats += ['img to com(+)%d'%(i+1)]
-            img_feats += ['img to com(-)%d'%(i+1)]
-
+        img_feats = ['img-val', 'img-edge', 'img-avg', 'img-std']
         for s in self.sigmas:
             feats.extend(["%s-sigma=%.1f" % (f,s) for f in img_feats])
 

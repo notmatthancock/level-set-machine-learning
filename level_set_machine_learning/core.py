@@ -7,7 +7,7 @@ import skfmm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from level_set_machine_learning.feature_maps.feature_map_base import FeatureMapBase
+from level_set_machine_learning.feature_map.feature_map_base import FeatureMapBase
 from initialization_functions import init_func_base
 from utils.score_functions import jaccard
 from utils.data import splitter
@@ -43,7 +43,7 @@ class LevelSetMachineLearning(object):
             `data.h5` contains the image and ground truth data.
 
         feature_map: feature map class
-            See :class:`level_set_machine_learning.feature_maps.FeatureMapBase`.
+            See :class:`level_set_machine_learning.feature_map.FeatureMapBase`.
 
         init_func: init func class
             See :class:`level_set_machine_learning.initialization_functions.init_func_base`.
@@ -93,7 +93,7 @@ class LevelSetMachineLearning(object):
 
         if not isinstance(feature_map, FeatureMapBase):
             msg = ("`feature_map` should be a class derived from "
-                   "`level_set_machine_learning.feature_maps.FeatureMapBase`.")
+                   "`level_set_machine_learning.feature_map.FeatureMapBase`.")
             raise ValueError(msg)
 
         self.feature_map = feature_map

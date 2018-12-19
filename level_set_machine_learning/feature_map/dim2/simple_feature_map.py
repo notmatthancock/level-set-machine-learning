@@ -1,7 +1,8 @@
 import numpy as np
-from level_set_machine_learning.feature_maps.feature_map_base import FeatureMapBase
+from level_set_machine_learning.feature_map.feature_map_base import FeatureMapBase
 from scipy.ndimage import gaussian_filter1d as gf1d
 from level_set_machine_learning.utils import masked_grad as mg
+
 
 class simple_feature_map(FeatureMapBase):
     """
@@ -15,41 +16,11 @@ class simple_feature_map(FeatureMapBase):
 
         TODO
 
-    Documentation for `__call__`:
-
-    Parameters
-    ----------
-    u: ndarrary
-        The "level set function".
-
-    img: ndarray
-        The image.
-
-    dist: ndarray
-        The signed distance transform to the level set `u` (only computed
-        necessarily in the narrow band region).
-
-    mask: ndarray, dtype=bool
-        The boolean mask indicating the narrow band region of `u`.
-
-    dx: ndarray, shape=img.ndim
-        The "delta" spacing terms for each image axis. If None, then
-        1.0 is used for each axis.
-
-    memoize: flag, default=None
-        Should be one of [None, 'create', 'use']. This variable will be None
-        always during training, but during run-time (where the feature 
-        map is called for many iterations on the same image), it is
-        'create' at the first iteration and 'use' for all iterations 
-        thereafter. Use this to create more efficient run-time 
-        performance by storing features that can be re-used
-        in subsequent iterations.
-
     """
-    nlocalimg  = 2 # img, grad
-    nlocalseg  = 1 # dist from com
-    nglobalimg = 2 # mean, std
-    nglobalseg = 7 # area, len, iso, mi1, mj1, mi2, mj2
+    nlocalimg  = 2  # img, grad
+    nlocalseg  = 1  # dist from center of mass
+    nglobalimg = 2  # mean, std
+    nglobalseg = 7  # area, len, iso, 1st moment 2 axes, 2nd moment 2 axes
 
     def __init__(self, sigmas=[0, 3]):
         self.sigmas = sigmas
@@ -108,18 +79,19 @@ class simple_feature_map(FeatureMapBase):
                             (jj[mask]-F[mask,4][0])**2)
 
         for isig,sigma in enumerate(self.sigmas):
-            ijump = self.nglobalseg + self.nlocalseg + \
-                    isig*(self.nlocalimg + self.nglobalimg)
+
+            ijump = (self.nglobalseg + self.nlocalseg +
+                     isig*(self.nlocalimg + self.nglobalimg))
 
             if memoize is None:
                 if sigma > 0:
                     blur = img
                     for axis in range(len(dx)):
                         blur = gf1d(blur, sigma/dx[axis], axis=axis)
-                    _,gmag = mg.gradient_centered(blur, mask=mask, dx=dx) 
+                    _, gmag = mg.gradient_centered(blur, mask=mask, dx=dx)
                 else:
                     blur = img
-                    _,gmag = mg.gradient_centered(blur, mask=mask, dx=dx) 
+                    _, gmag = mg.gradient_centered(blur, mask=mask, dx=dx)
             else:
                 if memoize == 'create':
                     if not hasattr(self, 'blurs'):
@@ -170,7 +142,9 @@ class simple_feature_map(FeatureMapBase):
                  'dist from center of mass']
 
         img_feats = ['img-val', 'img-edge', 'img-avg', 'img-std']
-        for s in self.sigmas:
-            feats.extend(["%s-sigma=%.1f" % (f,s) for f in img_feats])
+
+        for sigma in self.sigmas:
+            feats.extend(["{:s}-sigma={:.1f}".format(feat, sigma)
+                          for feat in img_feats])
 
         return feats
