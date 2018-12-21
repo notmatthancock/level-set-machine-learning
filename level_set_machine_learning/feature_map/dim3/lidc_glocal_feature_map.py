@@ -5,7 +5,7 @@ from scipy.spatial.distance import pdist
 from level_set_machine_learning.feature_map.feature_map_base import FeatureMapBase
 from level_set_machine_learning.feature_map.dim3.utils import normal_samples as ns
 from level_set_machine_learning.feature_map.dim3.utils import to_com_samples as ts
-from level_set_machine_learning.utils import masked_grad as mg
+from level_set_machine_learning.util import masked_grad as mg
 
 class lidc_glocal_feature_map(FeatureMapBase):
     """

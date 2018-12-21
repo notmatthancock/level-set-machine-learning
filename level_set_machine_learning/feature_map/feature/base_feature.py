@@ -36,13 +36,20 @@ class BaseFeature(abc.ABC):
         raise NotImplementedError
 
     def __init__(self, ndim):
+        """ Initialize the feature
+
+        Parameters
+        ----------
+        ndim: int
+            The dimensions of the input space
+
+        """
         self.ndim = ndim
 
     def __call__(self, u, img, dist, mask, dx=None):
         """ Calls the feature computation function after performing
         some validation on the inputs
         """
-
         # Check shapes
         shape = u.shape
         if img.shape != shape or dist.shape != shape or mask.shape != shape:
@@ -50,6 +57,14 @@ class BaseFeature(abc.ABC):
             msg = ("Shape mismatch in one of the inputs: u={}, img={}, "
                    "dist={}, mask={}")
             raise ValueError(msg.format(*shapes))
+
+        # Check dimensions
+        ndim = self.ndim
+        if img.ndim != ndim or dist.ndim != ndim or mask.ndim != ndim:
+            ndims = (u.ndim, img.ndim, dist.ndim, mask.ndim)
+            msg = ("Shape mismatch in one of the inputs: u={}, img={}, "
+                   "dist={}, mask={}")
+            raise ValueError(msg.format(*ndims))
 
         # Check delta terms
         if dx is None:
@@ -112,6 +127,13 @@ class BaseShapeFeature(BaseFeature):
         """ Calls the feature computation function after performing
         some validation on the inputs
         """
+        # Check ndims
+        ndim = self.ndim
+        if dist.ndim != ndim or mask.ndim != ndim:
+            ndims = (u.ndim, dist.ndim, mask.ndim)
+            msg = ("Shape mismatch in one of the inputs: u={}, "
+                   "dist={}, mask={}")
+            raise ValueError(msg.format(*ndims))
 
         # Check shapes
         shape = u.shape

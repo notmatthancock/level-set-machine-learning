@@ -1,1 +1,1 @@
-from core import LevelSetMachineLearning
+from .core import LevelSetMachineLearning

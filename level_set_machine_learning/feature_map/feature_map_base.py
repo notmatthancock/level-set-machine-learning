@@ -93,8 +93,7 @@ class FeatureMapBase(abc.ABC):
 
     @property
     def n_local_img_features(self):
-
-
+        pass
 
     @property
     @abc.abstractmethod

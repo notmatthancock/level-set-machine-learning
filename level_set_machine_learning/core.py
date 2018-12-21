@@ -8,11 +8,10 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
 from level_set_machine_learning.feature_map.feature_map_base import FeatureMapBase
-from initialization_functions import init_func_base
-from utils.score_functions import jaccard
-from utils.data import splitter
-
-import utils.masked_grad as mg
+from .initialization_functions import init_func_base
+from .util.score_functions import jaccard
+from .util.data import splitter
+from .util import masked_grad as mg
 
 
 DEFAULT_SAVE_NAME = 'lsl_model.pkl'
@@ -159,7 +158,7 @@ class LevelSetMachineLearning(object):
             raise RuntimeError("Cannot iter seeds without seeds initialized.")
         
         for key in self._seeds[ds]:
-            for iseed,seed in enumerate(self._seeds[ds][key]):
+            for iseed, seed in enumerate(self._seeds[ds][key]):
                 yield key, iseed, seed
 
     def _iter_tmp(self):

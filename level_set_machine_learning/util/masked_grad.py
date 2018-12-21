@@ -1,5 +1,5 @@
 import numpy as np
-import _masked_grad
+from . import _masked_grad
 
 def gradient_centered(A, mask=None, dx=None, return_gmag=True, 
                       normalize=False):
