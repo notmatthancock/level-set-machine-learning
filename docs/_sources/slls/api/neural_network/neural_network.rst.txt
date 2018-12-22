@@ -1,5 +1,5 @@
-LevelSetMachineLearning.neural_network.neural_network
+LevelSetMachineLearning.NeuralNetwork.NeuralNetwork
 --------------------------------------------------
 
-.. automodule:: LevelSetMachineLearning.neural_network.neural_network
+.. automodule:: LevelSetMachineLearning.NeuralNetwork.NeuralNetwork
     :members:

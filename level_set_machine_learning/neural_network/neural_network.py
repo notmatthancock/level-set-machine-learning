@@ -1,12 +1,11 @@
 import os
-import cPickle
-import warnings
+import pickle
 import numpy as np
-import stats_recorder as sr
+from . import stats_recorder as sr
 from datetime import datetime
-from scipy.optimize import fmin_l_bfgs_b as fmin
 
-class neural_network(object):
+
+class NeuralNetwork(object):
     """
     Single hidden layer neural network with single output unit that
     computes the identity.
@@ -51,7 +50,7 @@ class neural_network(object):
         self.randomize_params()
 
     def __repr__(self):
-        return "<neural_network ninput=%d, nhidden=%d>"%(self.ni, self.nh)
+        return "<NeuralNetwork ninput=%d, nhidden=%d>"%(self.ni, self.nh)
 
     def randomize_params(self, scale=0.1):
         """
@@ -107,7 +106,7 @@ class neural_network(object):
 
         fpath = os.path.join(base, fname)
 
-        with open(fpath, 'wb') as f: cPickle.dump(self, f)
+        with open(fpath, 'wb') as f: pickle.dump(self, f)
 
     def predict(self, X):
         """

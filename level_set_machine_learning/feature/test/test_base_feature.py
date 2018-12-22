@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from level_set_machine_learning.feature_map.feature.base_feature import (
+from level_set_machine_learning.feature.base_feature import (
     BaseImageFeature, BaseShapeFeature)
 
 
@@ -33,7 +33,7 @@ class TestBaseFeature(unittest.TestCase):
 
     def test_correct_type(self):
 
-        from level_set_machine_learning.feature_map.feature.base_feature import (
+        from level_set_machine_learning.feature.base_feature import (
             IMAGE_FEATURE_TYPE, SHAPE_FEATURE_TYPE)
 
         image_feature = self.ImageFeature(ndim=1)
@@ -92,4 +92,3 @@ class TestBaseFeature(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             shape_feature(u=u, dist=dist, mask=mask, dx=dx)
-

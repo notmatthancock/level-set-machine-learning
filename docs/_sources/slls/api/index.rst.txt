@@ -16,8 +16,8 @@ SLLS API
     feature_maps/dim3/simple_feature_map
     feature_maps/dim3/lidc_glocal_feature_map
     feature_maps/dim2/simple_feature_map
-    neural_network/neural_network
-    neural_network/stats_recorder
+    NeuralNetwork/NeuralNetwork
+    NeuralNetwork/stats_recorder
     init_funcs/base
     init_funcs/threshold
     init_funcs/random

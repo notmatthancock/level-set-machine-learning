@@ -1,7 +1,7 @@
 import numpy as np
 
 from level_set_machine_learning import LevelSetMachineLearning as LSML
-from level_set_machine_learning.feature_map.dim2 import simple_feature_map
+from level_set_machine_learning.feature.dim2 import simple_feature_map
 from level_set_machine_learning.initialization_functions import random as rand_init
 
 # Seed a random number generator.

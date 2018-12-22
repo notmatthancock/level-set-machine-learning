@@ -16580,8 +16580,8 @@ sS'models'
 p8225
 (lp8226
 g0
-(cstat_learn_level_set.neural_network.neural_network
-neural_network
+(cstat_learn_level_set.NeuralNetwork.NeuralNetwork
+NeuralNetwork
 p8227
 g2
 Ntp8228
@@ -16633,7 +16633,7 @@ tp8247
 bsS'stats'
 p8248
 g0
-(cstat_learn_level_set.neural_network.stats_recorder
+(cstat_learn_level_set.NeuralNetwork.stats_recorder
 stats_recorder
 p8249
 g2

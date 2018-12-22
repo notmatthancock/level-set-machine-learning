@@ -10,7 +10,7 @@ class TestStepRecovery(unittest.TestCase):
 
         ninput = 10
         nhidden = 1024
-        nnet = nn.neural_network(ninput, nhidden, rs=rs)
+        nnet = nn.NeuralNetwork(ninput, nhidden, rs=rs)
 
         xtr = rs.randn(100,10)
         ytr = rs.randn(100)

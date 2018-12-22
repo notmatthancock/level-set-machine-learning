@@ -1,8 +1,8 @@
 ccopy_reg
 _reconstructor
 p0
-(cstat_learn_level_set.neural_network.neural_network
-neural_network
+(cstat_learn_level_set.NeuralNetwork.NeuralNetwork
+NeuralNetwork
 p1
 c__builtin__
 object
@@ -78,7 +78,7 @@ tp32
 bsS'stats'
 p33
 g0
-(cstat_learn_level_set.neural_network.stats_recorder
+(cstat_learn_level_set.NeuralNetwork.stats_recorder
 stats_recorder
 p34
 g2
