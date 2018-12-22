@@ -8,7 +8,8 @@ from level_set_machine_learning.feature import shape
 class TestShapeFeatures(unittest.TestCase):
 
     def test_size_1d(self):
-        """ Check interval length in 1d """
+        """ Check interval length in 1d
+        """
 
         x, dx = np.linspace(-2, 2, 401, retstep=True)
         y = 1 - np.abs(x)
@@ -21,8 +22,8 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(2, length[0], places=1)
 
     def test_size_2d(self):
-        """ Check area feature with anisotropic mesh """
-
+        """ Check area feature with anisotropic mesh
+        """
         x, dx = np.linspace(-2, 2, 701, retstep=True)
         y, dy = np.linspace(-2, 2, 901, retstep=True)
 
@@ -38,7 +39,8 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(np.pi, area[0, 0], places=2)
 
     def test_size_3d(self):
-        """ Check area feature with anisotropic mesh """
+        """ Check volume feature with anisotropic mesh
+        """
 
         x, dx = np.linspace(-2, 2, 401, retstep=True)
         y, dy = np.linspace(-2, 2, 301, retstep=True)
@@ -55,3 +57,53 @@ class TestShapeFeatures(unittest.TestCase):
 
         print(volume)
         self.assertAlmostEqual(4 * np.pi / 3, volume[0, 0, 0], places=2)
+
+    def test_boundary_1d(self):
+        """ Check boundary size in 1d (# zeros)
+        """
+        x, dx = np.linspace(-2, 2, retstep=True)
+        u = 1 - np.abs(x)
+        mask = np.zeros(x.shape, dtype=np.bool)
+        mask[0] = True
+
+        boundary_size = shape.BoundarySize(ndim=1)
+        n_zeros = boundary_size(u=u, dist=u, mask=mask, dx=[dx])
+
+        self.assertAlmostEqual(2, n_zeros)
+
+    def test_boundary_2d(self):
+        """ Check boundary curve length with anisotropic mesh
+        """
+        x, dx = np.linspace(-2, 2, 2001, retstep=True)
+        y, dy = np.linspace(-2, 2, 2001, retstep=True)
+
+        xx, yy = np.meshgrid(x, y)
+
+        z = 1 - np.sqrt(xx**2 + yy**2)
+        mask = np.zeros(xx.shape, dtype=np.bool)
+        mask[0, 0] = True
+
+        boundary_size = shape.BoundarySize(ndim=2)
+        curve_length = boundary_size(u=z, dist=z, mask=mask, dx=[dx, dy])
+
+        print(curve_length)
+
+
+    def test_isoperimetric_2d(self):
+        """ Check isoperm ratio is approx 1 for circle
+        """
+
+        x, dx = np.linspace(-2, 2, 701, retstep=True)
+        y, dy = np.linspace(-2, 2, 901, retstep=True)
+
+        xx, yy = np.meshgrid(x, y)
+
+        z = 1 - np.sqrt(xx**2 + yy**2)
+        mask = np.zeros(xx.shape, dtype=np.bool)
+        mask[0, 0] = True
+
+        isoperm = shape.IsoperimetricRatio(ndim=2)
+        ratio = isoperm(u=z, dist=z, mask=mask, dx=[dx, dy])
+
+        self.assertAlmostEqual(1, ratio[0, 0], places=2)
+

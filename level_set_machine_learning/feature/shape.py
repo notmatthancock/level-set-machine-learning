@@ -37,7 +37,7 @@ class BoundarySize(BaseShapeFeature):
 
     This uses a volume integral:
 
-        :math:`\\int\\int \\delta(u) \\| Du \\| dx dy`
+        :math:`\\int \\| DH(u) \\| dx `
 
     to compute the length of the boundary contour via Co-Area formula.
     """
@@ -47,7 +47,7 @@ class BoundarySize(BaseShapeFeature):
     @property
     def name(self):
         if self.ndim == 1:
-            return 'zeros'
+            return 'number-zeros'
         elif self.ndim == 2:
             return 'curve-length'
         elif self.ndim == 3:
@@ -57,10 +57,12 @@ class BoundarySize(BaseShapeFeature):
 
     def compute_feature(self, u, dist, mask, dx):
 
-        pos_part = (u > 0).astype(numpy.float)
+        positive_part = (u > 0).astype(numpy.float)
 
-        gradient = numpy.gradient(pos_part.astype(numpy.float), *dx)
-        gradient_magnitude = numpy.zeros_like(gradient[0])
+        gradient = numpy.gradient(positive_part.astype(numpy.float), *dx)
+        if self.ndim == 1:
+            gradient = [gradient]
+        gradient_magnitude = numpy.zeros_like(u)
 
         for grad in gradient:
             gradient_magnitude += grad**2
@@ -90,6 +92,67 @@ class IsoperimetricRatio(BaseShapeFeature):
             raise ValueError(msg.format(ndim))
 
         super(IsoperimetricRatio, self).__init__(ndim)
+
+    def compute_feature(self, u, dist, mask, dx):
+
+        if self.ndim == 2:
+            return self.compute_feature2d(
+                u=u, dist=dist, mask=mask, dx=dx)
+        else:
+            return self.compute_feature3d(
+                u=u, dist=dist, mask=mask, dx=dx)
+
+    def compute_feature2d(self, u, dist, mask, dx):
+
+        # Compute the area
+        size = Size(ndim=2)
+        area = size.compute_feature(u=u, dist=dist, mask=mask, dx=dx)
+
+        # Compute the area
+        boundary_size = BoundarySize(ndim=2)
+        curve_length = boundary_size.compute_feature(
+            u=u, dist=dist, mask=mask, dx=dx)
+
+        print(area, curve_length)
+
+        return 4*numpy.pi*area / curve_length**2
+
+    def compute_feature3d(self, u, dist, mask, dx):
+
+        # Compute the area
+        size = Size(ndim=3)
+        volume = size.compute_feature(u=u, dist=dist, mask=mask, dx=dx)
+
+        # Compute the area
+        boundary_size = BoundarySize(ndim=3)
+        surface_area = boundary_size.compute_feature(u=u, dist=dist, mask=mask, dx=dx)
+
+        return 36*numpy.pi*volume**2 / surface_area**3
+
+
+class Moment(BaseShapeFeature):
+    """ Computes the statisical moments of a given order along a given axis
+    """
+
+    locality = GLOBAL_FEATURE_TYPE
+
+    @property
+    def name(self):
+        return "moment-axis-{}-order-{}".format(self.axis, self.order)
+
+    def __init__(self, ndim, axis=0, order=1):
+
+        super(Moment, self).__init__(ndim)
+
+        if axis < 0 or axis > ndim-1:
+            msg = "axis provided ({}) does not lie in required range (0-{})"
+            raise ValueError(msg.format(axis, ndim-1))
+
+        if order < 1:
+            raise ValueError("Moment order should be ≥ 1")
+
+        self.axis = axis
+        self.order = order
 
     def compute_feature(self, u, dist, mask, dx):
 
