@@ -71,23 +71,40 @@ class TestShapeFeatures(unittest.TestCase):
 
         self.assertAlmostEqual(2, n_zeros)
 
-    def test_boundary_2d(self):
+    def test_boundary_size_2d(self):
         """ Check boundary curve length with anisotropic mesh
         """
-        x, dx = np.linspace(-2, 2, 2001, retstep=True)
-        y, dy = np.linspace(-2, 2, 2001, retstep=True)
+        x, dx = np.linspace(-2, 2, 501, retstep=True)
+        y, dy = np.linspace(-2, 2, 701, retstep=True)
 
         xx, yy = np.meshgrid(x, y)
 
         z = 1 - np.sqrt(xx**2 + yy**2)
-        mask = np.zeros(xx.shape, dtype=np.bool)
+        mask = np.zeros(z.shape, dtype=np.bool)
         mask[0, 0] = True
 
         boundary_size = shape.BoundarySize(ndim=2)
         curve_length = boundary_size(u=z, dist=z, mask=mask, dx=[dx, dy])
 
-        print(curve_length)
+        self.assertAlmostEqual(2*np.pi, curve_length[0, 0], places=4)
 
+    def test_boundary_size_3d(self):
+        """ Check boundary surface area with anisotropic mesh
+        """
+        x, dx = np.linspace(-2, 2, 501, retstep=True)
+        y, dy = np.linspace(-2, 2, 401, retstep=True)
+        z, dz = np.linspace(-2, 2, 601, retstep=True)
+
+        xx, yy, zz = np.meshgrid(x, y, z)
+
+        w = 1 - np.sqrt(xx**2 + yy**2 + zz**2)
+        mask = np.zeros(w.shape, dtype=np.bool)
+        mask[0, 0, 0] = True
+
+        boundary_size = shape.BoundarySize(ndim=3)
+        surface_area = boundary_size(u=w, dist=w, mask=mask, dx=[dx, dy, dz])
+
+        self.assertAlmostEqual(4*np.pi, surface_area[0, 0, 0], places=0)
 
     def test_isoperimetric_2d(self):
         """ Check isoperm ratio is approx 1 for circle
@@ -105,5 +122,22 @@ class TestShapeFeatures(unittest.TestCase):
         isoperm = shape.IsoperimetricRatio(ndim=2)
         ratio = isoperm(u=z, dist=z, mask=mask, dx=[dx, dy])
 
-        self.assertAlmostEqual(1, ratio[0, 0], places=2)
+        self.assertAlmostEqual(1, ratio[0, 0], places=3)
 
+    def test_isoperimetric_3d(self):
+        """ Check isoperm ratio is approx 1 for sphere
+        """
+        x, dx = np.linspace(-2, 2, 201, retstep=True)
+        y, dy = np.linspace(-2, 2, 201, retstep=True)
+        z, dz = np.linspace(-2, 2, 901, retstep=True)
+
+        xx, yy, zz = np.meshgrid(x, y, z)
+
+        w = 1 - np.sqrt(xx**2 + yy**2 + zz**2)
+        mask = np.zeros(w.shape, dtype=np.bool)
+        mask[0, 0, 0] = True
+
+        isoperm = shape.IsoperimetricRatio(ndim=3)
+        ratio = isoperm(u=w, dist=w, mask=mask, dx=[dx, dy, dz])
+
+        self.assertAlmostEqual(1, ratio[0, 0, 0], places=2)

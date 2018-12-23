@@ -10,7 +10,7 @@ LOCAL_FEATURE_TYPE = 'local'
 GLOBAL_FEATURE_TYPE = 'global'
 
 
-class BaseFeature(abc.ABC):
+class BaseFeature(object):
     """ The abstract base class for all features
     """
 
@@ -130,9 +130,9 @@ class BaseShapeFeature(BaseFeature):
         # Check ndims
         ndim = self.ndim
         if dist.ndim != ndim or mask.ndim != ndim:
-            ndims = (u.ndim, dist.ndim, mask.ndim)
-            msg = ("Shape mismatch in one of the inputs: u={}, "
-                   "dist={}, mask={}")
+            ndims = (ndim, u.ndim, dist.ndim, mask.ndim)
+            msg = ("One of the inputs is not the correct dimension "
+                   "(correct={}): u={}, dist={}, mask={}")
             raise ValueError(msg.format(*ndims))
 
         # Check shapes

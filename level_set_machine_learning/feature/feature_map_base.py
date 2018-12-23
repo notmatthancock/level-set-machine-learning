@@ -13,7 +13,7 @@ import numpy as np
 MEMOIZE_OPTIONS = (None, 'create', 'use')
 
 
-class FeatureMapBase(abc.ABC):
+class FeatureMapBase(object):
     """
     The is an abstract base class for creating new feature maps.
 
