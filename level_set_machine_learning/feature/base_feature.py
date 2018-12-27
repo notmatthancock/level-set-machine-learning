@@ -103,11 +103,14 @@ class BaseFeature(object):
 
         dx: numpy.array, shape=ndim
             The "delta" spacing terms for each image axis. If None, then
-            1.0 is used for each axis.
+            1.0 is used for each axis. This array should be in index space,
+            i.e., the first term should refer to spacing along the first
+            axis, etc.
 
         Returns
         -------
         feature: numpy.array, shape=u.shape
+
         """
         raise NotImplementedError
 

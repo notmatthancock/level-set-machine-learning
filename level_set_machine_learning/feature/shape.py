@@ -34,7 +34,7 @@ class Size(BaseShapeFeature):
 
 class BoundarySize(BaseShapeFeature):
     """ Computes the size of the zero-level set of u. In 2D, this is
-    the -length of the implicit curve. In 3D, it is surface area.
+    the length of the implicit curve. In 3D, it is surface area.
     """
     locality = GLOBAL_FEATURE_TYPE
 
@@ -138,18 +138,18 @@ class IsoperimetricRatio(BaseShapeFeature):
 
         # Compute the area
         size = Size(ndim=3)
-        volume = size.compute_feature(u=u, dist=dist, mask=mask, dx=dx)
+        volume = size(u=u, dist=dist, mask=mask, dx=dx)
 
         # Compute the area
         boundary_size = BoundarySize(ndim=3)
-        surface_area = boundary_size.compute_feature(
-            u=u, dist=dist, mask=mask, dx=dx)
+        surface_area = boundary_size(u=u, dist=dist, mask=mask, dx=dx)
 
         return 36*numpy.pi*volume**2 / surface_area**3
 
 
 class Moment(BaseShapeFeature):
-    """ Computes the statisical moments of a given order along a given axis
+    """ Computes the normalized statistical moments of a given order along
+    a given axis
     """
     locality = GLOBAL_FEATURE_TYPE
 
@@ -158,6 +158,20 @@ class Moment(BaseShapeFeature):
         return "moment-axis-{}-order-{}".format(self.axis, self.order)
 
     def __init__(self, ndim, axis=0, order=1):
+        """ Initialize a normalized statistical moment feature
+
+        ndim: int
+            Number of dimensions
+
+        axis: int, default=0
+            The axis along which the moment should be computed
+
+        order: int, default=1
+            The order of the moment, e.g., order=1 yields the 'center of
+            mass' coordinate along the given axis and order=2 yields a measure
+            of spread along the given axis
+
+        """
 
         super(Moment, self).__init__(ndim)
 
@@ -173,6 +187,20 @@ class Moment(BaseShapeFeature):
         self.order = order
 
     def compute_feature(self, u, dist, mask, dx):
-        # TODO
-        pass
+
+        indices = numpy.indices(u.shape, dtype=numpy.float)
+        mesh = indices[self.axis] * dx[self.axis]
+
+        size = Size(ndim=u.ndim)
+        measure = size(u=u, dist=dist, mask=mask, dx=dx)[mask].ravel()[0]
+
+        positive_part = (u > 0).astype(numpy.float)
+
+        moment = (mesh**self.order * positive_part / measure).sum()
+        moment *= numpy.prod(dx)
+
+        feature = numpy.empty_like(u)
+        feature[mask] = moment
+
+        return feature
 

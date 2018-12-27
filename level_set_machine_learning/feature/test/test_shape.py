@@ -109,7 +109,6 @@ class TestShapeFeatures(unittest.TestCase):
     def test_isoperimetric_2d(self):
         """ Check isoperm ratio is approx 1 for circle
         """
-
         x, dx = np.linspace(-2, 2, 701, retstep=True)
         y, dy = np.linspace(-2, 2, 901, retstep=True)
 
@@ -141,3 +140,75 @@ class TestShapeFeatures(unittest.TestCase):
         ratio = isoperm(u=w, dist=w, mask=mask, dx=[dx, dy, dz])
 
         self.assertAlmostEqual(1, ratio[0, 0, 0], places=2)
+
+    def test_moment2d_order1(self):
+        """ Check that center of mass is in the correct location
+        """
+        x, dx = np.linspace(-2, 2, 301, retstep=True)
+        y, dy = np.linspace(-2, 2, 501, retstep=True)
+
+        xx, yy = np.meshgrid(x, y)
+
+        z = 1 - np.sqrt(xx**2 + yy**2)
+        mask = np.zeros(xx.shape, dtype=np.bool)
+        mask[0, 0] = True
+
+        moments = [shape.Moment(ndim=2, axis=0, order=1),
+                   shape.Moment(ndim=2, axis=1, order=1)]
+
+        center_of_mass = [
+            moment(u=z, dist=z, mask=mask, dx=[dy, dx])
+            for moment in moments
+        ]
+
+        self.assertAlmostEqual(2.0, center_of_mass[0][mask][0], places=3)
+        self.assertAlmostEqual(2.0, center_of_mass[1][mask][0], places=3)
+
+    def test_moment2d_order1_off_center(self):
+        """ Check that center of mass is in the correct location
+        """
+        x, dx = np.linspace(-2, 2, 301, retstep=True)
+        y, dy = np.linspace(-2, 2, 501, retstep=True)
+
+        xx, yy = np.meshgrid(x, y)
+
+        z = 1 - np.sqrt((xx-0.25)**2 + (yy+0.25)**2)
+        mask = np.zeros(xx.shape, dtype=np.bool)
+        mask[0, 0] = True
+
+        moments = [shape.Moment(ndim=2, axis=0, order=1),
+                   shape.Moment(ndim=2, axis=1, order=1)]
+
+        center_of_mass = [
+            moment(u=z, dist=z, mask=mask, dx=[dy, dx])
+            for moment in moments
+        ]
+
+        self.assertAlmostEqual(1.75, center_of_mass[0][mask][0], places=3)
+        self.assertAlmostEqual(2.25, center_of_mass[1][mask][0], places=3)
+
+    def test_moment2d_order2(self):
+        """ Check that center of mass is in the correct location
+        """
+        x, dx = np.linspace(-2, 2, 301, retstep=True)
+        y, dy = np.linspace(-2, 2, 501, retstep=True)
+
+        xx, yy = np.meshgrid(x, y)
+
+        z = 1 - np.sqrt(xx**2 + yy**2)
+        mask = np.zeros(xx.shape, dtype=np.bool)
+        mask[0, 0] = True
+
+        moments = [shape.Moment(ndim=2, axis=0, order=2),
+                   shape.Moment(ndim=2, axis=1, order=2)]
+
+        center_of_mass = [
+            moment(u=z, dist=z, mask=mask, dx=[dy, dx])
+            for moment in moments
+        ]
+
+        print([c[mask][0] for c in center_of_mass])
+
+        # self.assertAlmostEqual(2.0, center_of_mass[0][mask][0], places=3)
+        # self.assertAlmostEqual(2.0, center_of_mass[1][mask][0], places=3)
+
