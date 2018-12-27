@@ -191,7 +191,7 @@ class TestShapeFeatures(unittest.TestCase):
         """ Check that center of mass is in the correct location
         """
         x, dx = np.linspace(-2, 2, 301, retstep=True)
-        y, dy = np.linspace(-2, 2, 501, retstep=True)
+        y, dy = np.linspace(-2, 2, 201, retstep=True)
 
         xx, yy = np.meshgrid(x, y)
 
@@ -202,13 +202,11 @@ class TestShapeFeatures(unittest.TestCase):
         moments = [shape.Moment(ndim=2, axis=0, order=2),
                    shape.Moment(ndim=2, axis=1, order=2)]
 
-        center_of_mass = [
+        spread = [
             moment(u=z, dist=z, mask=mask, dx=[dy, dx])
             for moment in moments
         ]
 
-        print([c[mask][0] for c in center_of_mass])
-
-        # self.assertAlmostEqual(2.0, center_of_mass[0][mask][0], places=3)
-        # self.assertAlmostEqual(2.0, center_of_mass[1][mask][0], places=3)
+        self.assertAlmostEqual(0.25, spread[0][mask][0], places=2)
+        self.assertAlmostEqual(0.25, spread[1][mask][0], places=2)
 

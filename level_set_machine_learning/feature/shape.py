@@ -186,18 +186,45 @@ class Moment(BaseShapeFeature):
         self.axis = axis
         self.order = order
 
+    def _compute_center_of_mass(self, u, dx):
+
+        # Store the original axis and order to reset later
+        original_axis = self.axis
+        original_order = self.order
+
+        # Set the order to 1 to compute center of mass
+        self.order = 1
+
+        # Initialize center of mass container and mask with singular entry
+        center_of_mass = numpy.zeros(self.ndim)
+        mask = numpy.empty(u.shape, dtype=numpy.bool)
+        mask.ravel()[0] = True
+
+        for i in range(self.ndim):
+            self.axis = i
+            center_of_mass[i] = self.__call__(
+                u=u, dist=u, mask=mask, dx=dx)[mask][0]
+
+        self.axis = original_axis
+        self.order = original_order
+
+        return center_of_mass
+
     def compute_feature(self, u, dist, mask, dx):
 
         indices = numpy.indices(u.shape, dtype=numpy.float)
         mesh = indices[self.axis] * dx[self.axis]
 
         size = Size(ndim=u.ndim)
+
+        # Normalize by centering if order is greater than 1
+        if self.order > 1:
+            center_of_mass = self._compute_center_of_mass(u=u, dx=dx)
+            mesh -= center_of_mass[self.axis]
+
         measure = size(u=u, dist=dist, mask=mask, dx=dx)[mask].ravel()[0]
 
-        positive_part = (u > 0).astype(numpy.float)
-
-        moment = (mesh**self.order * positive_part / measure).sum()
-        moment *= numpy.prod(dx)
+        moment = (mesh**self.order)[u > 0].sum() * numpy.prod(dx) / measure
 
         feature = numpy.empty_like(u)
         feature[mask] = moment
