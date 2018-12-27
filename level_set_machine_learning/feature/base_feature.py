@@ -35,6 +35,12 @@ class BaseFeature(object):
         """
         raise NotImplementedError
 
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+
     def __init__(self, ndim):
         """ Initialize the feature
 

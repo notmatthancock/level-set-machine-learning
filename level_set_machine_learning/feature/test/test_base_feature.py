@@ -92,3 +92,42 @@ class TestBaseFeature(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             shape_feature(u=u, dist=dist, mask=mask, dx=dx)
+
+    def test_feature_eq(self):
+
+        image_feature1 = self.ImageFeature(ndim=2)
+        image_feature2 = self.ImageFeature(ndim=2)
+
+        shape_feature1 = self.ShapeFeature(ndim=2)
+        shape_feature2 = self.ShapeFeature(ndim=2)
+
+        self.assertEqual(image_feature1, image_feature2)
+        self.assertEqual(shape_feature1, shape_feature2)
+
+    def test_feature_neq(self):
+
+        image_feature1 = self.ImageFeature(ndim=2)
+        image_feature2 = self.ImageFeature(ndim=2)
+        image_feature1.name = 'other image feature'
+
+        shape_feature1 = self.ShapeFeature(ndim=2)
+        shape_feature2 = self.ShapeFeature(ndim=2)
+        shape_feature1.name = 'other shape feature'
+
+        self.assertNotEqual(image_feature1, image_feature2)
+        self.assertNotEqual(shape_feature1, shape_feature2)
+
+    def test_feature_hash(self):
+
+        image_feature1 = self.ImageFeature(ndim=2)
+        image_feature2 = self.ImageFeature(ndim=2)
+
+        shape_feature1 = self.ShapeFeature(ndim=2)
+        shape_feature2 = self.ShapeFeature(ndim=2)
+        shape_feature1.name = 'other shape feature'
+
+        image_feature_set = {image_feature1, image_feature2}
+        shape_feature_set = {shape_feature1, shape_feature2}
+
+        self.assertEqual(1, len(image_feature_set))
+        self.assertEqual(2, len(shape_feature_set))
