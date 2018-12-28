@@ -132,7 +132,10 @@ class IsoperimetricRatio(BaseShapeFeature):
         curve_length = boundary_size.compute_feature(
             u=u, dist=dist, mask=mask, dx=dx)
 
-        return 4*numpy.pi*area / curve_length**2
+        feature = numpy.empty_like(u)
+        feature[mask] = 4*numpy.pi*area[mask] / curve_length[mask]**2
+
+        return feature
 
     def compute_feature3d(self, u, dist, mask, dx):
 
@@ -144,8 +147,10 @@ class IsoperimetricRatio(BaseShapeFeature):
         boundary_size = BoundarySize(ndim=3)
         surface_area = boundary_size(u=u, dist=dist, mask=mask, dx=dx)
 
-        return 36*numpy.pi*volume**2 / surface_area**3
+        feature = numpy.empty_like(u)
+        feature[mask] = 36*numpy.pi*volume[mask]**2 / surface_area[mask]**3
 
+        return feature
 
 class Moment(BaseShapeFeature):
     """ Computes the normalized statistical moments of a given order along

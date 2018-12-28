@@ -36,7 +36,7 @@ class ImageSample(BaseImageFeature):
         feature = numpy.empty_like(u)
 
         if self.sigma == 0:
-            feature[mask] = img[mask].mean()
+            feature[mask] = img[mask]
         else:
             smoothed = img.copy()
 
@@ -44,7 +44,7 @@ class ImageSample(BaseImageFeature):
                 smoothed = gaussian_filter1d(
                     smoothed, sigma=self.sigma / dx[i], axis=i)
 
-            feature[mask] = smoothed[mask].mean()
+            feature[mask] = smoothed[mask]
 
         return feature
 
@@ -120,29 +120,22 @@ class InteriorImageAverage(BaseImageFeature):
             provided dx terms)
 
         """
-        super(ImageEdgeSample, self).__init__(ndim)
+        super(InteriorImageAverage, self).__init__(ndim)
         self.sigma = sigma
 
     def compute_feature(self, u, img, dist, mask, dx):
+
         feature = numpy.empty_like(u)
 
         if self.sigma == 0:
-            gradients = numpy.gradient(img, *dx)
-
+            feature[mask] = img[mask].mean()
         else:
-            gradients = [
-                gaussian_filter1d(
-                    img, sigma=self.sigma/dx[axis], order=1, axis=axis)
-                for axis in range(self.ndim)
-            ]
+            smoothed = img.copy()
 
-        # Square, sum, and square-root the gradient terms to form the magnitude
-        gradient_magnitude = reduce(lambda a, b: a+b**2,
-                                    gradients,
-                                    numpy.zeros_like(img))**0.5
+            for i in range(self.ndim):
+                smoothed = gaussian_filter1d(
+                    smoothed, sigma=self.sigma / dx[i], axis=i)
 
-        # Place the gradient magnitude into the feature array
-        feature[mask] = gradient_magnitude[mask]
+            feature[mask] = smoothed[mask].mean()
 
         return feature
-
