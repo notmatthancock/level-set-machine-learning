@@ -10,7 +10,6 @@ class TestShapeFeatures(unittest.TestCase):
     def test_size_1d(self):
         """ Check interval length in 1d
         """
-
         x, dx = np.linspace(-2, 2, 401, retstep=True)
         y = 1 - np.abs(x)
         mask = np.zeros(x.shape, dtype=np.bool)
@@ -41,7 +40,6 @@ class TestShapeFeatures(unittest.TestCase):
     def test_size_3d(self):
         """ Check volume feature with anisotropic mesh
         """
-
         x, dx = np.linspace(-2, 2, 401, retstep=True)
         y, dy = np.linspace(-2, 2, 301, retstep=True)
         z, dz = np.linspace(-2, 2, 501, retstep=True)
@@ -56,19 +54,6 @@ class TestShapeFeatures(unittest.TestCase):
         volume = size(u=w, dist=w, mask=mask, dx=[dx, dy, dz])
 
         self.assertAlmostEqual(4 * np.pi / 3, volume[0, 0, 0], places=2)
-
-    def test_boundary_1d(self):
-        """ Check boundary size in 1d (# zeros)
-        """
-        x, dx = np.linspace(-2, 2, retstep=True)
-        u = 1 - np.abs(x)
-        mask = np.zeros(x.shape, dtype=np.bool)
-        mask.ravel()[0] = True
-
-        boundary_size = shape.BoundarySize(ndim=1)
-        n_zeros = boundary_size(u=u, dist=u, mask=mask, dx=[dx])
-
-        self.assertAlmostEqual(2, n_zeros)
 
     def test_boundary_size_2d(self):
         """ Check boundary curve length with anisotropic mesh

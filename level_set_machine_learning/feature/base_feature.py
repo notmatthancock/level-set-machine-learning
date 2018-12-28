@@ -10,7 +10,7 @@ LOCAL_FEATURE_TYPE = 'local'
 GLOBAL_FEATURE_TYPE = 'global'
 
 
-class BaseFeature(object):
+class BaseFeature(abc.ABC):
     """ The abstract base class for all features
     """
 
@@ -42,8 +42,10 @@ class BaseFeature(object):
         return hash(self.name)
 
     def __str__(self):
-        return "<{} {}>".format(self.__class__.__name__,
-                                self.name)
+        return self.name
+
+    def __repr__(self):
+        return self.__str__()
 
     def __init__(self, ndim):
         """ Initialize the feature
@@ -128,13 +130,13 @@ class BaseFeature(object):
 class BaseImageFeature(BaseFeature):
     """ The abstract base class for all image features
     """
-    type = 'image'
+    type = IMAGE_FEATURE_TYPE
 
 
 class BaseShapeFeature(BaseFeature):
     """ The abstract base class for all shape features
     """
-    type = 'shape'
+    type = SHAPE_FEATURE_TYPE
 
     def __call__(self, u, dist, mask, dx=None):
         """ Calls the feature computation function after performing
