@@ -78,9 +78,9 @@ class BaseFeature(object):
 
         # Check delta terms
         if dx is None:
-            dx = numpy.ones(self.ndim)
+            dx = numpy.ones(self.ndim, dtype=numpy.float)
         else:
-            dx = numpy.array(dx)
+            dx = numpy.array(dx, dtype=numpy.float)
             if len(dx) != self.ndim:
                 msg = "Number of dx terms ({}) doesn't match dimensions ({})"
                 raise ValueError(msg.format(len(dx), self.ndim))
@@ -158,9 +158,9 @@ class BaseShapeFeature(BaseFeature):
 
         # Check delta terms
         if dx is None:
-            dx = numpy.ones(self.ndim)
+            dx = numpy.ones(self.ndim, dtype=numpy.float)
         else:
-            dx = numpy.array(dx)
+            dx = numpy.array(dx, dtype=numpy.float)
             if len(dx) != self.ndim:
                 msg = "Number of dx terms ({}) doesn't match dimensions ({})"
                 raise ValueError(msg.format(len(dx), self.ndim))

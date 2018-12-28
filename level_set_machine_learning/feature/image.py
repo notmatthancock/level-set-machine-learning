@@ -41,5 +41,7 @@ class SmoothedImageSample(BaseImageFeature):
                 smoothed = gaussian_filter1d(
                     smoothed, sigma=self.sigma / dx[i], axis=i)
 
+            feature[mask] = smoothed[mask]
+
         return feature
 
