@@ -58,25 +58,38 @@ class BaseFeature(abc.ABC):
         """
         self.ndim = ndim
 
-    def __call__(self, u, img, dist, mask, dx=None):
+    def __call__(self, u, img=None, dist=None, mask=None, dx=None):
         """ Calls the feature computation function after performing
         some validation on the inputs
         """
-        # Check shapes
-        shape = u.shape
-        if img.shape != shape or dist.shape != shape or mask.shape != shape:
-            shapes = (u.shape, img.shape, dist.shape, mask.shape)
-            msg = ("Shape mismatch in one of the inputs: u={}, img={}, "
-                   "dist={}, mask={}")
-            raise ValueError(msg.format(*shapes))
 
-        # Check dimensions
-        ndim = self.ndim
-        if img.ndim != ndim or dist.ndim != ndim or mask.ndim != ndim:
-            ndims = (u.ndim, img.ndim, dist.ndim, mask.ndim)
-            msg = ("Shape mismatch in one of the inputs: u={}, img={}, "
-                   "dist={}, mask={}")
-            raise ValueError(msg.format(*ndims))
+        not_ndarray = "`{var}` must be a numpy array"
+
+        if not isinstance(u, numpy.ndarray):
+            raise ValueError(not_ndarray.format(var='u'))
+
+        # Set the shape
+        shape = u.shape
+        shape_mismatch = ("`{{var}}` has shape {{shape}}, "
+                          "but must be shape {correct_shape}")
+        shape_mismatch = shape_mismatch.format(correct_shape=shape)
+
+        if isinstance(self, BaseImageFeature):
+            if img is None:
+                msg = "`img` must be present for image features"
+                raise ValueError(msg)
+            if not isinstance(img, numpy.ndarray):
+                raise ValueError(not_ndarray.format(var='img'))
+            if img.shape != shape:
+                msg = shape_mismatch.format(var='img', shape=img.shape)
+                raise ValueError(msg)
+
+        if dist is not None:
+            if not isinstance(dist, numpy.ndarray):
+                raise ValueError(not_ndarray.format(var='dist'))
+            if dist.shape != shape:
+                msg = shape_mismatch.format(var='img', shape=img.shape)
+                raise ValueError(msg)
 
         # Check delta terms
         if dx is None:
@@ -87,12 +100,34 @@ class BaseFeature(abc.ABC):
                 msg = "Number of dx terms ({}) doesn't match dimensions ({})"
                 raise ValueError(msg.format(len(dx), self.ndim))
 
+        if mask is None:
+            mask = numpy.ones(shape, dtype=numpy.bool)
+
+        # Check mask is a numpy array
+        if not isinstance(mask, numpy.ndarray):
+            msg = not_ndarray.format(var='mask')
+            raise ValueError(msg)
+
+        # Check shape of mask
+        if mask.shape != mask.shape:
+            msg = shape_mismatch.format(var='mask', shape=mask.shape)
+            raise ValueError(msg)
+
         # Check dtype of mask
         if mask.dtype != numpy.bool:
             msg = "mask dtype ({}) was not of type bool"
             raise ValueError(msg.format(mask.dtype))
 
-        return self.compute_feature(u=u, img=img, dist=dist, mask=mask, dx=dx)
+        # Handle the empty mask case
+        if not mask.any():
+            return numpy.empty_like(u)
+
+        if isinstance(self, BaseImageFeature):
+            return self.compute_feature(
+                u=u, img=img, dist=dist, mask=mask, dx=dx)
+        elif isinstance(self, BaseShapeFeature):
+            return self.compute_feature(
+                u=u, dist=dist, mask=mask, dx=dx)
 
     @abc.abstractmethod
     def compute_feature(self, u, img, dist, mask, dx):
@@ -138,64 +173,3 @@ class BaseShapeFeature(BaseFeature):
     """
     type = SHAPE_FEATURE_TYPE
 
-    def __call__(self, u, dist, mask, dx=None):
-        """ Calls the feature computation function after performing
-        some validation on the inputs
-        """
-        # Check ndims
-        ndim = self.ndim
-        if dist.ndim != ndim or mask.ndim != ndim:
-            ndims = (ndim, u.ndim, dist.ndim, mask.ndim)
-            msg = ("One of the inputs is not the correct dimension "
-                   "(correct={}): u={}, dist={}, mask={}")
-            raise ValueError(msg.format(*ndims))
-
-        # Check shapes
-        shape = u.shape
-        if dist.shape != shape or mask.shape != shape:
-            shapes = (u.shape, dist.shape, mask.shape)
-            msg = ("Shape mismatch in one of the inputs: u={}, "
-                   "dist={}, mask={}")
-            raise ValueError(msg.format(*shapes))
-
-        # Check delta terms
-        if dx is None:
-            dx = numpy.ones(self.ndim, dtype=numpy.float)
-        else:
-            dx = numpy.array(dx, dtype=numpy.float)
-            if len(dx) != self.ndim:
-                msg = "Number of dx terms ({}) doesn't match dimensions ({})"
-                raise ValueError(msg.format(len(dx), self.ndim))
-
-        # Check dtype of mask
-        if mask.dtype != numpy.bool:
-            msg = "mask dtype ({}) was not of type bool"
-            raise ValueError(msg.format(mask.dtype))
-
-        return self.compute_feature(u=u, dist=dist, mask=mask, dx=dx)
-
-    @abc.abstractmethod
-    def compute_feature(self, u, dist, mask, dx):
-        """ Compute the feature
-
-        Parameters
-        ----------
-        u: numpy.array
-            The "level set function".
-
-        dist: numpy.array
-            The signed distance transform to the level set `u` (only computed
-            necessarily in the narrow band region).
-
-        mask: numpy.array (dtype=bool)
-            The boolean mask indicating the narrow band region of `u`.
-
-        dx: numpy.array, shape=ndim
-            The "delta" spacing terms for each image axis. If None, then
-            1.0 is used for each axis.
-
-        Returns
-        -------
-        feature: numpy.array, shape=u.shape
-        """
-        raise NotImplementedError

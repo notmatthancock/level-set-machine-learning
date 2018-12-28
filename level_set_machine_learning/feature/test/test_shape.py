@@ -16,7 +16,7 @@ class TestShapeFeatures(unittest.TestCase):
         mask[0] = True
 
         size = shape.Size(ndim=1)
-        length = size(u=y, dist=y, mask=mask, dx=[dx])
+        length = size(u=y, mask=mask, dx=[dx])
 
         self.assertAlmostEqual(2, length[0], places=1)
 
@@ -33,7 +33,7 @@ class TestShapeFeatures(unittest.TestCase):
         mask.ravel()[0] = True
 
         size = shape.Size(ndim=2)
-        area = size(u=z, dist=z, mask=mask, dx=[dx, dy])
+        area = size(u=z, mask=mask, dx=[dx, dy])
 
         self.assertAlmostEqual(np.pi, area[0, 0], places=2)
 
@@ -51,7 +51,7 @@ class TestShapeFeatures(unittest.TestCase):
         mask.ravel()[0] = True
 
         size = shape.Size(ndim=3)
-        volume = size(u=w, dist=w, mask=mask, dx=[dx, dy, dz])
+        volume = size(u=w, mask=mask, dx=[dx, dy, dz])
 
         self.assertAlmostEqual(4 * np.pi / 3, volume[0, 0, 0], places=2)
 
@@ -68,7 +68,7 @@ class TestShapeFeatures(unittest.TestCase):
         mask.ravel()[0] = True
 
         boundary_size = shape.BoundarySize(ndim=2)
-        curve_length = boundary_size(u=z, dist=z, mask=mask, dx=[dx, dy])
+        curve_length = boundary_size(u=z, mask=mask, dx=[dx, dy])
 
         self.assertAlmostEqual(2*np.pi, curve_length[0, 0], places=4)
 
@@ -86,7 +86,7 @@ class TestShapeFeatures(unittest.TestCase):
         mask.ravel()[0] = True
 
         boundary_size = shape.BoundarySize(ndim=3)
-        surface_area = boundary_size(u=w, dist=w, mask=mask, dx=[dx, dy, dz])
+        surface_area = boundary_size(u=w, mask=mask, dx=[dx, dy, dz])
 
         self.assertAlmostEqual(4*np.pi, surface_area[0, 0, 0], places=0)
 
@@ -103,7 +103,7 @@ class TestShapeFeatures(unittest.TestCase):
         mask.ravel()[0] = True
 
         isoperm = shape.IsoperimetricRatio(ndim=2)
-        ratio = isoperm(u=z, dist=z, mask=mask, dx=[dx, dy])
+        ratio = isoperm(u=z, mask=mask, dx=[dx, dy])
 
         self.assertAlmostEqual(1, ratio[0, 0], places=3)
 
@@ -121,7 +121,7 @@ class TestShapeFeatures(unittest.TestCase):
         mask.ravel()[0] = True
 
         isoperm = shape.IsoperimetricRatio(ndim=3)
-        ratio = isoperm(u=w, dist=w, mask=mask, dx=[dx, dy, dz])
+        ratio = isoperm(u=w, mask=mask, dx=[dx, dy, dz])
 
         self.assertAlmostEqual(1, ratio[0, 0, 0], places=2)
 
@@ -141,7 +141,7 @@ class TestShapeFeatures(unittest.TestCase):
                    shape.Moment(ndim=2, axis=1, order=1)]
 
         center_of_mass = [
-            moment(u=z, dist=z, mask=mask, dx=[dy, dx])
+            moment(u=z, mask=mask, dx=[dy, dx])
             for moment in moments
         ]
 
@@ -164,7 +164,7 @@ class TestShapeFeatures(unittest.TestCase):
                    shape.Moment(ndim=2, axis=1, order=1)]
 
         center_of_mass = [
-            moment(u=z, dist=z, mask=mask, dx=[dy, dx])
+            moment(u=z, mask=mask, dx=[dy, dx])
             for moment in moments
         ]
 
@@ -187,7 +187,7 @@ class TestShapeFeatures(unittest.TestCase):
                    shape.Moment(ndim=2, axis=1, order=2)]
 
         spread = [
-            moment(u=z, dist=z, mask=mask, dx=[dy, dx])
+            moment(u=z, mask=mask, dx=[dy, dx])
             for moment in moments
         ]
 
@@ -212,7 +212,7 @@ class TestShapeFeatures(unittest.TestCase):
                    shape.Moment(ndim=3, axis=2, order=1)]
 
         center_of_mass = [
-            moment(u=w, dist=w, mask=mask, dx=[dy, dx, dz])
+            moment(u=w, mask=mask, dx=[dy, dx, dz])
             for moment in moments
         ]
 
@@ -238,7 +238,7 @@ class TestShapeFeatures(unittest.TestCase):
                    shape.Moment(ndim=3, axis=2, order=1)]
 
         center_of_mass = [
-            moment(u=w, dist=w, mask=mask, dx=[dy, dx, dz])
+            moment(u=w, mask=mask, dx=[dy, dx, dz])
             for moment in moments
         ]
 
@@ -264,7 +264,7 @@ class TestShapeFeatures(unittest.TestCase):
                    shape.Moment(ndim=3, axis=2, order=2)]
 
         spread = [
-            moment(u=w, dist=w, mask=mask, dx=[dy, dx, dz])
+            moment(u=w, mask=mask, dx=[dy, dx, dz])
             for moment in moments
         ]
 

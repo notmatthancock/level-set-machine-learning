@@ -131,3 +131,21 @@ class TestBaseFeature(unittest.TestCase):
 
         self.assertEqual(1, len(image_feature_set))
         self.assertEqual(2, len(shape_feature_set))
+
+    def test_empty_mask(self):
+
+        image_feature = self.ImageFeature(ndim=2)
+        shape_feature = self.ShapeFeature(ndim=2)
+
+        u = np.ones((3, 2))
+        img = np.ones((3, 2))
+        dist = np.ones((3, 2))
+        mask = np.zeros((3, 2), dtype=np.bool)
+
+        feature = image_feature(u=u, img=img, dist=dist, mask=mask)
+        self.assertEqual(u.shape, feature.shape)
+        self.assertEqual(u.dtype, feature.dtype)
+
+        feature = shape_feature(u=u, dist=dist, mask=mask)
+        self.assertEqual(u.shape, feature.shape)
+        self.assertEqual(u.dtype, feature.dtype)

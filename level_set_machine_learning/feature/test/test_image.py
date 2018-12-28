@@ -16,7 +16,7 @@ class TestImageFeatures(unittest.TestCase):
         u = random_state.randn(*img.shape)
         mask = u > 0
 
-        feature = image_sample(u=u, img=img, dist=u, mask=mask, dx=None)
+        feature = image_sample(u=u, img=img, mask=mask, dx=None)
 
         self.assertLessEqual(np.abs(feature[mask] - img[mask]).mean(), 1e-8)
 
@@ -33,7 +33,7 @@ class TestImageFeatures(unittest.TestCase):
         u = random_state.randn(*img.shape)
         mask = u > 0
 
-        feature = image_sample(u=u, img=img, dist=u, mask=mask, dx=[1, 2])
+        feature = image_sample(u=u, img=img, mask=mask, dx=[1, 2])
 
         smoothed_img = gaussian_filter1d(
             gaussian_filter1d(img, sigma, axis=0), 0.5*sigma, axis=1)
@@ -54,7 +54,7 @@ class TestImageFeatures(unittest.TestCase):
         di, dj = np.gradient(img)
         gmag = np.sqrt(di**2 + dj**2)
 
-        feature = image_edge_sample(u=u, img=img, dist=u, mask=mask, dx=None)
+        feature = image_edge_sample(u=u, img=img, mask=mask, dx=None)
 
         self.assertLessEqual(np.abs(feature[mask] - gmag[mask]).mean(), 1e-8)
 
@@ -71,7 +71,7 @@ class TestImageFeatures(unittest.TestCase):
         u = random_state.randn(*img.shape)
         mask = u > 0
 
-        feature = image_edge_sample(u=u, img=img, dist=u, mask=mask, dx=[1, 2])
+        feature = image_edge_sample(u=u, img=img, mask=mask, dx=[1, 2])
 
         di = gaussian_filter1d(img, sigma=sigma, axis=0, order=1)
         dj = gaussian_filter1d(img, sigma=0.5*sigma, axis=1, order=1)
@@ -93,7 +93,7 @@ class TestImageFeatures(unittest.TestCase):
 
         img[mask] = 2.0
 
-        feature = interior_average(u=u, img=img, dist=u, mask=mask)
+        feature = interior_average(u=u, img=img, mask=mask)
 
         self.assertAlmostEqual(2.0, feature[mask][0])
 
@@ -114,6 +114,6 @@ class TestImageFeatures(unittest.TestCase):
             gaussian_filter1d(img, sigma=sigma, axis=0),
             sigma=0.5*sigma, axis=1)
 
-        feature = interior_average(u=u, img=img, dist=u, mask=mask, dx=[1, 2])
+        feature = interior_average(u=u, img=img, mask=mask, dx=[1, 2])
 
         self.assertAlmostEqual(smoothed_image[mask].mean(), feature[mask][0])
