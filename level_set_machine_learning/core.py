@@ -1,13 +1,19 @@
-import os, shutil, time, warnings, pickle, h5py
-import datetime, logging
+import logging
+import os
+import shutil
+import time
+import warnings
+import pickle
+import datetime
 
+import h5py
 import numpy as np
 import multiprocessing as mp
 import skfmm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from level_set_machine_learning.feature.feature_map_base import FeatureMapBase
+from level_set_machine_learning.feature.feature_map_base import FeatureMap
 from .initialization_functions import init_func_base
 from .util.score_functions import jaccard
 from .util.data import splitter

@@ -15,13 +15,13 @@ class Size(BaseShapeFeature):
     @property
     def name(self):
         if self.ndim == 1:
-            return 'length'
+            return 'Length'
         elif self.ndim == 2:
-            return 'area'
+            return 'Area'
         elif self.ndim == 3:
-            return 'volume'
+            return 'Volume'
         else:
-            return 'hyper-volume'
+            return 'Hyper-volume'
 
     def compute_feature(self, u, dist, mask, dx):
 
@@ -49,9 +49,9 @@ class BoundarySize(BaseShapeFeature):
     @property
     def name(self):
         if self.ndim == 2:
-            return 'curve-length'
+            return 'Curve length'
         elif self.ndim == 3:
-            return 'surface-area'
+            return 'Surface area'
 
     def compute_feature(self, u, dist, mask, dx):
 
@@ -100,9 +100,9 @@ class IsoperimetricRatio(BaseShapeFeature):
     @property
     def name(self):
         if self.ndim == 2:
-            return 'circularity'
+            return 'Circularity'
         else:
-            return 'sphericity'
+            return 'Sphericity'
 
     def __init__(self, ndim):
         if ndim < 2 or ndim > 3:
@@ -155,7 +155,7 @@ class Moment(BaseShapeFeature):
 
     @property
     def name(self):
-        return "moment-axis-{}-order-{}".format(self.axis, self.order)
+        return "Moment (axis={}; order={})".format(self.axis, self.order)
 
     def __init__(self, ndim, axis=0, order=1):
         """ Initialize a normalized statistical moment feature
