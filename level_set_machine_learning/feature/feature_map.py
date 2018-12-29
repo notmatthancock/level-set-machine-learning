@@ -44,18 +44,18 @@ class FeatureMap(object):
             The resulting feature array
 
         """
-        features_shape = u.shape + (self.nfeatures,)
-        features = np.empty(features_shape)
+        features_shape = u.shape + (self.n_features,)
+        features_array = np.empty(features_shape)
 
-        for ifeature, feature in enumerate(features):
+        for ifeature, feature in enumerate(self.features):
             if isinstance(feature, BaseImageFeature):
-                features[ifeature][mask] = feature(u=u, img=img, dist=dist,
-                                                   mask=mask, dx=dx)
+                features_array[ifeature][mask] = feature(
+                    u=u, img=img, dist=dist, mask=mask, dx=dx)
             elif isinstance(feature, BaseShapeFeature):
-                features[ifeature][mask] = feature(u=u, dist=dist,
-                                                   mask=mask, dx=dx)
+                features_array[ifeature][mask] = feature(
+                    u=u, dist=dist, mask=mask, dx=dx)
             else:
                 msg = "Unknown feature type ({})"
                 raise ValueError(msg.format(feature.__class__.__name__))
 
-        return features
+        return features_array
