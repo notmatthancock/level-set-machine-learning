@@ -175,4 +175,3 @@ class BaseShapeFeature(BaseFeature):
     """ The abstract base class for all shape features
     """
     type = SHAPE_FEATURE_TYPE
-

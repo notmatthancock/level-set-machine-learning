@@ -3,7 +3,7 @@ from skimage.measure import marching_cubes_lewiner as marching_cubes
 from skimage.measure import find_contours, mesh_surface_area
 
 from .base_feature import (
-    BaseShapeFeature, LOCAL_FEATURE_TYPE, GLOBAL_FEATURE_TYPE)
+    BaseShapeFeature, GLOBAL_FEATURE_TYPE)
 
 
 class Size(BaseShapeFeature):
@@ -152,6 +152,7 @@ class IsoperimetricRatio(BaseShapeFeature):
 
         return feature
 
+
 class Moment(BaseShapeFeature):
     """ Computes the normalized statistical moments of a given order along
     a given axis
@@ -235,4 +236,3 @@ class Moment(BaseShapeFeature):
         feature[mask] = moment
 
         return feature
-

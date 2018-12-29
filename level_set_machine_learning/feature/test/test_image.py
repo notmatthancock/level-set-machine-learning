@@ -117,3 +117,41 @@ class TestImageFeatures(unittest.TestCase):
         feature = interior_average(u=u, img=img, mask=mask, dx=[1, 2])
 
         self.assertAlmostEqual(smoothed_image[mask].mean(), feature[mask][0])
+
+    def test_interior_image_variation_sigma0_2d(self):
+
+        sigma = 0
+
+        random_state = np.random.RandomState(123)
+        interior_average = image.InteriorImageVariation(ndim=2, sigma=sigma)
+
+        img = random_state.randn(100, 200)
+        u = random_state.randn(*img.shape)
+        mask = u > 0
+
+        img[mask] = 2.0
+
+        feature = interior_average(u=u, img=img, mask=mask)
+
+        self.assertAlmostEqual(0, feature[mask][0])
+
+    def test_interior_image_variation_sigma1_2d(self):
+
+        from scipy.ndimage import gaussian_filter1d
+
+        sigma = 10
+
+        random_state = np.random.RandomState(123)
+        interior_average = image.InteriorImageVariation(ndim=2, sigma=sigma)
+
+        img = random_state.randn(100, 200)
+        u = random_state.randn(*img.shape)
+        mask = u > 0
+
+        smoothed_image = gaussian_filter1d(
+            gaussian_filter1d(img, sigma=sigma, axis=0),
+            sigma=0.5*sigma, axis=1)
+
+        feature = interior_average(u=u, img=img, mask=mask, dx=[1, 2])
+
+        self.assertAlmostEqual(smoothed_image[mask].std(), feature[mask][0])
