@@ -7,22 +7,8 @@ from level_set_machine_learning.feature import shape
 
 class TestShapeFeatures(unittest.TestCase):
 
-    def test_size_1d(self):
-        """ Check interval length in 1d
-        """
-        x, dx = np.linspace(-2, 2, 401, retstep=True)
-        y = 1 - np.abs(x)
-        mask = np.zeros(x.shape, dtype=np.bool)
-        mask[0] = True
-
-        size = shape.Size(ndim=1)
-        length = size(u=y, mask=mask, dx=[dx])
-
-        self.assertAlmostEqual(2, length[0], places=1)
-
     def test_size_2d(self):
-        """ Check area feature with anisotropic mesh
-        """
+
         x, dx = np.linspace(-2, 2, 701, retstep=True)
         y, dy = np.linspace(-2, 2, 901, retstep=True)
 
@@ -38,8 +24,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(np.pi, area[0, 0], places=2)
 
     def test_size_3d(self):
-        """ Check volume feature with anisotropic mesh
-        """
+
         x, dx = np.linspace(-2, 2, 401, retstep=True)
         y, dy = np.linspace(-2, 2, 301, retstep=True)
         z, dz = np.linspace(-2, 2, 501, retstep=True)
@@ -56,8 +41,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(4 * np.pi / 3, volume[0, 0, 0], places=2)
 
     def test_boundary_size_2d(self):
-        """ Check boundary curve length with anisotropic mesh
-        """
+
         x, dx = np.linspace(-2, 2, 501, retstep=True)
         y, dy = np.linspace(-2, 2, 701, retstep=True)
 
@@ -73,8 +57,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(2*np.pi, curve_length[0, 0], places=4)
 
     def test_boundary_size_3d(self):
-        """ Check boundary surface area with anisotropic mesh
-        """
+
         x, dx = np.linspace(-2, 2, 501, retstep=True)
         y, dy = np.linspace(-2, 2, 401, retstep=True)
         z, dz = np.linspace(-2, 2, 601, retstep=True)
@@ -91,8 +74,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(4*np.pi, surface_area[0, 0, 0], places=0)
 
     def test_isoperimetric_2d(self):
-        """ Check isoperm ratio is approx 1 for circle
-        """
+
         x, dx = np.linspace(-2, 2, 701, retstep=True)
         y, dy = np.linspace(-2, 2, 901, retstep=True)
 
@@ -108,8 +90,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(1, ratio[0, 0], places=3)
 
     def test_isoperimetric_3d(self):
-        """ Check isoperm ratio is approx 1 for sphere
-        """
+
         x, dx = np.linspace(-2, 2, 201, retstep=True)
         y, dy = np.linspace(-2, 2, 201, retstep=True)
         z, dz = np.linspace(-2, 2, 901, retstep=True)
@@ -126,8 +107,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(1, ratio[0, 0, 0], places=2)
 
     def test_moment2d_order1(self):
-        """ Check that center of mass is in the correct location
-        """
+
         x, dx = np.linspace(-2, 2, 301, retstep=True)
         y, dy = np.linspace(-2, 2, 501, retstep=True)
 
@@ -149,8 +129,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(2.0, center_of_mass[1][mask][0], places=3)
 
     def test_moment2d_order1_off_center(self):
-        """ Check that center of mass is in the correct location
-        """
+
         x, dx = np.linspace(-2, 2, 301, retstep=True)
         y, dy = np.linspace(-2, 2, 501, retstep=True)
 
@@ -172,8 +151,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(2.25, center_of_mass[1][mask][0], places=3)
 
     def test_moment2d_order2(self):
-        """ Check that center of mass is in the correct location
-        """
+
         x, dx = np.linspace(-2, 2, 301, retstep=True)
         y, dy = np.linspace(-2, 2, 201, retstep=True)
 
@@ -195,8 +173,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(0.25, spread[1][mask][0], places=2)
 
     def test_moment3d_order1(self):
-        """ Check that center of mass is in the correct location
-        """
+
         x, dx = np.linspace(-2, 2, 301, retstep=True)
         y, dy = np.linspace(-2, 2, 501, retstep=True)
         z, dz = np.linspace(-2, 2, 401, retstep=True)
@@ -221,8 +198,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(2.0, center_of_mass[2][mask][0], places=3)
 
     def test_moment3d_order1_off_center(self):
-        """ Check that center of mass is in the correct location
-        """
+
         x, dx = np.linspace(-2, 2, 301, retstep=True)
         y, dy = np.linspace(-2, 2, 501, retstep=True)
         z, dz = np.linspace(-2, 2, 401, retstep=True)
@@ -247,8 +223,7 @@ class TestShapeFeatures(unittest.TestCase):
         self.assertAlmostEqual(2.50, center_of_mass[2][mask][0], places=3)
 
     def test_moment3d_order2(self):
-        """ Check that center of mass is in the correct location
-        """
+
         x, dx = np.linspace(-2, 2, 301, retstep=True)
         y, dy = np.linspace(-2, 2, 201, retstep=True)
         z, dz = np.linspace(-2, 2, 401, retstep=True)

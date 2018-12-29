@@ -42,7 +42,7 @@ class TestBaseFeature(unittest.TestCase):
         self.assertEqual(image_feature.type, IMAGE_FEATURE_TYPE)
         self.assertEqual(shape_feature.type, SHAPE_FEATURE_TYPE)
 
-    def test_mismatch_input_shapes(self):
+    def test_shape_mismatch_dist(self):
 
         image_feature = self.ImageFeature(ndim=2)
         shape_feature = self.ShapeFeature(ndim=2)
@@ -57,6 +57,27 @@ class TestBaseFeature(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             shape_feature(u=u, dist=dist, mask=mask)
+
+    def test_shape_mismatch_img(self):
+
+        image_feature = self.ImageFeature(ndim=2)
+
+        u = np.ones((3, 2))
+        img = np.ones((3, 1))
+
+        with self.assertRaises(ValueError):
+            image_feature(u=u, img=img)
+
+    def test_shape_mismatch_mask(self):
+
+        image_feature = self.ImageFeature(ndim=2)
+
+        u = np.ones((3, 2))
+        img = np.ones((3, 1))
+        mask = np.ones((3, 9), dtype=np.bool)
+
+        with self.assertRaises(ValueError):
+            image_feature(u=u, img=img, mask=mask)
 
     def test_mismatch_input_ndims(self):
 
@@ -149,3 +170,58 @@ class TestBaseFeature(unittest.TestCase):
         feature = shape_feature(u=u, dist=dist, mask=mask)
         self.assertEqual(u.shape, feature.shape)
         self.assertEqual(u.dtype, feature.dtype)
+
+    def test_no_mask_and_no_dist(self):
+
+        image_feature = self.ImageFeature(ndim=2)
+        shape_feature = self.ShapeFeature(ndim=2)
+
+        u = np.ones((3, 2))
+        img = np.ones((3, 2))
+
+        image_feature(u=u, img=img)
+        shape_feature(u=u)
+
+    def test_u_not_array(self):
+
+        image_feature = self.ImageFeature(ndim=2)
+        shape_feature = self.ShapeFeature(ndim=2)
+
+        with self.assertRaises(TypeError):
+            image_feature(u='not an array')
+
+        with self.assertRaises(TypeError):
+            shape_feature(u='not an array')
+
+    def test_img_not_supplied_to_image_feature(self):
+
+        image_feature = self.ImageFeature(ndim=2)
+
+        u = np.ones((3, 2))
+
+        with self.assertRaises(ValueError):
+            image_feature(u=u)
+
+    def test_img_not_array(self):
+
+        image_feature = self.ImageFeature(ndim=2)
+        u = np.ones((3, 2))
+
+        with self.assertRaises(TypeError):
+            image_feature(u=u, img='not an array')
+
+    def test_dist_not_array(self):
+
+        shape_feature = self.ShapeFeature(ndim=2)
+        u = np.ones((3, 2))
+
+        with self.assertRaises(TypeError):
+            shape_feature(u=u, dist='not an array')
+
+    def test_mask_not_bool(self):
+
+        shape_feature = self.ShapeFeature(ndim=2)
+        u = np.ones((3, 2))
+
+        with self.assertRaises(TypeError):
+            shape_feature(u=u, mask=u)

@@ -63,13 +63,16 @@ class BaseFeature(abc.ABC):
         some validation on the inputs
         """
 
+        # Error message for incorrect variable type
         not_ndarray = "`{var}` must be a numpy array"
 
         if not isinstance(u, numpy.ndarray):
-            raise ValueError(not_ndarray.format(var='u'))
+            raise TypeError(not_ndarray.format(var='u'))
 
         # Set the shape
         shape = u.shape
+
+        # Error message for shape mismatches
         shape_mismatch = ("`{{var}}` has shape {{shape}}, "
                           "but must be shape {correct_shape}")
         shape_mismatch = shape_mismatch.format(correct_shape=shape)
@@ -79,16 +82,16 @@ class BaseFeature(abc.ABC):
                 msg = "`img` must be present for image features"
                 raise ValueError(msg)
             if not isinstance(img, numpy.ndarray):
-                raise ValueError(not_ndarray.format(var='img'))
+                raise TypeError(not_ndarray.format(var='img'))
             if img.shape != shape:
                 msg = shape_mismatch.format(var='img', shape=img.shape)
                 raise ValueError(msg)
 
         if dist is not None:
             if not isinstance(dist, numpy.ndarray):
-                raise ValueError(not_ndarray.format(var='dist'))
+                raise TypeError(not_ndarray.format(var='dist'))
             if dist.shape != shape:
-                msg = shape_mismatch.format(var='img', shape=img.shape)
+                msg = shape_mismatch.format(var='img', shape=dist.shape)
                 raise ValueError(msg)
 
         # Check delta terms
@@ -106,17 +109,17 @@ class BaseFeature(abc.ABC):
         # Check mask is a numpy array
         if not isinstance(mask, numpy.ndarray):
             msg = not_ndarray.format(var='mask')
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         # Check shape of mask
-        if mask.shape != mask.shape:
+        if mask.shape != shape:
             msg = shape_mismatch.format(var='mask', shape=mask.shape)
             raise ValueError(msg)
 
         # Check dtype of mask
         if mask.dtype != numpy.bool:
-            msg = "mask dtype ({}) was not of type bool"
-            raise ValueError(msg.format(mask.dtype))
+            msg = "`mask` dtype ({}) was not of type bool"
+            raise TypeError(msg.format(mask.dtype))
 
         # Handle the empty mask case
         if not mask.any():
