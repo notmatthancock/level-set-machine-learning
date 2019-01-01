@@ -17,7 +17,7 @@ class FeatureMap(object):
 
         """
         self._validate_features(features)
-        self.features = set(features)
+        self.features = features
         self.n_features = len(self.features)
 
     def _validate_features(self, features):
@@ -45,15 +45,17 @@ class FeatureMap(object):
 
         """
         features_shape = u.shape + (self.n_features,)
-        features_array = np.empty(features_shape)
+        features_array = np.zeros(features_shape)
 
+        # Loop through the feature list and stack the results into an array
         for ifeature, feature in enumerate(self.features):
+
             if isinstance(feature, BaseImageFeature):
-                features_array[ifeature][mask] = feature(
-                    u=u, img=img, dist=dist, mask=mask, dx=dx)
+                features_array[mask, ifeature] = feature(
+                    u=u, img=img, dist=dist, mask=mask, dx=dx)[mask]
             elif isinstance(feature, BaseShapeFeature):
-                features_array[ifeature][mask] = feature(
-                    u=u, dist=dist, mask=mask, dx=dx)
+                features_array[mask, ifeature] = feature(
+                    u=u, dist=dist, mask=mask, dx=dx)[mask]
             else:
                 msg = "Unknown feature type ({})"
                 raise ValueError(msg.format(feature.__class__.__name__))

@@ -32,6 +32,7 @@ class TestFeatureMap(unittest.TestCase):
         feature_array = feature_map(u=u, img=img, dist=u, mask=mask)
 
         for i in range(feature_map.n_features):
+
             if isinstance(features[i], BaseImageFeature):
                 feature = features[i](u=u, img=img, dist=u, mask=mask)
             elif isinstance(features[i], BaseShapeFeature):
@@ -39,6 +40,5 @@ class TestFeatureMap(unittest.TestCase):
             else:
                 raise RuntimeError("Unknown feature type")
 
-            error = np.abs(feature_array[i] - feature).mean()
-
-            self.assertAlmostEqual(error, 1e-8)
+            error = np.abs(feature_array[mask, i] - feature[mask]).mean()
+            self.assertLessEqual(error, 1e-8)
