@@ -8,17 +8,14 @@ import datetime
 
 import h5py
 import numpy as np
-import multiprocessing as mp
 import skfmm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from level_set_machine_learning.feature.feature_map import FeatureMap
 from .initialization_functions import init_func_base
 from .util.score_functions import jaccard
-from .util.data import splitter
-from .util import masked_grad as mg
-
+from level_set_machine_learning.data import splitter
+from level_set_machine_learning.gradient import masked_gradient as mg
 
 DEFAULT_SAVE_NAME = 'lsl_model.pkl'
 

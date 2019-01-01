@@ -6,7 +6,7 @@ def jaccard(u, seg, t=0.0):
     known as the intersection over union.
     """
     if seg.dtype != np.bool:
-        msg = "seg dtype ({}) was not of type bool"
+        msg = "`seg` dtype ({}) was not of type bool"
         raise ValueError(msg.format(seg.dtype))
 
     thresholded = u > t

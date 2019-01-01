@@ -1,12 +1,18 @@
+import ctypes
+
 import numpy as np
-#from . import _masked_grad
+from numpy.ctypeslib import ndpointer
 
 
-def gradient_centered(A, mask=None, dx=None, return_gmag=True, 
+_masked_gradient = ctypes.cdll.LoadLibrary('./_masked_gradient.so')
+
+
+
+def gradient_centered(arr, mask=None, dx=None, return_gmag=True,
                       normalize=False):
     """
     Compute the centered difference approximations of the partial 
-    derivatives of `A` along each coordinate axis, computed only 
+    derivatives of `arr` along each coordinate axis, computed only
     where `mask` is true.
 
     Note
@@ -15,14 +21,14 @@ def gradient_centered(A, mask=None, dx=None, return_gmag=True,
 
     Parameters
     ----------
-    A: ndarray, dtype=float
-        The gradient of `A` is returned.
+    arr: ndarray, dtype=float
+        The gradient of `arr` is returned.
 
-    mask: ndarray, dtype=bool, same shape as `A`, default=None
-        The gradient of `A` is only computed where `mask` is true. If
+    mask: ndarray, dtype=bool, same shape as `arr`, default=None
+        The gradient of `arr` is only computed where `mask` is true. If
         None (default), then mask is all ones.
 
-    dx: ndarray, dtype=float, len=A.ndim
+    dx: ndarray, dtype=float, len=arr.ndim
         These indicate the "delta" or spacing terms along each axis.
         If None (default), then spacing is 1.0 along each axis.
 
@@ -42,16 +48,16 @@ def gradient_centered(A, mask=None, dx=None, return_gmag=True,
         differences (only computed where mask is True). The gradient magnitude 
         is optionally returned.
     """
-    ndim = A.ndim
+    ndim = arr.ndim
     assert 1 <= ndim <= 3, "Only dimensions 1-3 supported."
-    if A.dtype != np.float:
-        raise ValueError("`A` must be float type.")
+    if arr.dtype != np.float:
+        raise ValueError("`arr` must be float type.")
 
     if mask is not None:
         if mask.ndim != ndim:
-            raise ValueError("Shape mismatch between `mask` and `A`.")
+            raise ValueError("Shape mismatch between `mask` and `arr`.")
     else:
-        mask = np.ones(A.shape, dtype=np.bool)
+        mask = np.ones(arr.shape, dtype=np.bool)
 
     if dx is not None:
         if len(dx) != ndim:
@@ -59,22 +65,22 @@ def gradient_centered(A, mask=None, dx=None, return_gmag=True,
     else:
         dx = np.ones(ndim, dtype=np.float)
 
-    D = [np.zeros_like(A) for _ in range(ndim)]
-    gmag = np.zeros_like(A)
+    D = [np.zeros_like(arr) for _ in range(ndim)]
+    gmag = np.zeros_like(arr)
 
     # Select the correct function depending on dimension of the input.
-    func = getattr(_masked_grad, 'gradient_centered%dd' % ndim)
+    func = getattr(_masked_gradient, 'gradient_centered%dd' % ndim)
 
     if ndim == 3:
-        func(A=A, di=D[0], dj=D[1], dk=D[2], gmag=gmag, mask=mask,
+        func(A=arr, di=D[0], dj=D[1], dk=D[2], gmag=gmag, mask=mask,
              deli=dx[0], delj=dx[1], delk=dx[2],
              normalize=(1 if normalize else 0))
     elif ndim == 2:
-        func(A=A, di=D[0], dj=D[1], gmag=gmag, mask=mask,
+        func(A=arr, di=D[0], dj=D[1], gmag=gmag, mask=mask,
              deli=dx[0], delj=dx[1],
              normalize=(1 if normalize else 0))
     elif ndim == 1:
-        func(A=A, di=D[0], gmag=gmag, mask=mask,
+        func(A=arr, di=D[0], gmag=gmag, mask=mask,
              deli=dx[0],
              normalize=(1 if normalize else 0))
 

@@ -1,7 +1,7 @@
 import numpy as np
 from level_set_machine_learning.feature.feature_map import FeatureMapBase
 from scipy.ndimage import gaussian_filter1d as gf1d
-from level_set_machine_learning.util import masked_grad as mg
+from level_set_machine_learning.gradient import masked_gradient as mg
 
 
 class simple_feature_map(FeatureMapBase):
