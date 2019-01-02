@@ -4,6 +4,7 @@
 #include <math.h>
 #include "utils.h"
 
+
 void gradient_centered3d(int m, int n, int p, double * A, bool * mask,
                          double * di, double * dj, double * dk, double * gmag,
                          double deli, double delj, double delk,

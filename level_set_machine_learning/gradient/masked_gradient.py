@@ -1,14 +1,46 @@
+import os
 import ctypes
 
 import numpy as np
 from numpy.ctypeslib import ndpointer
 
 
-_masked_gradient = ctypes.cdll.LoadLibrary('./_masked_gradient.so')
+# Load the masked gradient C library
+curdir = os.path.abspath(os.path.dirname(__file__))
+_masked_gradient = ctypes.cdll.LoadLibrary(
+    os.path.join(curdir, '_masked_gradient.so'))
 
 
+def _get_gradient_centered_func(ndim):
+    """ Gets the function from the c module and sets up the respective
+    argument and return types
+    """
+    func = getattr(_masked_gradient, 'gradient_centered{:d}d'.format(ndim))
+    func.restype = None
 
-def gradient_centered(arr, mask=None, dx=None, return_gmag=True,
+    array_dimension_args = ((ctypes.c_int,) * ndim)
+    array_arg = (ndpointer(ctypes.c_double),)
+    mask_arg = (ndpointer(ctypes.c_bool),)
+    gradient_args = (ndpointer(ctypes.c_double),) * ndim
+    gradient_magnitude_arg = (ndpointer(ctypes.c_double),)
+    delta_args = (ctypes.c_double,) * ndim
+    normalize_arg = (ctypes.c_int,)
+
+    func.argtypes = (
+        array_dimension_args +
+        array_arg +
+        mask_arg +
+        gradient_args +
+        gradient_magnitude_arg +
+        delta_args +
+        normalize_arg
+    )
+
+    return func
+
+
+def gradient_centered(arr, mask=None, dx=None,
+                      return_gradient_magnitude=True,
                       normalize=False):
     """
     Compute the centered difference approximations of the partial 
@@ -26,13 +58,13 @@ def gradient_centered(arr, mask=None, dx=None, return_gmag=True,
 
     mask: ndarray, dtype=bool, same shape as `arr`, default=None
         The gradient of `arr` is only computed where `mask` is true. If
-        None (default), then mask is all ones.
+        None (default), then mask True everywhere.
 
     dx: ndarray, dtype=float, len=arr.ndim
         These indicate the "delta" or spacing terms along each axis.
         If None (default), then spacing is 1.0 along each axis.
 
-    return_gmag: bool, default=True
+    return_gradient_magnitude: bool, default=True
         If True, the gradient magnitude is computed and returned also.
 
     normalize: bool, default=False
@@ -43,7 +75,7 @@ def gradient_centered(arr, mask=None, dx=None, return_gmag=True,
 
     Returns
     -------
-    [D1, ..., Dn], gmag: list, ndarray
+    [gradient_1, ... , gradient_n], gradient_magnitude: list, ndarray
         Returns the gradient along each axis approximated by centered
         differences (only computed where mask is True). The gradient magnitude 
         is optionally returned.
@@ -65,32 +97,33 @@ def gradient_centered(arr, mask=None, dx=None, return_gmag=True,
     else:
         dx = np.ones(ndim, dtype=np.float)
 
-    D = [np.zeros_like(arr) for _ in range(ndim)]
-    gmag = np.zeros_like(arr)
+    gradients = [np.zeros_like(arr) for _ in range(ndim)]
+    gradient_magnitude = np.zeros_like(arr)
 
-    # Select the correct function depending on dimension of the input.
-    func = getattr(_masked_gradient, 'gradient_centered%dd' % ndim)
+    # Set up the C function
+    func = _get_gradient_centered_func(ndim=ndim)
 
-    if ndim == 3:
-        func(A=arr, di=D[0], dj=D[1], dk=D[2], gmag=gmag, mask=mask,
-             deli=dx[0], delj=dx[1], delk=dx[2],
-             normalize=(1 if normalize else 0))
-    elif ndim == 2:
-        func(A=arr, di=D[0], dj=D[1], gmag=gmag, mask=mask,
-             deli=dx[0], delj=dx[1],
-             normalize=(1 if normalize else 0))
-    elif ndim == 1:
-        func(A=arr, di=D[0], gmag=gmag, mask=mask,
-             deli=dx[0],
-             normalize=(1 if normalize else 0))
+    # Set up the arguments to the C function
+    args = (
+        arr.shape +
+        (arr,) +
+        (mask,) +
+        tuple(gradients) +
+        (gradient_magnitude,) +
+        tuple(dx) +
+        (int(normalize),)
+    )
 
-    if return_gmag:
-        return D, gmag
+    # Call the C function
+    func(*args)
+
+    if return_gradient_magnitude:
+        return gradients, gradient_magnitude
     else:
-        return D
+        return gradients
 
 
-def gmag_os(A, nu, mask=None, dx=None):
+def gmag_os(arr, nu, mask=None, dx=None):
     """
     This numerical approximation is an upwind approximation of 
     the velocity-dependent gradient magnitude term in the PDE:
@@ -121,7 +154,7 @@ def gmag_os(A, nu, mask=None, dx=None):
 
     Parameters
     ----------
-    A: ndarray, dtype=float
+    arr: ndarray, dtype=float
         The gradient of `A` is returned.
 
     mask: ndarray, dtype=bool, same shape as `A`, default=None
@@ -137,16 +170,16 @@ def gmag_os(A, nu, mask=None, dx=None):
     gmag: ndarray
         The velocity-dependent gradient magnitude approximation.
     """
-    ndim = A.ndim
+    ndim = arr.ndim
     assert 1 <= ndim <= 3, "Only dimensions 1-3 supported."
-    if A.dtype != np.float:
-        raise ValueError("`A` must be float type.")
+    if arr.dtype != np.float:
+        raise ValueError("`arr` must be float type.")
 
     if mask is not None:
         if mask.ndim != ndim:
-            raise ValueError("Shape mismatch between `mask` and `A`.")
+            raise ValueError("Shape mismatch between `mask` and `arr`.")
     else:
-        mask = np.ones(A.shape, dtype=np.bool)
+        mask = np.ones(arr.shape, dtype=np.bool)
 
     if dx is not None:
         if len(dx) != ndim:
@@ -154,19 +187,19 @@ def gmag_os(A, nu, mask=None, dx=None):
     else:
         dx = np.ones(ndim, dtype=np.float)
 
-    gmag = np.zeros_like(A)
+    gmag = np.zeros_like(arr)
 
     # Select the correct function depending on dimension of the input.
     func = getattr(_masked_grad, 'gmag_os%dd' % ndim)
 
     if ndim == 3:
-        func(A=A, nu=nu, gmag=gmag, mask=mask,
+        func(A=arr, nu=nu, gmag=gmag, mask=mask,
              deli=dx[0], delj=dx[1], delk=dx[2])
     elif ndim == 2:
-        func(A=A, nu=nu, gmag=gmag, mask=mask,
+        func(A=arr, nu=nu, gmag=gmag, mask=mask,
              deli=dx[0], delj=dx[1])
     elif ndim == 1:
-        func(A=A, nu=nu, gmag=gmag, mask=mask,
+        func(A=arr, nu=nu, gmag=gmag, mask=mask,
              deli=dx[0])
 
     return gmag

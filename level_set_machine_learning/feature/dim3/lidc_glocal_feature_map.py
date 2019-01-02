@@ -80,7 +80,7 @@ class lidc_glocal_feature_map(FeatureMapBase):
         samples = np.zeros(shp + (self.nglocal_samples, 2))
 
         ddi,ddj,ddk = mg.gradient_centered(dist, mask=mask, dx=dx,
-                                           normalize=True, return_gmag=False)
+                                           normalize=True, return_gradient_magnitude=False)
 
         dx = np.ones(img.ndim) if dx is None else dx
 
