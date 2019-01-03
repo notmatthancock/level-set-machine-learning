@@ -82,3 +82,39 @@ class TestMaskedGradient(unittest.TestCase):
 
             self.assertLessEqual(gmag_error, 1e-8)
 
+    def manual_gmag_os(self, arr, nu, dx):
+        """ Manually compute the osher sethian gradient magnitude
+        """
+        di = np.diff(arr, axis=0) / dx[0]
+        dj = np.diff(arr, axis=1) / dx[1]
+
+        fwdi = np.vstack([di, di[-1]])
+        bcki = np.vstack([di[0], di])
+
+        fwdj = np.c_[dj, dj[:, -1]]
+        bckj = np.c_[dj[:, 0], dj]
+
+        plus = np.sqrt(np.maximum(bcki, 0)**2 + np.minimum(fwdi, 0)**2 +
+                       np.maximum(bckj, 0)**2 + np.minimum(fwdj, 0)**2)
+
+        minus = np.sqrt(np.minimum(bcki, 0)**2 + np.maximum(fwdi, 0)**2 +
+                        np.minimum(bckj, 0)**2 + np.maximum(fwdj, 0)**2)
+
+        gmag = np.zeros_like(arr)
+        gmag[nu > 0] = minus[nu > 0]
+        gmag[nu < 0] = plus[nu < 0]
+
+        return gmag
+
+    def test_gradient_magnitude_osher_sethian2d(self):
+
+        arr = self.random_state.randn(141, 112)
+        nu = self.random_state.randn(141, 112)
+        dx = self.random_state.rand(2)
+
+        gmag = mg.gradient_magnitude_osher_sethian(arr, nu, dx=dx)
+        gmag_true = self.manual_gmag_os(arr, nu, dx)
+
+        gmag_error = np.abs(gmag - gmag_true).mean()
+
+        self.assertLessEqual(gmag_error, 1e-8)

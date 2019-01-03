@@ -268,7 +268,7 @@ class LevelSetMachineLearning(object):
             nu[mask] = model.predict(features[mask])
 
             # Compute gradient magnitude using upwind Osher/Sethian method.
-            gmag = mg.gmag_os(u, nu, mask=mask, dx=dx)
+            gmag = mg.gradient_magnitude_osher_sethian(u, nu, mask=mask, dx=dx)
 
             # Here's the actual level set update.
             u[mask] += self.step*nu[mask]*gmag[mask]
@@ -336,7 +336,7 @@ class LevelSetMachineLearning(object):
 
                 # Compute gradient magnitude using 
                 # upwind Osher/Sethian method.
-                gmag = mg.gmag_os(u, nu, mask=mask, dx=dx)
+                gmag = mg.gradient_magnitude_osher_sethian(u, nu, mask=mask, dx=dx)
 
                 # Here's the dummy update.
                 utmp = u.copy()
@@ -1255,7 +1255,7 @@ class LevelSetMachineLearning(object):
 
                 nu[mask] = self.models[i].predict(features[mask])
 
-                gmag = mg.gmag_os(u[i], nu, mask=mask, dx=dx)
+                gmag = mg.gradient_magnitude_osher_sethian(u[i], nu, mask=mask, dx=dx)
                     
                 # Update the level set.
                 u[i+1][mask] += self.step*nu[mask]*gmag[mask]

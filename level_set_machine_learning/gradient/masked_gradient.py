@@ -39,11 +39,37 @@ def _get_gradient_centered_func(ndim):
     return func
 
 
+def _get_gradient_magnitude_osher_sethian_func(ndim):
+    """ Gets the function from the c module and sets up the respective
+    argument and return types
+    """
+    func = getattr(_masked_gradient, 'gmag_os{:d}d'.format(ndim))
+    func.restype = None
+
+    array_dimension_args = ((ctypes.c_int,) * ndim)
+    array_arg = (ndpointer(ctypes.c_double),)
+    mask_arg = (ndpointer(ctypes.c_bool),)
+    nu_arg = (ndpointer(ctypes.c_double),)
+    gradient_magnitude_arg = (ndpointer(ctypes.c_double),)
+    delta_args = (ctypes.c_double,) * ndim
+
+    func.argtypes = (
+            array_dimension_args +
+            array_arg +
+            mask_arg +
+            nu_arg +
+            gradient_magnitude_arg +
+            delta_args
+    )
+
+    return func
+
+
 def gradient_centered(arr, mask=None, dx=None,
                       return_gradient_magnitude=True,
                       normalize=False):
     """
-    Compute the centered difference approximations of the partial 
+    Compute the centered difference approximations of the partial
     derivatives of `arr` along each coordinate axis, computed only
     where `mask` is true.
 
@@ -68,16 +94,16 @@ def gradient_centered(arr, mask=None, dx=None,
         If True, the gradient magnitude is computed and returned also.
 
     normalize: bool, default=False
-        If True, then the gradient terms are normalized so that the 
+        If True, then the gradient terms are normalized so that the
         gradient magnitude is one if computed over the gradient terms.
-        Note that if `return_mag` is True, the gradient magnitude is 
+        Note that if `return_mag` is True, the gradient magnitude is
         magnitude value prior to normalization (not necessarily one).
 
     Returns
     -------
     [gradient_1, ... , gradient_n], gradient_magnitude: list, ndarray
         Returns the gradient along each axis approximated by centered
-        differences (only computed where mask is True). The gradient magnitude 
+        differences (only computed where mask is True). The gradient magnitude
         is optionally returned.
     """
     ndim = arr.ndim
@@ -123,19 +149,19 @@ def gradient_centered(arr, mask=None, dx=None,
         return gradients
 
 
-def gmag_os(arr, nu, mask=None, dx=None):
+def gradient_magnitude_osher_sethian(arr, nu, mask=None, dx=None):
     """
-    This numerical approximation is an upwind approximation of 
+    This numerical approximation is an upwind approximation of
     the velocity-dependent gradient magnitude term in the PDE:
 
     .. math::
         u_t = \\nu \\| Du \\|
 
-    from Osher and Sethian [1]. This is why the function is called 
-    `gmag_os`.
+    from Osher and Sethian [1]. This is why the function is called
+    `gradient_magnitude_osher_sethian`.
 
-    In the PDE, the gradient vector of u is assumed to point inward and 
-    :math:`\\nu` governs the velocity in the normal direction, with 
+    In the PDE, the gradient vector of u is assumed to point inward and
+    :math:`\\nu` governs the velocity in the normal direction, with
     positive values corresponding to movement in the outward normal
     direction (expansion) and negative values corresponding to the inward
     normal direction (contraction).
@@ -145,9 +171,9 @@ def gmag_os(arr, nu, mask=None, dx=None):
     .. math::
         u_t + F \\| Du \\| = 0
 
-    Thus, the relation is :math:`\\nu = -F`.
+    Thus, the correspondence is :math:`\\nu = -F`.
 
-    [1]: Level Set Methods. Evolving Interfaces in Geometry, 
+    [1]: Level Set Methods. Evolving Interfaces in Geometry,
          Fluid Mechanics, Computer Vision, and Materials Science
          J.A. Sethian, Cambridge University Press, 1996
          Cambridge Monograph on Applied and Computational Mathematics
@@ -167,7 +193,7 @@ def gmag_os(arr, nu, mask=None, dx=None):
 
     Returns
     -------
-    gmag: ndarray
+    gradient_magnitude: ndarray
         The velocity-dependent gradient magnitude approximation.
     """
     ndim = arr.ndim
@@ -187,19 +213,22 @@ def gmag_os(arr, nu, mask=None, dx=None):
     else:
         dx = np.ones(ndim, dtype=np.float)
 
-    gmag = np.zeros_like(arr)
+    gradient_magnitude = np.zeros_like(arr)
 
-    # Select the correct function depending on dimension of the input.
-    func = getattr(_masked_grad, 'gmag_os%dd' % ndim)
+    # Set up the C function
+    func = _get_gradient_magnitude_osher_sethian_func(ndim=ndim)
 
-    if ndim == 3:
-        func(A=arr, nu=nu, gmag=gmag, mask=mask,
-             deli=dx[0], delj=dx[1], delk=dx[2])
-    elif ndim == 2:
-        func(A=arr, nu=nu, gmag=gmag, mask=mask,
-             deli=dx[0], delj=dx[1])
-    elif ndim == 1:
-        func(A=arr, nu=nu, gmag=gmag, mask=mask,
-             deli=dx[0])
+    # Set up the arguments to the C function
+    args = (
+        arr.shape +
+        (arr,) +
+        (mask,) +
+        (nu,) +
+        (gradient_magnitude,) +
+        tuple(dx)
+    )
 
-    return gmag
+    # Call the C function
+    func(*args)
+
+    return gradient_magnitude
