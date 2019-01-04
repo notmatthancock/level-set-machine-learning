@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>LevelSetMachineLearning.init_funcs.dim3.ray_trim &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <title>LevelSetMachineLearning.init_funcs.dim3.RayTrim &#8212; LIDC Dataset and Segmentation  documentation</title>
     <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../../../_static/documentation_options.js"></script>
@@ -30,18 +30,18 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for LevelSetMachineLearning.init_funcs.dim3.ray_trim</h1><div class="highlight"><pre>
+  <h1>Source code for LevelSetMachineLearning.init_funcs.dim3.RayTrim</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">skfmm</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="k">import</span> <span class="n">gaussian_filter1d</span> <span class="k">as</span> <span class="n">gf1d</span>
 <span class="kn">from</span> <span class="nn">skimage.measure</span> <span class="k">import</span> <span class="n">label</span>
 
-<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs</span> <span class="k">import</span> <span class="n">init_func_base</span>
+<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs</span> <span class="k">import</span> <span class="n">InitializationBase</span>
 <span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs.dim3.utils</span> <span class="k">import</span> <span class="n">radii_from_mask</span> <span class="k">as</span> <span class="n">rfm</span>
 
 
-<div class="viewcode-block" id="ray_trim"><a class="viewcode-back" href="../../../../slls/api/init_funcs/dim3/ray_trim.html#LevelSetMachineLearning.init_funcs.dim3.ray_trim.ray_trim">[docs]</a><span class="k">class</span> <span class="nc">ray_trim</span><span class="p">(</span><span class="n">init_func_base</span><span class="p">):</span>
+<div class="viewcode-block" id="RayTrim"><a class="viewcode-back" href="../../../../slls/api/init_funcs/dim3/RayTrim.html#LevelSetMachineLearning.init_funcs.dim3.RayTrim.RayTrim">[docs]</a><span class="k">class</span> <span class="nc">RayTrim</span><span class="p">(</span><span class="n">InitializationBase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Local thresholding followed by radius trimming.</span>
 

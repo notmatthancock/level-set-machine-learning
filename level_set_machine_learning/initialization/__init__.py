@@ -1,16 +1,17 @@
+""" Tools for initialization of the zero level set.
 """
-Tools for initialization of the zero level set.
-"""
+import abc
 
-class init_func_base(object):
-    """
-    The template class for initialization functions.
+
+class InitializationBase(abc.ABC):
+    """ The template class for initialization functions.
 
     At minimum, the `__call__` function should be implemented and
     return `u0, dist, mask`.
     """
     def __init__(self):
         raise NotImplementedError
+
     def __call__(self, img, band, dx=None, seed=None):
         """
         All initialization functions must have the above __call__ signature

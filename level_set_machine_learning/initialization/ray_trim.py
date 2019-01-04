@@ -4,11 +4,11 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d as gf1d
 from skimage.measure import label
 
-from level_set_machine_learning.initialization_functions import init_func_base
-from level_set_machine_learning.initialization_functions.dim3.utils import radii_from_mask as rfm
+from level_set_machine_learning.initialization import InitializationBase
+from .util import radii_from_mask as rfm
 
 
-class ray_trim(init_func_base):
+class RayTrim(InitializationBase):
     """
     Local thresholding followed by radius trimming.
 

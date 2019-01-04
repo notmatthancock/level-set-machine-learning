@@ -2,7 +2,7 @@ import numpy as np
 
 from level_set_machine_learning import LevelSetMachineLearning as LSML
 from level_set_machine_learning.feature.dim2 import simple_feature_map
-from level_set_machine_learning.initialization_functions import random as rand_init
+from level_set_machine_learning.initialization import random_circle as rand_init
 
 # Seed a random number generator.
 rs = np.random.RandomState(1234)
@@ -11,7 +11,7 @@ rs = np.random.RandomState(1234)
 fmap = simple_feature_map.simple_feature_map(sigmas=[0, 3])
 
 # Set the level set init routine.
-ifnc = rand_init.random(rs=rs)
+ifnc = rand_init.RandomCircle(rs=rs)
 
 # Initialize the model.
 lsl = LSML(data_file="./dataset.h5", feature_map=fmap,

@@ -1,10 +1,10 @@
 import skfmm
 import numpy as np
-from level_set_machine_learning.initialization_functions import init_func_base
+from level_set_machine_learning.initialization import InitializationBase
 from scipy.ndimage import gaussian_filter as gf
 from skimage.filters.thresholding import threshold_otsu as otsu
 
-class threshold(init_func_base):
+class threshold(InitializationBase):
     """
     Use otsu thresholding to initialize the level set.
 
@@ -12,7 +12,7 @@ class threshold(init_func_base):
 
     Example::
         
-        >>> from level_set_machine_learning.initialization_functions import threshold as th
+        >>> from level_set_machine_learning.initialization import threshold as th
 
         >>> ifnc = th.threshold(sigma=2)
         >>> img = np.random.randn(46, 67, 81)

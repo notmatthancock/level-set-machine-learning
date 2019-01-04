@@ -1,14 +1,15 @@
-from level_set_machine_learning.initialization_functions import init_func_base
+from level_set_machine_learning.initialization import InitializationBase
 import numpy as np
 import skfmm
 
-class random(init_func_base):
+
+class RandomCircle(InitializationBase):
     """
     Initialize the zero level set to a sphere
     of random location and radius.
 
     This initialization function works for all dimensions, so
-    the intialization is a random circle in 2d, sphere in 3d, etc.
+    the initialization is a random circle in 2d, sphere in 3d, etc.
 
     If the `reproducible` flag is set to True,
     then the same "random" initialization is produced

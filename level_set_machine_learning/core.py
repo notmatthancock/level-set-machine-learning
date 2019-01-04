@@ -12,7 +12,7 @@ import skfmm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from .initialization_functions import init_func_base
+from .initialization import InitializationBase
 from .util.score_functions import jaccard
 from level_set_machine_learning.data import splitter
 from level_set_machine_learning.gradient import masked_gradient as mg
@@ -48,7 +48,7 @@ class LevelSetMachineLearning(object):
             See :class:`level_set_machine_learning.feature_map.FeatureMapBase`.
 
         init_func: init func class
-            See :class:`level_set_machine_learning.initialization_functions.init_func_base`.
+            See :class:`level_set_machine_learning.initialization.InitializationBase`.
 
         model: sklearn class
             The regression model for modeling the level set velocity
@@ -100,9 +100,9 @@ class LevelSetMachineLearning(object):
 
         self.feature_map = feature_map
 
-        if not isinstance(init_func, init_func_base):
+        if not isinstance(init_func, InitializationBase):
             msg = ("`init_func` should be a class derived from "
-                   "`level_set_machine_learning.initialization_functions.init_func_base`.")
+                   "`level_set_machine_learning.initialization.InitializationBase`.")
             raise ValueError(msg)
 
         self.init_func = init_func
