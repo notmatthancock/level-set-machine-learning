@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "utils.h"
+#include "../util/helpers.h"
 
 
 void gradient_centered3d(int m, int n, int p, double * A, bool * mask,

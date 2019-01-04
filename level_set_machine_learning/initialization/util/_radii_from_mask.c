@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "../../../utils/utils.h"
-#include "../../../utils/trilinear.c"
+#include "../../util/helpers.h"
+#include "./trilinear.c"
 
 /* Compute the radial distance from provided 3d `seed`
  * in direction given by theta and phi angles until a 
