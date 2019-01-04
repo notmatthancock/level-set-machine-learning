@@ -383,7 +383,7 @@ class LevelSetMachineLearning(object):
         balance: bool
             Balance by neg/pos of target value.
 
-        rs: numpy.RandomState
+        random_state: numpy.RandomState
             To make results reproducible. The random state
             should be passed here rather than using the `self._rs`
             attribute, since in the multiprocessing setting we can't
@@ -478,7 +478,7 @@ class LevelSetMachineLearning(object):
         balance: bool
             Balance by neg/pos of target value.
 
-        rs: numpy.RandomState
+        random_state: numpy.RandomState
             To make results reproducible. The random state
             should be passed here rather than using the `self._rs`
             attribute, since in the multiprocessing setting we can't

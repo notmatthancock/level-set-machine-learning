@@ -19,14 +19,25 @@ class RandomCircle(InitializationBase):
         
         TODO
     """
-    def __init__(self, rs=None, reproducible=True):
-        if rs is None:
-            self.rs = np.random.RandomState()
+
+    def __init__(self, random_state=None, reproducible=True):
+        """ Initialize a RandomCircle initialization object
+
+        Parameters
+        ----------
+        random_state: numpy.random.RandomState, default None
+            Supply for reproducible results
+
+        """
+
+        if random_state is None:
+            self.random_state = np.random.RandomState()
         else:
-            self.rs = rs
+            self.random_state = random_state
         self.reproducible = reproducible
 
     def __call__(self, img, band, dx=None, seed=None):
+
         dx = np.ones(img.ndim) if dx is None else dx
 
         if self.reproducible:
@@ -34,13 +45,14 @@ class RandomCircle(InitializationBase):
             s = str(img.flatten()[0])
             n = s.index(".")
             seed_val = int(s[n+1 : n+1+4])
-            self.rs.seed(seed_val)
+            self.random_state.seed(seed_val)
 
         # Select the radius.
-        r = 5*dx.min() + self.rs.rand() * min(dx * img.shape) * 0.25
+        radius = (5 * dx.min() +
+                  self.random_state.rand() * min(dx * img.shape) * 0.25)
 
-        inds = [np.arange(img.shape[i], dtype=np.float)*dx[i]
-                 for i in range(img.ndim)]
+        indices = [np.arange(img.shape[i], dtype=np.float)*dx[i]
+                for i in range(img.ndim)]
         
         # Select the center point uniformly at random.
         # Expected center is at the center of image, but could
@@ -48,19 +60,19 @@ class RandomCircle(InitializationBase):
         center = []
         for i in range(img.ndim):
             while True:
-                c = self.rs.choice(inds[i])
-                if c-r > inds[i][0] and c+r <= inds[i][-1]:
+                c = self.random_state.choice(indices[i])
+                if c-radius > indices[i][0] and c+radius <= indices[i][-1]:
                     center.append(c)
                     break
         center = np.array(center)
 
-        inds = np.indices(img.shape, dtype=np.float)
+        indices = np.indices(img.shape, dtype=np.float)
         shape = dx.shape + tuple(np.ones(img.ndim, dtype=int))
-        inds *= dx.reshape(shape)
-        inds -= center.reshape(shape)
-        inds **= 2
+        indices *= dx.reshape(shape)
+        indices -= center.reshape(shape)
+        indices **= 2
         
-        u0 = (inds.sum(axis=0)**0.5 <= r).astype(np.float)
+        u0 = (indices.sum(axis=0)**0.5 <= radius).astype(np.float)
         u0 *= 2
         u0 -= 1
 

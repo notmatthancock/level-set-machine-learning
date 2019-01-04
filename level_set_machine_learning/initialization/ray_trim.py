@@ -47,7 +47,7 @@ class RayTrim(InitializationBase):
         alert_small: bool, default=True
             Print message when initialization is replaced with the small ball.
 
-        rs: numpy.random.RandomState, default=None
+        random_state: numpy.random.RandomState, default=None
             Provide for reproducibility.
         """
         if isinstance(sigma, int) or isinstance(sigma, int):
@@ -65,10 +65,10 @@ class RayTrim(InitializationBase):
             raise ValueError("`pr` should be in range (0, 100]")
         self.pr = pr
 
-        self.ntpr        = ntpr
-        self.rs          = np.random.RandomState() if rs is None else rs
-        self.ball_small  = ball_small
-        self.min_vol     = min_vol
+        self.ntpr = ntpr
+        self.rs = np.random.RandomState() if rs is None else rs
+        self.ball_small = ball_small
+        self.min_vol = min_vol
         self.alert_small = alert_small
 
         # ... End input variable checking.

@@ -11,7 +11,7 @@ rs = np.random.RandomState(1234)
 fmap = sfm.simple_feature_map(sigmas=[0,3])
 
 # Set the level set init routine.
-ifnc = rand_init.RandomCircle(rs=rs)
+ifnc = rand_init.RandomCircle(random_state=rs)
 
 # Initialize the model.
 slls = SLLS(data_file="./dataset.h5", feature_map=fmap,
