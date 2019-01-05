@@ -1,26 +1,16 @@
 import numpy
 
-from level_set_machine_learning.initialize.initialize_base import InitializeBase
+from level_set_machine_learning.initialize.initialize_base import (
+    InitializeBase)
 
 
-class RandomBall(InitializeBase):
-    """ Initialize the zero level set to a cicle/sphere/hyper-sphere
+class RandomBallInitialize(InitializeBase):
+    """ Initialize the zero level set to a circle/sphere/hyper-sphere
     with random center and radius
-
-    This initialize function works for all dimensions, so
-    the initialize is a random circle in 2d, sphere in 3d, etc.
-
-    If the `reproducible` flag is set to True,
-    then the same "random" initialize is produced
-    when the same image is given as input.
-
-    Example::
-        
-        TODO
     """
 
     def __init__(self, random_state=None):
-        """ Initialize a RandomBall initialization object
+        """ Initialize a RandomBallInitialize initialization object
 
         Parameters
         ----------
@@ -46,7 +36,7 @@ class RandomBall(InitializeBase):
 
         return seed_val
 
-    def initialize(self, img, dx=None, seed=None):
+    def initialize(self, img, dx, seed):
 
         # Seed the random state from the image so that the same "random"
         # initialization is given for identical image inputs

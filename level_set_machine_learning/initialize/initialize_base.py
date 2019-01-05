@@ -17,18 +17,19 @@ class InitializeBase(abc.ABC):
         """
         pass
 
-    def __call__(self, img, band, dx=None, seed=None):
-        """ The __call__ function handles input validation, etc. It calls
-        the user-implemented `initialize` member function
+    def __call__(self, img, band=0, dx=None, seed=None):
+        """ The __call__ function handles input validation, etc. This
+        function is used internally and calls the user-implemented
+        `initialize` member function.
         """
         # Validate the delta terms
         if dx is None:
-            dx = numpy.ones(self.ndim, dtype=numpy.float)
+            dx = numpy.ones(img.ndim, dtype=numpy.float)
         else:
             dx = numpy.array(dx, dtype=numpy.float)
-            if len(dx) != self.ndim:
+            if len(dx) != img.ndim:
                 msg = "Number of dx terms ({}) doesn't match dimensions ({})"
-                raise ValueError(msg.format(len(dx), self.ndim))
+                raise ValueError(msg.format(len(dx), img.ndim))
 
         # Compute the initialize
         init_mask = self.initialize(img=img, dx=dx, seed=seed)
@@ -56,6 +57,6 @@ class InitializeBase(abc.ABC):
         return u, dist, mask
 
     @abc.abstractmethod
-    def initialize(self, img, dx=None, seed=None):
+    def initialize(self, img, dx, seed):
         raise NotImplementedError
 

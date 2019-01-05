@@ -1,8 +1,8 @@
-import numpy as np
 from scipy.ndimage import gaussian_filter
 from skimage.filters.thresholding import threshold_otsu
 
-from level_set_machine_learning.initialize.initialize_base import InitializeBase
+from level_set_machine_learning.initialize.initialize_base import (
+    InitializeBase)
 
 
 class ThresholdInitialize(InitializeBase):
@@ -10,12 +10,12 @@ class ThresholdInitialize(InitializeBase):
     creates the boolean initialization using that threshold
     """
 
-    def __init__(self, sigma=1.234):
+    def __init__(self, sigma):
         """ Initialize a threshold initializer instance
 
         Parameters
         ----------
-        sigma: float, default=1.234
+        sigma: float
             The sigma value used for Gaussian smoothing. A value of zero
             implies no Gaussian filtering will be used.
 
@@ -24,7 +24,7 @@ class ThresholdInitialize(InitializeBase):
             raise ValueError("sigma ({}) was negative".format(sigma))
         self.sigma = sigma
 
-    def initialize(self, img, dx=None, seed=None):
+    def initialize(self, img, dx, seed):
 
         if self.sigma == 0:
             blur = img.copy()
