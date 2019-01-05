@@ -4,11 +4,11 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d as gf1d
 from skimage.measure import label
 
-from level_set_machine_learning.initialization import InitializationBase
-from .util import radii_from_mask as rfm
+from level_set_machine_learning.initialize.initialize_base import InitializeBase
+from level_set_machine_learning.initialize.provided.util import radii_from_mask as rfm
 
 
-class RayTrim(InitializationBase):
+class RayTrim(InitializeBase):
     """
     Local thresholding followed by radius trimming.
 
@@ -37,15 +37,15 @@ class RayTrim(InitializationBase):
             The number of theta and phi angles to sample radii over.
 
         ball_small: bool, default=True
-            If the volume of the initialization is less than `min_vol`
-            then the initialization is simply set to a ball of volume
+            If the volume of the initialize is less than `min_vol`
+            then the initialize is simply set to a ball of volume
             `min_vol`.
 
         min_vol: float, default=40.0
             See `ball_small` parameter.
 
         alert_small: bool, default=True
-            Print message when initialization is replaced with the small ball.
+            Print message when initialize is replaced with the small ball.
 
         random_state: numpy.random.RandomState, default=None
             Provide for reproducibility.

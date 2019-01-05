@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from level_set_machine_learning.feature import shape
+from level_set_machine_learning.feature.provided import shape
 
 
 class TestShapeFeatures(unittest.TestCase):

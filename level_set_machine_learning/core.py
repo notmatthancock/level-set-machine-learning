@@ -12,7 +12,7 @@ import skfmm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from .initialization import InitializationBase
+from level_set_machine_learning.initialize.initialize_base import InitializeBase
 from .util.score_functions import jaccard
 from level_set_machine_learning.data import splitter
 from level_set_machine_learning.gradient import masked_gradient as mg
@@ -27,11 +27,11 @@ class LevelSetMachineLearning(object):
         """
         Initialize a statistical learning level set object.
         
-        The parameters required at initialization 
+        The parameters required at initialize
         are those that can be used in *both* the training and run-time
         phases of the algorithm. Training options should be set via
         the `set_fit_options` and `set_net_options` member functions
-        after initialization.
+        after initialize.
 
         Parameters
         ----------
@@ -48,7 +48,7 @@ class LevelSetMachineLearning(object):
             See :class:`level_set_machine_learning.feature_map.FeatureMapBase`.
 
         init_func: init func class
-            See :class:`level_set_machine_learning.initialization.InitializationBase`.
+            See :class:`level_set_machine_learning.initialize.InitializeBase`.
 
         model: sklearn class
             The regression model for modeling the level set velocity
@@ -72,7 +72,7 @@ class LevelSetMachineLearning(object):
             The default ('auto') determines the step size automatically 
             by using the reciprocal of the maximum ground truth speed values
             in the narrow band of the level sets in the training data at 
-            the first iterate (i.e., at initialization). The CFL condition
+            the first iterate (i.e., at initialize). The CFL condition
             is satisfied by taking the maximum speed over ALL spatial 
             coordinates, but we attempt to avoid this prohibitively 
             small step size by assuming that the maximum speed observed 
@@ -100,9 +100,9 @@ class LevelSetMachineLearning(object):
 
         self.feature_map = feature_map
 
-        if not isinstance(init_func, InitializationBase):
+        if not isinstance(init_func, InitializeBase):
             msg = ("`init_func` should be a class derived from "
-                   "`level_set_machine_learning.initialization.InitializationBase`.")
+                   "`level_set_machine_learning.initialize.InitializeBase`.")
             raise ValueError(msg)
 
         self.init_func = init_func
@@ -193,7 +193,7 @@ class LevelSetMachineLearning(object):
             if self._fopts_normalize_images:
                 img = (img - img.mean()) / img.std()
 
-            # Compute the initialization for this example and seed value.
+            # Compute the initialize for this example and seed value.
             u0, dist, mask = self.init_func(img, self.band,
                                             dx=df[key].attrs['dx'],
                                             seed=seed)
@@ -990,7 +990,7 @@ class LevelSetMachineLearning(object):
             `level_set_machine_learning.utils.data.splitter` utility.
 
         seeds: dict, default=None
-            The seeds are used in the `init_func` supplied at initialization.
+            The seeds are used in the `init_func` provided at initialize.
             Note that seed coordinates must be given in *index* coordinates, 
             i.e., they should *not* take into account pixel spacing / 
             resolution. However, fractional values are allowed (float type).

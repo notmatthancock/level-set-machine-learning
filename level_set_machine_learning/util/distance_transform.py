@@ -4,7 +4,7 @@ import skfmm
 
 def distance_transform(arr, band, dx):
     """ A thin wrapper around the skfmm distance transform function, but
-    handles edge cases where the supplied array is completely negative or
+    handles edge cases where the provided array is completely negative or
     positive.
 
     Parameters

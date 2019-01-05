@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from level_set_machine_learning.feature import image
+from level_set_machine_learning.feature.provided import image
 
 
 class TestImageFeatures(unittest.TestCase):

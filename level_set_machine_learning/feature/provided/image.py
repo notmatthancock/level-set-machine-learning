@@ -3,7 +3,7 @@ from functools import reduce
 import numpy
 from scipy.ndimage.filters import gaussian_filter1d
 
-from .base_feature import (
+from level_set_machine_learning.feature.base_feature import (
     BaseImageFeature, LOCAL_FEATURE_TYPE, GLOBAL_FEATURE_TYPE)
 
 

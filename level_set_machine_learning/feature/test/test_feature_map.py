@@ -11,8 +11,8 @@ class TestFeatureMap(unittest.TestCase):
 
     def test_simple_feature_map(self):
 
-        from level_set_machine_learning.feature import image
-        from level_set_machine_learning.feature import shape
+        from level_set_machine_learning.feature.provided import image
+        from level_set_machine_learning.feature.provided import shape
 
         features = [
             image.ImageSample(ndim=2, sigma=0),

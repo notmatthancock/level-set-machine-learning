@@ -37,11 +37,11 @@
 <span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="k">import</span> <span class="n">gaussian_filter1d</span> <span class="k">as</span> <span class="n">gf1d</span>
 <span class="kn">from</span> <span class="nn">skimage.measure</span> <span class="k">import</span> <span class="n">label</span>
 
-<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs</span> <span class="k">import</span> <span class="n">InitializationBase</span>
+<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs</span> <span class="k">import</span> <span class="n">InitializeBase</span>
 <span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs.dim3.utils</span> <span class="k">import</span> <span class="n">radii_from_mask</span> <span class="k">as</span> <span class="n">rfm</span>
 
 
-<div class="viewcode-block" id="RayTrim"><a class="viewcode-back" href="../../../../slls/api/init_funcs/dim3/RayTrim.html#LevelSetMachineLearning.init_funcs.dim3.RayTrim.RayTrim">[docs]</a><span class="k">class</span> <span class="nc">RayTrim</span><span class="p">(</span><span class="n">InitializationBase</span><span class="p">):</span>
+<div class="viewcode-block" id="RayTrim"><a class="viewcode-back" href="../../../../slls/api/init_funcs/dim3/RayTrim.html#LevelSetMachineLearning.init_funcs.dim3.RayTrim.RayTrim">[docs]</a><span class="k">class</span> <span class="nc">RayTrim</span><span class="p">(</span><span class="n">InitializeBase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Local thresholding followed by radius trimming.</span>
 

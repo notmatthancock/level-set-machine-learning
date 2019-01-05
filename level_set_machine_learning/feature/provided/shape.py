@@ -2,7 +2,7 @@ import numpy
 from skimage.measure import marching_cubes_lewiner as marching_cubes
 from skimage.measure import find_contours, mesh_surface_area
 
-from .base_feature import (
+from level_set_machine_learning.feature.base_feature import (
     BaseShapeFeature, GLOBAL_FEATURE_TYPE)
 
 
@@ -41,7 +41,7 @@ class BoundarySize(BaseShapeFeature):
     def __init__(self, ndim):
         if ndim < 2 or ndim > 3:
             msg = ("Isoperimetric ratio defined for dimensions 2 and 3; "
-                   "ndim supplied = {}")
+                   "ndim provided = {}")
             raise ValueError(msg.format(ndim))
 
         super(BoundarySize, self).__init__(ndim)
@@ -107,7 +107,7 @@ class IsoperimetricRatio(BaseShapeFeature):
     def __init__(self, ndim):
         if ndim < 2 or ndim > 3:
             msg = ("Isoperimetric ratio defined for dimensions 2 and 3; "
-                   "ndim supplied = {}")
+                   "ndim provided = {}")
             raise ValueError(msg.format(ndim))
 
         super(IsoperimetricRatio, self).__init__(ndim)

@@ -1,30 +1,26 @@
-""" Tools for initialization of the zero level set.
-"""
 import abc
 
 import numpy
 import skfmm
 
+from level_set_machine_learning.util.distance_transform import (
+    distance_transform)
 
-class InitializationBase(abc.ABC):
-    """ The template class for initialization functions.
 
-    At minimum, the `__call__` function should be implemented and
-    return `u0, dist, mask`.
+class InitializeBase(abc.ABC):
+    """ The abstract base class for level set initialize functions.
     """
 
-    @abc.abstractmethod
     def __init__(self):
-        raise NotImplementedError
+        """ Supply the initialization instance with attributes that are
+        necessary for re-use (e.g., a threshold parameter or a random state)
+        """
+        pass
 
     def __call__(self, img, band, dx=None, seed=None):
+        """ The __call__ function handles input validation, etc. It calls
+        the user-implemented `initialize` member function
         """
-        All initialization functions must have the above __call__ signature
-        with *at least* these arguments (additional keyword arguments are
-        of course allowed, but won't be used by the `fit` routine
-        in the `level_set_machine_learning` module).
-        """
-
         # Validate the delta terms
         if dx is None:
             dx = numpy.ones(self.ndim, dtype=numpy.float)
@@ -34,31 +30,32 @@ class InitializationBase(abc.ABC):
                 msg = "Number of dx terms ({}) doesn't match dimensions ({})"
                 raise ValueError(msg.format(len(dx), self.ndim))
 
-        # Compute the initialization
+        # Compute the initialize
         init_mask = self.initialize(img=img, dx=dx, seed=seed)
 
         # Validate the returned mask
         if not isinstance(init_mask, numpy.ndarray):
-            msg = ("Returned initialization was type {} but "
+            msg = ("Returned initialize was type {} but "
                    "should be numpy.ndarray")
             raise TypeError(msg.format(type(init_mask)))
 
         if init_mask.dtype != numpy.bool:
-            msg = "Returned initialization was dtype {} but should be bool"
+            msg = "Returned initialize was dtype {} but should be bool"
             raise TypeError(msg.format(init_mask.dtype))
 
         if init_mask.shape != img.shape:
-            msg = "Returned initialization was shape {} but should be {}"
+            msg = "Returned initialize was shape {} but should be {}"
             raise ValueError(msg.format(init_mask.shape, img.shape))
 
         # Set the initial level set function
         u = 2 * init_mask.astype(numpy.float) - 1
 
-        # Initialize the distance transform
-        dist = skfmm.distance(u, narrow=band, dx=dx)
+        # Compute the distance transform
+        dist, mask = distance_transform(arr=u, band=band, dx=dx)
 
         return u, dist, mask
 
     @abc.abstractmethod
     def initialize(self, img, dx=None, seed=None):
         raise NotImplementedError
+

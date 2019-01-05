@@ -38,7 +38,7 @@
 <span class="kn">import</span> <span class="nn">skfmm</span>
 
 <span class="kn">from</span> <span class="nn">feature_maps</span> <span class="k">import</span> <span class="n">FeatureMapBase</span>
-<span class="kn">from</span> <span class="nn">init_funcs</span> <span class="k">import</span> <span class="n">InitializationBase</span>
+<span class="kn">from</span> <span class="nn">init_funcs</span> <span class="k">import</span> <span class="n">InitializeBase</span>
 <span class="kn">from</span> <span class="nn">utils.data</span> <span class="k">import</span> <span class="n">splitter</span>
 
 <span class="kn">import</span> <span class="nn">utils.masked_grad</span> <span class="k">as</span> <span class="nn">mg</span>
@@ -71,7 +71,7 @@
 <span class="sd">            See :class:`LevelSetMachineLearning.feature_maps.FeatureMapBase`.</span>
 
 <span class="sd">        init_func: init func class</span>
-<span class="sd">            See :class:`LevelSetMachineLearning.init_funcs.InitializationBase`.</span>
+<span class="sd">            See :class:`LevelSetMachineLearning.init_funcs.InitializeBase`.</span>
 
 <span class="sd">        score_func: function, default=None</span>
 <span class="sd">            Has signature::</span>
@@ -115,9 +115,9 @@
                               <span class="s2">&quot; `LevelSetMachineLearning.feature_maps.FeatureMapBase`.&quot;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feature_map</span> <span class="o">=</span> <span class="n">feature_map</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">init_func</span><span class="p">,</span> <span class="n">InitializationBase</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">init_func</span><span class="p">,</span> <span class="n">InitializeBase</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s2">&quot;`init_func` should be a class derived from&quot;</span>
-                              <span class="s2">&quot; `LevelSetMachineLearning.init_funcs.InitializationBase`.&quot;</span><span class="p">))</span>
+                              <span class="s2">&quot; `LevelSetMachineLearning.init_funcs.InitializeBase`.&quot;</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">init_func</span> <span class="o">=</span> <span class="n">init_func</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">score_func</span> <span class="o">=</span> <span class="n">jaccard</span> <span class="k">if</span> <span class="n">score_func</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">score_func</span>
