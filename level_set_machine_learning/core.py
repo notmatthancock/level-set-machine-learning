@@ -14,7 +14,7 @@ from sklearn.linear_model import LinearRegression
 
 from level_set_machine_learning.initialize.initialize_base import InitializeBase
 from level_set_machine_learning.score_functions import jaccard
-from level_set_machine_learning.data import splitter
+from level_set_machine_learning.util import splitter
 from level_set_machine_learning.gradient import masked_gradient as mg
 
 DEFAULT_SAVE_NAME = 'lsl_model.pkl'

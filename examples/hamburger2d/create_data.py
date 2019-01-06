@@ -1,7 +1,7 @@
 import numpy as np
 
-from level_set_machine_learning.data.synth.dim2 import hamburger
-from level_set_machine_learning.data import tohdf5
+from level_set_machine_learning.util.data.dim2 import hamburger
+from level_set_machine_learning.util import tohdf5
 
 # Create the random number generator.
 seed = 1234
