@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def split(keys, p=[0.6, 0.2, 0.2], subset_size=None, rs=None):
     """
     Split a list `keys` randomly into training, validation, and testing sets.
@@ -39,7 +40,7 @@ def split(keys, p=[0.6, 0.2, 0.2], subset_size=None, rs=None):
 
     datasets = {}
 
-    for j,d in enumerate(['tr', 'va', 'ts']):
-        datasets[d] = [subkeys[i] for i in range(len(subkeys)) if mn[i,j]==1]
+    for j, dataset_id in enumerate(['tr', 'va', 'ts']):
+        datasets[dataset_id] = [subkeys[i] for i in range(len(subkeys)) if mn[i,j]==1]
         
     return datasets

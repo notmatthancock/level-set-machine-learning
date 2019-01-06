@@ -12,22 +12,26 @@ import skfmm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from level_set_machine_learning.initialize.initialize_base import InitializeBase
+from level_set_machine_learning.consts import (
+    DEFAULT_MODEL_FILENAME
+)
+from level_set_machine_learning.initialize.initialize_base import (
+    InitializeBase)
 from level_set_machine_learning.score_functions import jaccard
-from level_set_machine_learning.util import splitter
+from level_set_machine_learning.util import key_splitter
 from level_set_machine_learning.gradient import masked_gradient as mg
-
-DEFAULT_SAVE_NAME = 'lsl_model.pkl'
 
 
 class LevelSetMachineLearning(object):
+
     def __init__(self, data_file, feature_map, init_func,
                  model=LinearRegression, model_kwargs={},
-                 score_func=jaccard, step='auto', band=3, rs=None):
+                 score_func=jaccard, step='auto', band=3,
+                 random_state=None):
         """
         Initialize a statistical learning level set object.
         
-        The parameters required at initialize
+        The parameters required at initialization
         are those that can be used in *both* the training and run-time
         phases of the algorithm. Training options should be set via
         the `set_fit_options` and `set_net_options` member functions
@@ -85,7 +89,7 @@ class LevelSetMachineLearning(object):
         band: int, default=3
             The "narrow band" distance.
 
-        rs: numpy.random.RandomState, default=None
+        random_state: numpy.random.RandomState, default=None
             Provide for reproducible results.
         """
         self._data_file_name = os.path.abspath(data_file)
@@ -114,13 +118,13 @@ class LevelSetMachineLearning(object):
             raise ValueError("`step` must be 'auto' or float.")
         self.step = step
 
-        if rs is None:
-            rs = np.random.RandomState()
+        if random_state is None:
+            random_state = np.random.RandomState()
             warnings.warn(
                 "No RandomState provided. Results will not be reproducible."
             )
 
-        self._rs = rs
+        self._rs = random_state
 
         self.model = model
         self.model_kwargs = model_kwargs
@@ -1080,7 +1084,7 @@ class LevelSetMachineLearning(object):
 
         if self._fopts_save_file is None:
             self._fopts_save_file = os.path.join(os.path.curdir,
-                                                 DEFAULT_SAVE_NAME)
+                                                 DEFAULT_MODEL_FILENAME)
 
         self._fopts_save_file = os.path.abspath(
             self._fopts_save_file
@@ -1290,7 +1294,7 @@ class LevelSetMachineLearning(object):
     def _validate_datasets(self, datasets):
         if datasets is None:
             df = self._data_file()
-            datasets = splitter.split(df.keys(), rs=self._rs)
+            datasets = key_splitter.split(df.keys(), rs=self._rs)
             df.close()
 
         # Check if all dataset keys are present.
