@@ -19,10 +19,6 @@ class TestThresholdInitialize(unittest.TestCase):
 
         initializer = ThresholdInitialize(sigma=0)
 
-        _, _, init_mask = initializer(image)
+        u0, _, _ = initializer(image)
 
-        import matplotlib.pyplot as pl
-        pl.imshow(init_mask)
-        pl.show()
-
-        self.assertTrue((mask == init_mask).all())
+        self.assertTrue((mask == (u0 > 0)).all())

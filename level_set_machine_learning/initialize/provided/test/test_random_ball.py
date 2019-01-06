@@ -19,8 +19,6 @@ class TestRandomBallInitialize(unittest.TestCase):
 
         initializer = RandomBallInitialize(random_state=random_state)
 
-        init_mask = initializer.initialize(image)
-
-        import matplotlib.pyplot as plt
-        plt.imshow(init_mask)
-        plt.show()
+        # Smoke test ...
+        u0, _, _ = initializer(image)
+        self.assertTrue((u0 > 0).any())
