@@ -1,6 +1,6 @@
 import numpy as np
 
-from level_set_machine_learning.util.visualize import interactive2d
+from level_set_machine_learning.visualize import interactive2d
 
 
 model = np.load('./lsl_model.pkl')
