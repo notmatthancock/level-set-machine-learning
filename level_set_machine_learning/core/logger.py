@@ -30,7 +30,8 @@ class CoreLogger(logging.Logger):
 
         self.addHandler(fhandler)
 
-        if self.stdout: self.addHandler(shandler)
+        if self.stdout:
+            self.addHandler(shandler)
 
     def progress(self, msg, i, n):
         msg = "(%%0%dd / %d) %s" % (len(str(n)), n, msg)

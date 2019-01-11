@@ -75,9 +75,7 @@ class DatasetsManager(object):
                                  dx=dx, compress=compress)
 
         # To be assigned by a `split` method
-        self.training_dataset_indices = None
-        self.validation_dataset_indices = None
-        self.testing_dataset_indices = None
+        self.datasets = {}
 
         with h5py.File(self.h5_file) as hf:
             self.n_examples = len(hf.keys())
@@ -230,15 +228,15 @@ class DatasetsManager(object):
             msg = "Training data indices must be a list of integers"
             raise ValueError(msg)
 
-        self.training_dataset_indices = training_dataset_indices
-        self.validation_dataset_indices = validation_dataset_indices
-        self.testing_dataset_indices = testing_dataset_indices
-
+        self.datasets[TRAINING_DATASET_KEY] = training_dataset_indices
+        self.datasets[VALIDATION_DATASET_KEY] = validation_dataset_indices
+        self.datasets[TESTING_DATASET_KEY] = testing_dataset_indices
 
     def split_datasets_random(self, keys, random_state,
                               probabilities=(0.6, 0.2, 0.2), subset_size=None):
         """
-        Split a list `keys` randomly into training, validation, and testing sets
+        Split a list `keys` randomly into training, validation,
+        and testing sets
 
         Parameters
         ----------
@@ -249,20 +247,14 @@ class DatasetsManager(object):
             For reproducible results
 
         probabilities: 3-tuple of floats, default=(0.6, 0.2, 0.2)
-            The probability of being placed in the training, validation or testing
+            The probability of being placed in the training, validation
+            or testing
 
         subset_size: int, default=None
-            If provided, then should be less than or equal to :code:`len(keys)`. If
-            given, then :code:`keys` is first sub-sampled by :code:`subset_size`
+            If provided, then should be less than or equal to
+            :code:`len(keys)`. If given, then :code:`keys` is first
+            sub-sampled by :code:`subset_size`
             before splitting.
-
-        Returns
-        -------
-        split_keys: dict
-            The returned dictionary is of the form
-            :code:`split_keys[DATASET_KEY] = [key1, key2, ...]` where
-            :code:`DATASET_KEY` is one of the dataset keys from the
-            :module:`level_set_machine_learning` module.
 
         """
         if subset_size is not None and subset_size > len(keys):
@@ -277,26 +269,20 @@ class DatasetsManager(object):
         # This generates a matrix size `(n_keys, 3)` where each row
         # is an indicator vector indicating to which dataset the key with
         # respective row index should be placed into.
-        indicators = random_state.multinomial(1, pvals=probabilities, size=n_keys)
+        indicators = random_state.multinomial(1, pvals=probabilities,
+                                              size=n_keys)
 
         # Cast to numpy array for fancy indexing
         sub_keys_as_array = numpy.array(sub_keys)
 
-        # Initialize the return dictionary
-        split_dataset_keys = {}
-
         for idataset_key, dataset_key in enumerate(_iterate_dataset_keys()):
+
             indices_for_dataset_key = numpy.where(indicators == idataset_key)
-            split_dataset_keys[dataset_key] = list(
-                sub_keys_as_array[indices_for_dataset_key])
-
-        return split_dataset_keys
+            as_list = list(sub_keys_as_array[indices_for_dataset_key])
+            self.datasets[dataset_key] = as_list
 
 
-    def _iterate_dataset_keys(self):
+def _iterate_dataset_keys():
 
-        from level_set_machine_learning.util.datasets import DATASET_KEYS
-
-        for dataset_key in DATASET_KEYS:
-
-            yield dataset_key
+    for dataset_key in DATASET_KEYS:
+        yield dataset_key
