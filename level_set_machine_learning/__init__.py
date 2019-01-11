@@ -1,1 +1,1 @@
-from .core import LevelSetMachineLearning
+from .core.model import AUTO_STEP, LevelSetMachineLearning

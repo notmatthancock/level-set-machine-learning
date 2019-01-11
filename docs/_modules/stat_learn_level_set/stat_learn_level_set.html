@@ -421,7 +421,7 @@
         <span class="n">iterspb</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nopts_iters_per_batch</span>
         <span class="n">balance</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nopts_balance</span>
 
-        <span class="n">logger</span> <span class="o">=</span> <span class="n">fit_logger</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_dir</span><span class="p">,</span> 
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">CoreLogger</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_dir</span><span class="p">,</span>
                                               <span class="n">nnet_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;log&quot;</span><span class="p">),</span>
                             <span class="n">stdout</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stamp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -889,7 +889,7 @@
 
         <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fopts_tmp_dir</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">fit_logger</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">logfile</span><span class="p">,</span> <span class="n">stamp</span><span class="o">=</span><span class="n">logstamp</span><span class="p">,</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">CoreLogger</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">logfile</span><span class="p">,</span> <span class="n">stamp</span><span class="o">=</span><span class="n">logstamp</span><span class="p">,</span>
                                   <span class="n">stdout</span><span class="o">=</span><span class="n">logstdout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fit_opts_set</span> <span class="o">=</span> <span class="kc">True</span></div>
 
@@ -1178,7 +1178,7 @@
 
 
 <span class="c1"># This class is used privately within the stat learn level set model.</span>
-<span class="k">class</span> <span class="nc">fit_logger</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">CoreLogger</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stamp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;[</span><span class="si">%(asctime)s</span><span class="s1">] </span><span class="si">%(levelname)-8s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
         <span class="n">datefmt</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span>

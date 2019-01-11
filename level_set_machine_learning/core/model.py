@@ -1,30 +1,33 @@
-import logging
 import os
 import shutil
 import time
 import warnings
 import pickle
-import datetime
 
 import h5py
 import numpy as np
 import skfmm
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
 
-import level_set_machine_learning.util.datasets
-from .initialize.initialize_base import InitializeBase
-from .score_functions import jaccard
-from .util import keys
-from .gradient import masked_gradient as mg
+from level_set_machine_learning.core.logger import CoreLogger
+from level_set_machine_learning.core.datasets_manager import DatasetsManager
+from level_set_machine_learning.gradient import masked_gradient as mg
+from level_set_machine_learning.score_functions import jaccard
+from level_set_machine_learning.feature.feature_map import FeatureMap
+from level_set_machine_learning.initialize.initialize_base import (
+    InitializeBase)
+
+
+# Constant used to indicate auto-computed step size
+AUTO_STEP = 'auto'
 
 
 class LevelSetMachineLearning(object):
 
-    def __init__(self, data_file, feature_map, init_func,
-                 model=LinearRegression, model_kwargs={},
-                 score_func=jaccard, step='auto', band=3,
-                 random_state=None):
+    def __init__(self, data_filename, features, initializer,
+                 model_class, model_kwargs, imgs=None, segs=None,
+                 scorer=jaccard, step=AUTO_STEP, band=3,
+                 random_state=None, log_filename=None, log_stdout=True):
         """
         Initialize a statistical learning level set object.
         
@@ -36,41 +39,42 @@ class LevelSetMachineLearning(object):
 
         Parameters
         ----------
-        data_file: str
-            This string should be of the form::
-                
-                some/path/to/data.h5
+        data_filename: str
+            The filename of the hdf5 file of converted data or the filename
+            of an existing hdf5 file with required structure. If the
+            file `h5_file` does not exist, then `imgs` and `segs` *must* be
+            provided.
 
-            where `data.h5` is formatted as specified in the 
-            :meth:`level_set_machine_learning.utils.tohdf5` module.
-            `data.h5` contains the image and ground truth data.
+        features: List(BaseFeature)
+            A list of image or shape features that derive from BaseImageFeature
+            or BaseShapeFeature
 
-        feature_map: feature map class
-            See :class:`level_set_machine_learning.feature_map.FeatureMapBase`.
+        initializer: class
+            Provides the initial segmentation guess, given an image.
+            A subclass of
+            :class:`level_set_machine_learning.initialize.InitializeBase`
 
-        init_func: init func class
-            See :class:`level_set_machine_learning.initialize.InitializeBase`.
-
-        model: sklearn class
+        model_class: class
             The regression model for modeling the level set velocity
 
         model_kwargs: dict
-            The keyword arguments to supply the model when created
+            The keyword arguments to supply :code:`model_class` on
+            instantiation
 
-        score_func: function, default=jaccard
+        scorer: function, default=jaccard
             Has signature::
                 
-                score_func(u, seg)
+                scorer(u, seg)
 
             where `u` is a level set iterate and `seg` is the ground-truth
             segmentation. The default (None) uses the jaccard overlap 
             between `u > 0` and `seg`.
 
-        step: float, default='auto'
+        step: float, default=level_set_machine_learning.AUTO_STEP
             The step size for updating the level sets, i.e., the "delta t"
             term in the discretization of :math:`u_t = \\nu \\| Du \\|`.
 
-            The default ('auto') determines the step size automatically 
+            The default AUTO_STEP determines the step size automatically
             by using the reciprocal of the maximum ground truth speed values
             in the narrow band of the level sets in the training data at 
             the first iterate (i.e., at initialize). The CFL condition
@@ -80,58 +84,67 @@ class LevelSetMachineLearning(object):
             will be in the first iteration (i.e., that u0 is farthest 
             from the ground-truth).
 
-            If 'auto', then `step` is replaced with the computed
+            If AUTO_STEP, then `step` is replaced with the computed
             value after `fit` is called.
 
-        band: int, default=3
+        band: float, default=3
             The "narrow band" distance.
 
         random_state: numpy.random.RandomState, default=None
             Provide for reproducible results.
+
+        log_filename: str, default=None
+            The name of the log file to write. The default (None) writes to
+            `log.txt` in the current working directory.
+
+        log_stdout: bool, default=True
+            If True, the log will print to stdout (as well as logging to file)
+
         """
-        self._data_file_name = os.path.abspath(data_file)
+        # Create the logger to be passed around
+        self._logger = CoreLogger(filename=log_filename, stdout=log_stdout)
 
-        with self._data_file() as df:
-            self._ndim = df[df.keys()[0]+"/img"].ndim
+        # Create the datasets manager object
+        data_file = os.path.abspath(data_filename)
+        self.datasets_manager = DatasetsManager(
+            h5_file=data_file, imgs=imgs, segs=segs)
 
-        if not isinstance(feature_map, FeatureMapBase):
-            msg = ("`feature_map` should be a class derived from "
-                   "`level_set_machine_learning.feature_map.FeatureMapBase`.")
+        # Create the feature map comprising the given features
+        self.feature_map = FeatureMap(features=features)
+
+        # Validate the level set initializer
+        if not isinstance(initializer, InitializeBase):
+            msg = ("`initializer` should be a class derived from "
+                   "`level_set_machine_learning.initialize.InitializeBase`")
             raise ValueError(msg)
+        self.initializer = initializer
 
-        self.feature_map = feature_map
-
-        if not isinstance(init_func, InitializeBase):
-            msg = ("`init_func` should be a class derived from "
-                   "`level_set_machine_learning.initialize.InitializeBase`.")
-            raise ValueError(msg)
-
-        self.init_func = init_func
-
-        self.score_func = score_func
+        self.scorer = scorer
         self.band = band
 
-        if step != 'auto' and not isinstance(step, float):
-            raise ValueError("`step` must be 'auto' or float.")
+        if step != 'auto':
+            try:
+                step = float(step)
+            except (ValueError, TypeError):  # TypeError handles None
+                raise ValueError("`step` must be 'auto' or float")
         self.step = step
 
         if random_state is None:
             random_state = np.random.RandomState()
-            warnings.warn(
-                "No RandomState provided. Results will not be reproducible."
-            )
+            msg = "No RandomState provided. Results will not be reproducible"
+            self._logger.warning(msg)
 
-        self._rs = random_state
+        self._random_state = random_state
 
-        self.model = model
+        # Attach the model class and initialization kwargs
+        self.model_class = model_class
         self.model_kwargs = model_kwargs
 
-        self._is_fitted    = False
+        self._is_fitted = False
         self._fit_opts_set = False
-        self._net_opts_set = False
 
     def _data_file(self):
-        return h5py.File(self._data_file_name, 'r')
+        return h5py.File(self._data_file, 'r')
 
     def _tmp_file(self, mode):
         path = os.path.join(self._fopts_tmp_dir, "tmp.h5")
@@ -195,9 +208,9 @@ class LevelSetMachineLearning(object):
                 img = (img - img.mean()) / img.std()
 
             # Compute the initialize for this example and seed value.
-            u0, dist, mask = self.init_func(img, self.band,
-                                            dx=df[key].attrs['dx'],
-                                            seed=seed)
+            u0, dist, mask = self.initializer(img, self.band,
+                                              dx=df[key].attrs['dx'],
+                                              seed=seed)
 
             # "Auto" step: only use training and validation datasets.
             if ds in ['tr', 'va']:
@@ -343,7 +356,7 @@ class LevelSetMachineLearning(object):
                 utmp = u.copy()
                 utmp[mask] += self.step*nu[mask]*gmag[mask]
 
-            mu += self.score_func(utmp, seg)*1.0 / self._nva
+            mu += self.scorer(utmp, seg) * 1.0 / self._nva
 
         df.close()
         tf.close()
@@ -386,9 +399,9 @@ class LevelSetMachineLearning(object):
 
         random_state: numpy.RandomState
             To make results reproducible. The random state
-            should be passed here rather than using the `self._rs`
+            should be passed here rather than using the `self._random_state`
             attribute, since in the multiprocessing setting we can't
-            rely on `self._rs`.
+            rely on `self._random_state`.
 
         Returns
         -------
@@ -481,9 +494,9 @@ class LevelSetMachineLearning(object):
 
         random_state: numpy.RandomState
             To make results reproducible. The random state
-            should be passed here rather than using the `self._rs`
+            should be passed here rather than using the `self._random_state`
             attribute, since in the multiprocessing setting we can't
-            rely on `self._rs`.
+            rely on `self._random_state`.
         """
         assert dataset in ['tr','va','ts']
         who = ['tr','va','ts'].index(dataset)
@@ -547,7 +560,7 @@ class LevelSetMachineLearning(object):
         Fit a neural network model.
         """
         # Create a unique random state seed from the inputs
-        # since we shouldn't rely on `self._rs` in the multiprocess setting.
+        # since we shouldn't rely on `self._random_state` in the multiprocess setting.
         rs_seed = (nh+init+1)*(nh+init)/2 + init # <= Cantor pairing function
         rs = np.random.RandomState(rs_seed)
 
@@ -560,8 +573,8 @@ class LevelSetMachineLearning(object):
         iterspb   = self._nopts_iters_per_batch
         balance   = self._nopts_balance
 
-        logger = fit_logger(file=os.path.join(self._iter_dir, 
-                                              nnet_name[:-3]+"log"),
+        logger = CoreLogger(filename=os.path.join(self._iter_dir,
+                                              nnet_name[:-3] +"log"),
                             stdout=False, stamp=False)
 
         if self._nopts_batch_size_auto:
@@ -743,7 +756,7 @@ class LevelSetMachineLearning(object):
 
         # Get input and output variables
         X, y = self._featurize_all_images('tr', balance=True,
-                                          rs=self._rs)
+                                          rs=self._random_state)
         # Create and fit the model
         model = self.model(**self.model_kwargs)
         model.fit(X, y)
@@ -968,8 +981,7 @@ class LevelSetMachineLearning(object):
     def set_fit_options(self, datasets=None, seeds=None, save_file=None,
                         model_fit_method="nnet",
                         normalize_images=True, tmp_dir=None, remove_tmp=False,
-                        maxiters=100, va_hist_len=5, va_hist_tol=0.0,
-                        logfile=None, logstamp=True, logstdout=True):
+                        maxiters=100, va_hist_len=5, va_hist_tol=0.0):
         """
         Parameters
         ----------
@@ -990,7 +1002,7 @@ class LevelSetMachineLearning(object):
             `level_set_machine_learning.utils.data.splitter` utility.
 
         seeds: dict, default=None
-            The seeds are used in the `init_func` provided at initialize.
+            The seeds are used in the `initializer` provided at initialize.
             Note that seed coordinates must be given in *index* coordinates, 
             i.e., they should *not* take into account pixel spacing / 
             resolution. However, fractional values are allowed (float type).
@@ -1055,15 +1067,6 @@ class LevelSetMachineLearning(object):
             terminates if the linear trend (slope of best fit line) is less 
             than `va_hist_tol`, or when `maxiters` has been reached.
 
-        logfile: str, default=None
-            The name of the log file to write. The default (None) writes to
-            `log.txt` in the current working directory.
-
-        logstamp: bool, default=True
-            Include a timestamp in the `logfile` name.
-
-        logstdout: bool, default=True
-            If True, the log will print to stdout (as well as logging to file).
         """
         # This is hackish. It just sets most the arguments to member variables.
         L = locals(); L.pop('self'); L.pop('datasets'); L.pop('seeds')
@@ -1095,7 +1098,7 @@ class LevelSetMachineLearning(object):
 
         os.mkdir(self._fopts_tmp_dir)
 
-        self._logger = fit_logger(file=logfile, stamp=logstamp, 
+        self._logger = CoreLogger(filename=logfile, stamp=logstamp,
                                   stdout=logstdout)
         self._fit_opts_set = True
 
@@ -1226,11 +1229,11 @@ class LevelSetMachineLearning(object):
             raise ValueError("`dx` has incorrect number of elements.")
 
         u = np.zeros((iters+1,) + img_.shape)
-        u[0], dist, mask = self.init_func(img_, self.band, dx=dx)
+        u[0], dist, mask = self.initializer(img_, self.band, dx=dx)
 
         if seg is not None:
             scores = np.zeros((iters+1,))
-            scores[0] = self.score_func(u[0], seg)
+            scores[0] = self.scorer(u[0], seg)
 
         nu = np.zeros(img_.shape)
 
@@ -1275,7 +1278,7 @@ class LevelSetMachineLearning(object):
                         mask = np.ones(u[i+1].shape, dtype=np.bool)
 
             if seg is not None:
-                scores[i+1] = self.score_func(u[i+1], seg)
+                scores[i+1] = self.scorer(u[i + 1], seg)
 
             if verbose and seg is None:
                 print(pstr % (i+1))
@@ -1290,7 +1293,7 @@ class LevelSetMachineLearning(object):
     def _validate_datasets(self, datasets):
         if datasets is None:
             df = self._data_file()
-            datasets = level_set_machine_learning.util.datasets.split(df.keys(), random_state=self._rs)
+            datasets = level_set_machine_learning.util.datasets.split(df.keys(), random_state=self._random_state)
             df.close()
 
         # Check if all dataset keys are present.
@@ -1377,7 +1380,7 @@ class LevelSetMachineLearning(object):
         for ds,key,iseed,seed in self._iter_tmp():
             u   = tf["%s/%s/seed-%d/u" % (ds,key,iseed)][...]
             seg = df[key+"/seg"][...]
-            score = self.score_func(u, seg)
+            score = self.scorer(u, seg)
             self._scores[ds][key][iseed].append(score)
 
         df.close()
@@ -1400,53 +1403,3 @@ class LevelSetMachineLearning(object):
             names.append("%s/%s/seed-%d" % (dataset,key,iseed))
             scores.append(self._scores[dataset][key][iseed])
         return np.vstack(scores), names
-
-
-# This class is used privately within the stat learn level set model.
-class fit_logger(logging.Logger):
-    def __init__(self, file=None, stamp=True, stdout=True):
-        fmt = '[%(asctime)s] %(levelname)-8s %(message)s'
-        datefmt = '%Y-%m-%d %H:%M:%S'
-        formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
-
-        now = datetime.datetime.now()
-        timestamp = datetime.datetime.strftime(now, '%Y-%m-%d %H:%M:%S')
-
-        if file is None:
-            if stamp:
-                base = "log-%s.txt" % timestamp
-            else:
-                base = "log.txt"
-            file = os.path.join(os.path.curdir, base)
-        else:
-            if stamp:
-                dir = os.path.dirname(file)
-                base = os.path.basename(file)
-                name,ext = os.path.splitext(base)
-                base = "%s-%s%s" % (name, timestamp, ext)
-                file = os.path.join(dir, base)
-
-        self.file = file
-        self.stamp = stamp
-        self.stdout = stdout
-
-        fhandler = logging.FileHandler(file, mode='w')
-        fhandler.setFormatter(formatter)
-
-        if self.stdout:
-            shandler = logging.StreamHandler()
-            shandler.setFormatter(formatter)
-
-        logging.Logger.__init__(self, 'slls_fit_logger')
-        self.setLevel(logging.DEBUG)
-
-        self.addHandler(fhandler)
-
-        if self.stdout: self.addHandler(shandler)
-
-    def progress(self, msg, i, n):
-        s = "(%%0%dd / %d) %s" % (len(str(n)), n, msg)    
-        self.info(s % i)
-
-
-DEFAULT_MODEL_FILENAME = 'lsl_model.pkl'

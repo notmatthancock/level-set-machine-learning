@@ -1,16 +1,10 @@
 import os
-import logging
 
+import h5py
 import numpy
 import skfmm
-import h5py
 
 
-logger = logging.getLogger(__name__)
-
-
-############################################
-# Global key definitions
 TRAINING_DATASET_KEY = 'training-dataset'
 VALIDATION_DATASET_KEY = 'validation-dataset'
 TESTING_DATASET_KEY = 'testing-dataset'
@@ -29,11 +23,15 @@ class DatasetsManager(object):
     """ Handles internal dataset operations
     """
 
-    def __init__(self, h5_file, imgs=None, segs=None, dx=None, compress=True):
+    def __init__(self, logger, h5_file, imgs=None, segs=None,
+                 dx=None, compress=True):
         """ Initialize a dataset manager
 
         Parameters
         ----------
+        logger: logging.Logger
+            A logger for logging progress and errors
+
         h5_file: str
             A (possibly already existing) hdf5 dataset
 
@@ -62,6 +60,7 @@ class DatasetsManager(object):
         argument `h5_file`.
 
         """
+        self.logger = logger
 
         self.h5_file = os.path.abspath(h5_file)
 
@@ -173,7 +172,7 @@ class DatasetsManager(object):
         for i in range(n_examples):
 
             msg = "Creating dataset entry {} / {}"
-            logger.info(msg.format(i+1, n_examples))
+            self.logger.info(msg.format(i+1, n_examples))
 
             # Create a group for the i'th example
             g = hf.create_group(EXAMPLE_KEY.format(i))
