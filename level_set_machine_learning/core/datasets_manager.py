@@ -281,6 +281,9 @@ class DatasetsManager(object):
             as_list = list(sub_keys_as_array[indices_for_dataset_key])
             self.datasets[dataset_key] = as_list
 
+    def open_data_file(self):
+        return h5py.File(self.h5_file, 'r')
+
 
 def _iterate_dataset_keys():
 

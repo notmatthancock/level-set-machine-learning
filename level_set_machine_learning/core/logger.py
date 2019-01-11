@@ -6,7 +6,12 @@ DEFAULT_LOG_FILENAME = 'log.txt'
 
 
 class CoreLogger(logging.Logger):
+    """ Sets up logger formatting and adds an additional
+    `progress` member function to the standard logger
+    """
+
     def __init__(self, filename=None, stdout=True):
+
         fmt = '[%(asctime)s] %(levelname)-8s %(message)s'
         datefmt = '%Y-%m-%d %H:%M:%S'
         formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
@@ -33,6 +38,9 @@ class CoreLogger(logging.Logger):
         if self.stdout:
             self.addHandler(shandler)
 
-    def progress(self, msg, i, n):
-        msg = "(%%0%dd / %d) %s" % (len(str(n)), n, msg)
-        self.info(msg % i)
+    def progress(self, msg, current_iteration, total_iterations):
+        """ Logs a progress message to info
+        """
+        format_tuple = (len(str(total_iterations)), total_iterations, msg)
+        msg = "(%%0%dd / %d) %s" % format_tuple
+        self.info(msg % current_iteration)

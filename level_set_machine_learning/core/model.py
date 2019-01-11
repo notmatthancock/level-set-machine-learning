@@ -156,8 +156,11 @@ class LevelSetMachineLearning(object):
         while True:
             lock_path = os.path.join(self._fopts_tmp_dir, 'tmp.lock')
             if not os.path.exists(lock_path):
+
                 # lock the tmp file
-                with open(lock_path, 'w') as f: pass
+                with open(lock_path, 'w') as f:
+                    pass
+
                 # open the tmp file in write mode
                 return self._tmp_file(mode='a')
             else:
