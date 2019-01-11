@@ -12,14 +12,11 @@ import skfmm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from level_set_machine_learning.consts import (
-    DEFAULT_MODEL_FILENAME
-)
-from level_set_machine_learning.initialize.initialize_base import (
-    InitializeBase)
-from level_set_machine_learning.score_functions import jaccard
-from level_set_machine_learning.util import key_splitter
-from level_set_machine_learning.gradient import masked_gradient as mg
+import level_set_machine_learning.util.datasets
+from .initialize.initialize_base import InitializeBase
+from .score_functions import jaccard
+from .util import keys
+from .gradient import masked_gradient as mg
 
 
 class LevelSetMachineLearning(object):
@@ -968,7 +965,6 @@ class LevelSetMachineLearning(object):
         with open(self._fopts_save_file, 'w') as f:
             pickle.dump(self, f)
 
-
     def set_fit_options(self, datasets=None, seeds=None, save_file=None,
                         model_fit_method="nnet",
                         normalize_images=True, tmp_dir=None, remove_tmp=False,
@@ -1294,7 +1290,7 @@ class LevelSetMachineLearning(object):
     def _validate_datasets(self, datasets):
         if datasets is None:
             df = self._data_file()
-            datasets = key_splitter.split(df.keys(), rs=self._rs)
+            datasets = level_set_machine_learning.util.datasets.split(df.keys(), random_state=self._rs)
             df.close()
 
         # Check if all dataset keys are present.
@@ -1453,3 +1449,4 @@ class fit_logger(logging.Logger):
         self.info(s % i)
 
 
+DEFAULT_MODEL_FILENAME = 'lsl_model.pkl'
