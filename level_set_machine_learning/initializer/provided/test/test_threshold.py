@@ -1,6 +1,6 @@
 import unittest
 
-from level_set_machine_learning.initialize.provided import ThresholdInitialize
+from level_set_machine_learning.initializer.provided import ThresholdInitializer
 
 
 class TestThresholdInitialize(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestThresholdInitialize(unittest.TestCase):
         image[mask] = 1 + 0.5*random_state.randn(mask.sum())
         image[~mask] = -1 - 0.5*random_state.rand((~mask).sum())
 
-        initializer = ThresholdInitialize(sigma=0)
+        initializer = ThresholdInitializer(sigma=0)
 
         u0, _, _ = initializer(image)
 

@@ -1,11 +1,11 @@
 from scipy.ndimage import gaussian_filter
 from skimage.filters.thresholding import threshold_otsu
 
-from level_set_machine_learning.initialize.initialize_base import (
-    InitializeBase)
+from level_set_machine_learning.initializer.initializer_base import (
+    InitializerBase)
 
 
-class ThresholdInitialize(InitializeBase):
+class ThresholdInitializer(InitializerBase):
     """ Computes the Otsu threshold on the a Gaussian-smoothed image, and
     creates the boolean initialization using that threshold
     """

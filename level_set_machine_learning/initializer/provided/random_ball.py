@@ -1,16 +1,16 @@
 import numpy
 
-from level_set_machine_learning.initialize.initialize_base import (
-    InitializeBase)
+from level_set_machine_learning.initializer.initializer_base import (
+    InitializerBase)
 
 
-class RandomBallInitialize(InitializeBase):
+class RandomBallInitializer(InitializerBase):
     """ Initialize the zero level set to a circle/sphere/hyper-sphere
     with random center and radius
     """
 
     def __init__(self, random_state=None):
-        """ Initialize a RandomBallInitialize initialization object
+        """ Initialize a RandomBallInitializer initialization object
 
         Parameters
         ----------

@@ -14,15 +14,15 @@ from level_set_machine_learning.core.datasets_manager import DatasetsManager
 from level_set_machine_learning.gradient import masked_gradient as mg
 from level_set_machine_learning.score_functions import jaccard
 from level_set_machine_learning.feature.feature_map import FeatureMap
-from level_set_machine_learning.initialize.initialize_base import (
-    InitializeBase)
+from level_set_machine_learning.initializer.initializer_base import (
+    InitializerBase)
 
 
 # Constant used to indicate auto-computed step size
 AUTO_STEP = 'auto'
 
 
-class LevelSetMachineLearning(object):
+class LevelSetMachineLearning:
 
     def __init__(self, data_filename, features, initializer,
                  model_class, model_kwargs, imgs=None, segs=None,
@@ -35,7 +35,7 @@ class LevelSetMachineLearning(object):
         are those that can be used in *both* the training and run-time
         phases of the algorithm. Training options should be set via
         the `set_fit_options` and `set_net_options` member functions
-        after initialize.
+        after initializer.
 
         Parameters
         ----------
@@ -52,7 +52,7 @@ class LevelSetMachineLearning(object):
         initializer: class
             Provides the initial segmentation guess, given an image.
             A subclass of
-            :class:`level_set_machine_learning.initialize.InitializeBase`
+            :class:`level_set_machine_learning.initializer.InitializerBase`
 
         model_class: class
             The regression model for modeling the level set velocity
@@ -77,7 +77,7 @@ class LevelSetMachineLearning(object):
             The default AUTO_STEP determines the step size automatically
             by using the reciprocal of the maximum ground truth speed values
             in the narrow band of the level sets in the training data at 
-            the first iterate (i.e., at initialize). The CFL condition
+            the first iterate (i.e., at initializer). The CFL condition
             is satisfied by taking the maximum speed over ALL spatial 
             coordinates, but we attempt to avoid this prohibitively 
             small step size by assuming that the maximum speed observed 
@@ -113,9 +113,9 @@ class LevelSetMachineLearning(object):
         self.feature_map = FeatureMap(features=features)
 
         # Validate the level set initializer
-        if not isinstance(initializer, InitializeBase):
+        if not isinstance(initializer, InitializerBase):
             msg = ("`initializer` should be a class derived from "
-                   "`level_set_machine_learning.initialize.InitializeBase`")
+                   "`level_set_machine_learning.initializer.InitializerBase`")
             raise ValueError(msg)
         self.initializer = initializer
 
@@ -142,9 +142,6 @@ class LevelSetMachineLearning(object):
 
         self._is_fitted = False
         self._fit_opts_set = False
-
-    def _data_file(self):
-        return h5py.File(self._data_file, 'r')
 
     def _tmp_file(self, mode):
         path = os.path.join(self._fopts_tmp_dir, "tmp.h5")
@@ -210,7 +207,7 @@ class LevelSetMachineLearning(object):
             if self._fopts_normalize_images:
                 img = (img - img.mean()) / img.std()
 
-            # Compute the initialize for this example and seed value.
+            # Compute the initializer for this example and seed value.
             u0, dist, mask = self.initializer(img, self.band,
                                               dx=df[key].attrs['dx'],
                                               seed=seed)
@@ -1005,7 +1002,7 @@ class LevelSetMachineLearning(object):
             `level_set_machine_learning.utils.data.splitter` utility.
 
         seeds: dict, default=None
-            The seeds are used in the `initializer` provided at initialize.
+            The seeds are used in the `initializer` provided at initializer.
             Note that seed coordinates must be given in *index* coordinates, 
             i.e., they should *not* take into account pixel spacing / 
             resolution. However, fractional values are allowed (float type).

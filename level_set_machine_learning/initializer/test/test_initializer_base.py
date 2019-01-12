@@ -1,7 +1,7 @@
 import unittest
 
-from level_set_machine_learning.initialize.initialize_base import (
-    InitializeBase)
+from level_set_machine_learning.initializer.initializer_base import (
+    InitializerBase)
 
 
 class TestInitializeBase(unittest.TestCase):
@@ -13,14 +13,14 @@ class TestInitializeBase(unittest.TestCase):
         random_state = np.random.RandomState(123)
 
         # Mock an initializer class
-        class MyInitialize(InitializeBase):
+        class MyInitializer(InitializerBase):
 
             def initialize(self, img, dx, seed):
                 return img > 0
 
         image = random_state.randn(41, 50)
 
-        initializer = MyInitialize()
+        initializer = MyInitializer()
         u0, _, _ = initializer(image)
 
         self.assertTrue(((u0 > 0) == (image > 0)).all())

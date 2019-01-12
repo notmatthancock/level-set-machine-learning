@@ -33,11 +33,11 @@
   <h1>Source code for LevelSetMachineLearning.init_funcs.threshold</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">skfmm</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs</span> <span class="k">import</span> <span class="n">InitializeBase</span>
+<span class="kn">from</span> <span class="nn">LevelSetMachineLearning.init_funcs</span> <span class="k">import</span> <span class="n">InitializerBase</span>
 <span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="k">import</span> <span class="n">gaussian_filter</span> <span class="k">as</span> <span class="n">gf</span>
 <span class="kn">from</span> <span class="nn">skimage.filters.thresholding</span> <span class="k">import</span> <span class="n">threshold_otsu</span> <span class="k">as</span> <span class="n">otsu</span>
 
-<div class="viewcode-block" id="threshold"><a class="viewcode-back" href="../../../slls/api/init_funcs/threshold.html#LevelSetMachineLearning.init_funcs.threshold.threshold">[docs]</a><span class="k">class</span> <span class="nc">threshold</span><span class="p">(</span><span class="n">InitializeBase</span><span class="p">):</span>
+<div class="viewcode-block" id="threshold"><a class="viewcode-back" href="../../../slls/api/init_funcs/threshold.html#LevelSetMachineLearning.init_funcs.threshold.threshold">[docs]</a><span class="k">class</span> <span class="nc">threshold</span><span class="p">(</span><span class="n">InitializerBase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use otsu thresholding to initialize the level set.</span>
 

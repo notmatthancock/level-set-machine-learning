@@ -19,7 +19,7 @@ SEGMENTATION_KEY = "segmentation"
 DISTANCE_TRANSFORM_KEY = "distance-transform"
 
 
-class DatasetsManager(object):
+class DatasetsManager:
     """ Handles internal dataset operations
     """
 

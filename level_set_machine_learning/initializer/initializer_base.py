@@ -7,8 +7,8 @@ from level_set_machine_learning.util.distance_transform import (
     distance_transform)
 
 
-class InitializeBase(abc.ABC):
-    """ The abstract base class for level set initialize functions.
+class InitializerBase(abc.ABC):
+    """ The abstract base class for level set initializer functions.
     """
 
     def __init__(self):
@@ -20,7 +20,7 @@ class InitializeBase(abc.ABC):
     def __call__(self, img, band=0, dx=None, seed=None):
         """ The __call__ function handles input validation, etc. This
         function is used internally and calls the user-implemented
-        `initialize` member function.
+        `initializer` member function.
         """
         # Validate the delta terms
         if dx is None:
@@ -31,21 +31,21 @@ class InitializeBase(abc.ABC):
                 msg = "Number of dx terms ({}) doesn't match dimensions ({})"
                 raise ValueError(msg.format(len(dx), img.ndim))
 
-        # Compute the initialize
+        # Compute the initializer
         init_mask = self.initialize(img=img, dx=dx, seed=seed)
 
         # Validate the returned mask
         if not isinstance(init_mask, numpy.ndarray):
-            msg = ("Returned initialize was type {} but "
+            msg = ("Returned initializer was type {} but "
                    "should be numpy.ndarray")
             raise TypeError(msg.format(type(init_mask)))
 
         if init_mask.dtype != numpy.bool:
-            msg = "Returned initialize was dtype {} but should be bool"
+            msg = "Returned initializer was dtype {} but should be bool"
             raise TypeError(msg.format(init_mask.dtype))
 
         if init_mask.shape != img.shape:
-            msg = "Returned initialize was shape {} but should be {}"
+            msg = "Returned initializer was shape {} but should be {}"
             raise ValueError(msg.format(init_mask.shape, img.shape))
 
         # Set the initial level set function

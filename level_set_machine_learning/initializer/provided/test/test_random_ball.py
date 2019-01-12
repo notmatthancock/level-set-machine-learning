@@ -1,6 +1,7 @@
 import unittest
 
-from level_set_machine_learning.initialize.provided import RandomBallInitialize
+from level_set_machine_learning.initializer.provided import (
+    RandomBallInitializer)
 
 
 class TestRandomBallInitialize(unittest.TestCase):
@@ -17,7 +18,7 @@ class TestRandomBallInitialize(unittest.TestCase):
         image[mask] = 1 + 0.5*random_state.randn(mask.sum())
         image[~mask] = -1 - 0.5*random_state.rand((~mask).sum())
 
-        initializer = RandomBallInitialize(random_state=random_state)
+        initializer = RandomBallInitializer(random_state=random_state)
 
         # Smoke test ...
         u0, _, _ = initializer(image)
