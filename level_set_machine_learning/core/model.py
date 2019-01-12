@@ -122,16 +122,17 @@ class LevelSetMachineLearning:
         self.scorer = scorer
         self.band = band
 
-        if step != 'auto':
+        if step != AUTO_STEP:
             try:
                 step = float(step)
             except (ValueError, TypeError):  # TypeError handles None
-                raise ValueError("`step` must be 'auto' or float")
+                msg = "`step` must be '{}' or float"
+                raise ValueError(msg.format(AUTO_STEP))
         self.step = step
 
         if random_state is None:
             random_state = np.random.RandomState()
-            msg = "No RandomState provided. Results will not be reproducible"
+            msg = "No RandomState provided: results will not be reproducible"
             self._logger.warning(msg)
 
         self._random_state = random_state
@@ -241,12 +242,19 @@ class LevelSetMachineLearning:
                 seed_group.create_dataset("nu", data=nu,
                                           compression='gzip')
 
-        if self.step == 'auto':
+        if self.step == AUTO_STEP:
+            # Assign the computed step value to class attribute and log it
             self.step = step
-            self._logger.info("Computed auto step is %.7f." % self.step)
-        elif self.step != 'auto' and self.step > step:
-            self._logger.warn("Computed step is %.7f but given step is %.7f."
-                                % (step, self.step))
+
+            msg = "Computed auto step is {:.7f}"
+            self._logger.info(msg.format(self.step))
+
+        elif self.step != AUTO_STEP and self.step > step:
+
+            # Warn the user that the provided step argument may be too big
+            msg = "Computed step is {:.7f} but given step is {:.7f}"
+            self._logger.warning(msg.format(step, self.step))
+
         df.close()
         tf.close()
         self._tmp_file_write_unlock()
