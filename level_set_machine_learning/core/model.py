@@ -160,13 +160,13 @@ class LevelSetMachineLearning:
             if ds not in tf:
                 tf.create_group(ds)
 
-            img = df[key+'/img'][...]
-
             if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
+                img = (example.img - example.img.mean()) / example.img.std()
+            else:
+                img = example.img
 
             # Compute the initializer for this example and seed value.
-            u0, dist, mask = self.initializer(img, self.band,
+            u0, dist, mask = self.initializer(img=img, band=self.band,
                                               dx=example.dx, seed=seed)
 
             # "Auto" step: only use training and validation datasets.

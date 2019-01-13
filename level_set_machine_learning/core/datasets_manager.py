@@ -32,14 +32,12 @@ class DatasetsManager:
     """
 
     def __init__(self, h5_file, imgs=None, segs=None,
-                 dx=None, compress=True, logger=None):
+                 dx=None, compress=True, logger=None,
+                 normalize_imgs_on_convert=True):
         """ Initialize a dataset manager
 
         Parameters
         ----------
-        logger: logging.Logger
-            A logger for logging progress and errors
-
         h5_file: str
             A (possibly already existing) hdf5 dataset
 
@@ -58,6 +56,14 @@ class DatasetsManager:
         compress: bool, default=True
             When the image and segmentation data are stored in the hdf5 file
             this flag indicates whether or not to use compression.
+
+        logger: level_set_machine_learning.core.CoreLogger, default=None
+            A logger for logging progress and errors
+
+        normalize_imgs_on_convert: bool, default=True
+            If True, then each image is normalized by subtracting its mean
+            and dividing by its standard deviation on conversion to
+            hdf5 storage format
 
         Note
         ----
@@ -80,7 +86,8 @@ class DatasetsManager:
 
             # Perform the conversion to hdf5
             self.convert_to_hdf5(imgs=imgs, segs=segs,
-                                 dx=dx, compress=compress)
+                                 dx=dx, compress=compress,
+                                 normalize_imgs=normalize_imgs_on_convert)
 
         # To be assigned by a `split` method
         self.datasets = {}
@@ -88,7 +95,8 @@ class DatasetsManager:
         with h5py.File(self.h5_file) as hf:
             self.n_examples = len(hf.keys())
 
-    def convert_to_hdf5(self, imgs, segs, dx=None, compress=True):
+    def convert_to_hdf5(self, imgs, segs, dx=None, compress=True,
+                        normalize_imgs=True):
         """ Convert a dataset of images and boolean segmentations
         to hdf5 format, which is required for the level set routine.
 
@@ -184,9 +192,16 @@ class DatasetsManager:
             # Create a group for the i'th example
             g = hf.create_group(EXAMPLE_KEY.format(i))
 
-            # Store the i'th image and segmentation
+            # Store the i'th image
+            if normalize_imgs:
+                img = (imgs[i] - imgs[i].mean()) / imgs[i].std()
+            else:
+                img = imgs[i]
+
             g.create_dataset(IMAGE_KEY,
-                             data=imgs[i], compression=compress_method)
+                             data=img, compression=compress_method)
+
+            # Store the i'th segmentation
             g.create_dataset(SEGMENTATION_KEY,
                              data=segs[i], compression=compress_method)
 
