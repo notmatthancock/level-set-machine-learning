@@ -4,7 +4,6 @@ import time
 import warnings
 import pickle
 
-import h5py
 import numpy as np
 import skfmm
 from sklearn.ensemble import RandomForestRegressor
@@ -140,24 +139,22 @@ class LevelSetMachineLearning:
         # Attach the model class and initialization kwargs
         self.model_class = model_class
         self.model_kwargs = model_kwargs
+        self.models = []
 
+        # Set up some private variables
         self._is_fitted = False
         self._fit_opts_set = False
 
     def _initialize(self):
         """ TODO """
 
-        self.models = []
-
-        df = self._data_file()
-        tf = self._tmp_file_write_lock()
-
+        # Initialize the auto-computed step estimate
         step = np.inf
 
-        nexamples = len(list(self._iter_tmp()))
+        for example in self.datasets_manager.iter_examples():
 
-        for index,(ds,key,iseed,seed) in enumerate(self._iter_tmp()):
-            self._logger.progress("... initializing", index, nexamples)
+            self._logger.progress("... initializing",
+                                  example.index, self.n_examples)
 
             # Create dataset group if it doesn't exist.
             if ds not in tf:
@@ -170,8 +167,7 @@ class LevelSetMachineLearning:
 
             # Compute the initializer for this example and seed value.
             u0, dist, mask = self.initializer(img, self.band,
-                                              dx=df[key].attrs['dx'],
-                                              seed=seed)
+                                              dx=example.dx, seed=seed)
 
             # "Auto" step: only use training and validation datasets.
             if ds in ['tr', 'va']:
@@ -846,12 +842,10 @@ class LevelSetMachineLearning:
         """
         Run `set_fit_options` and `set_net_options` before calling `fit`.
         """
-        if not self._fit_opts_set:
-            raise RuntimeError("Run `set_fit_options` before fitting.")
         if self._is_fitted:
             raise RuntimeError("This model has already been fitted.")
 
-        self._logger.info("Initializing.")
+        self._logger.info("Initializing...")
         self._initialize()
         self._iter = 0
 
