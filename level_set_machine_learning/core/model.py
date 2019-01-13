@@ -144,46 +144,6 @@ class LevelSetMachineLearning:
         self._is_fitted = False
         self._fit_opts_set = False
 
-    def _tmp_file(self, mode):
-        path = os.path.join(self._fopts_tmp_dir, "tmp.h5")
-
-        return h5py.File(path, mode=mode)
-
-    def _tmp_file_write_lock(self):
-
-        while True:
-            lock_path = os.path.join(self._fopts_tmp_dir, 'tmp.lock')
-            if not os.path.exists(lock_path):
-
-                # lock the tmp file
-                with open(lock_path, 'w') as f:
-                    pass
-
-                # open the tmp file in write mode
-                return self._tmp_file(mode='a')
-            else:
-                # wait a bit and check the lock
-                time.sleep(0.1)
-
-    def _tmp_file_write_unlock(self):
-        lock_path = os.path.join(self._fopts_tmp_dir, 'tmp.lock')
-        os.remove(lock_path)
-
-    def _iter_seeds(self, ds):
-        assert ds in ['tr', 'va', 'ts']
-
-        if not hasattr(self, '_seeds'):
-            raise RuntimeError("Cannot iter seeds without seeds initialized.")
-        
-        for key in self._seeds[ds]:
-            for iseed, seed in enumerate(self._seeds[ds][key]):
-                yield key, iseed, seed
-
-    def _iter_tmp(self):
-        for ds in ['tr', 'va', 'ts']:
-            for key,iseed,seed in self._iter_seeds(ds):
-                yield ds, key, iseed, seed
-
     def _initialize(self):
         """ TODO """
 
@@ -236,11 +196,6 @@ class LevelSetMachineLearning:
             seed_group.create_dataset("u",    data=u0,   compression='gzip')
             seed_group.create_dataset("dist", data=dist, compression='gzip')
             seed_group.create_dataset("mask", data=mask, compression='gzip')
-
-            if self._fopts_model_fit_method == 'rf':
-                nu = np.zeros_like(dist)
-                seed_group.create_dataset("nu", data=nu,
-                                          compression='gzip')
 
         if self.step == AUTO_STEP:
             # Assign the computed step value to class attribute and log it

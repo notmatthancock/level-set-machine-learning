@@ -1,3 +1,5 @@
+from collections import namedtuple
+import contextlib
 import os
 
 import h5py
@@ -19,12 +21,18 @@ SEGMENTATION_KEY = "segmentation"
 DISTANCE_TRANSFORM_KEY = "distance-transform"
 
 
+# Yielded by dataset manager generators
+DatasetExample = namedtuple(
+    'DatasetExample',
+    ['index', 'key', 'img', 'seg', 'dist', 'dx'])
+
+
 class DatasetsManager:
     """ Handles internal dataset operations
     """
 
-    def __init__(self, logger, h5_file, imgs=None, segs=None,
-                 dx=None, compress=True):
+    def __init__(self, h5_file, imgs=None, segs=None,
+                 dx=None, compress=True, logger=None):
         """ Initialize a dataset manager
 
         Parameters
@@ -150,7 +158,7 @@ class DatasetsManager:
                 msg = "segs[{}] (ndim={}) did not have correct dimensions ({})"
                 raise ValueError(msg.format(i, seg.ndim, ndim))
 
-            if img.shape != img.shape:
+            if img.shape != seg.shape:
                 msg = "imgs[{}] shape {} does not match segs[{}] shape {}"
                 raise ValueError(msg.format(i, img.shape, i, seg.shape))
 
@@ -169,8 +177,9 @@ class DatasetsManager:
 
         for i in range(n_examples):
 
-            msg = "Creating dataset entry {} / {}"
-            self.logger.info(msg.format(i+1, n_examples))
+            if self.logger:
+                msg = "Creating dataset entry {} / {}"
+                self.logger.info(msg.format(i+1, n_examples))
 
             # Create a group for the i'th example
             g = hf.create_group(EXAMPLE_KEY.format(i))
@@ -281,8 +290,36 @@ class DatasetsManager:
             as_list = list(sub_keys_as_array[indices_for_dataset_key])
             self.datasets[dataset_key] = as_list
 
-    def open_data_file(self):
-        return h5py.File(self.h5_file, 'r')
+    @contextlib.contextmanager
+    def open_h5_file(self):
+        """ Opens the data file"""
+        try:
+            h5 = h5py.File(self.h5_file, 'r')
+            yield h5
+        finally:
+            h5.close()
+
+    def iter_examples(self):
+        """ Iterates through the hdf5 dataset
+
+        Returns
+        -------
+        dataset: generator
+            The return generator returns (i, key, img[i], seg[i])
+            at each iteration, where i is the index and key is the
+            key into the hdf5 dataset for the respective index
+        """
+        with self.open_h5_file() as hf:
+            for i in range(self.n_examples):
+                example_key = EXAMPLE_KEY.format(i)
+                yield DatasetExample(
+                    index=i,
+                    key=example_key,
+                    img=hf[example_key][IMAGE_KEY],
+                    seg=hf[example_key][SEGMENTATION_KEY],
+                    dist=hf[example_key][DISTANCE_TRANSFORM_KEY],
+                    dx=hf[example_key].attrs['dx']
+                )
 
 
 def _iterate_dataset_keys():
