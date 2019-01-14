@@ -23,27 +23,17 @@ AUTO_STEP = 'auto'
 
 class LevelSetMachineLearning:
 
-    def __init__(self, data_filename, features, initializer,
-                 model_class, model_kwargs, imgs=None, segs=None,
-                 scorer=jaccard, step=AUTO_STEP, band=3,
-                 random_state=None, log_filename=None, log_stdout=True):
+    def __init__(self, features, initializer, model_class, model_kwargs,
+                 scorer=jaccard, band=3, log_filename=None, log_stdout=True):
         """
-        Initialize a statistical learning level set object.
+        Initialize a level set machine learning object
         
         The parameters required at initialization
         are those that can be used in *both* the training and run-time
-        phases of the algorithm. Training options should be set via
-        the `set_fit_options` and `set_net_options` member functions
-        after initializer.
+        phases of the algorithm.
 
         Parameters
         ----------
-        data_filename: str
-            The filename of the hdf5 file of converted data or the filename
-            of an existing hdf5 file with required structure. If the
-            file `h5_file` does not exist, then `imgs` and `segs` *must* be
-            provided.
-
         features: List(BaseFeature)
             A list of image or shape features that derive from BaseImageFeature
             or BaseShapeFeature
@@ -69,28 +59,8 @@ class LevelSetMachineLearning:
             segmentation. The default (None) uses the jaccard overlap 
             between `u > 0` and `seg`.
 
-        step: float, default=level_set_machine_learning.AUTO_STEP
-            The step size for updating the level sets, i.e., the "delta t"
-            term in the discretization of :math:`u_t = \\nu \\| Du \\|`.
-
-            The default AUTO_STEP determines the step size automatically
-            by using the reciprocal of the maximum ground truth speed values
-            in the narrow band of the level sets in the training data at 
-            the first iterate (i.e., at initializer). The CFL condition
-            is satisfied by taking the maximum speed over ALL spatial 
-            coordinates, but we attempt to avoid this prohibitively 
-            small step size by assuming that the maximum speed observed 
-            will be in the first iteration (i.e., that u0 is farthest 
-            from the ground-truth).
-
-            If AUTO_STEP, then `step` is replaced with the computed
-            value after `fit` is called.
-
         band: float, default=3
             The "narrow band" distance.
-
-        random_state: numpy.random.RandomState, default=None
-            Provide for reproducible results.
 
         log_filename: str, default=None
             The name of the log file to write. The default (None) writes to
@@ -102,11 +72,6 @@ class LevelSetMachineLearning:
         """
         # Create the logger to be passed around
         self._logger = CoreLogger(filename=log_filename, stdout=log_stdout)
-
-        # Create the datasets manager object
-        data_file = os.path.abspath(data_filename)
-        self.datasets_manager = DatasetsManager(
-            h5_file=data_file, imgs=imgs, segs=segs)
 
         # Create the feature map comprising the given features
         self.feature_map = FeatureMap(features=features)
@@ -121,21 +86,6 @@ class LevelSetMachineLearning:
         self.scorer = scorer
         self.band = band
 
-        if step != AUTO_STEP:
-            try:
-                step = float(step)
-            except (ValueError, TypeError):  # TypeError handles None
-                msg = "`step` must be '{}' or float"
-                raise ValueError(msg.format(AUTO_STEP))
-        self.step = step
-
-        if random_state is None:
-            random_state = np.random.RandomState()
-            msg = "No RandomState provided: results will not be reproducible"
-            self._logger.warning(msg)
-
-        self._random_state = random_state
-
         # Attach the model class and initialization kwargs
         self.model_class = model_class
         self.model_kwargs = model_kwargs
@@ -145,7 +95,7 @@ class LevelSetMachineLearning:
         self._is_fitted = False
         self._fit_opts_set = False
 
-    def _initialize(self):
+    def _initialize(self, seeder):
         """ TODO """
 
         # Initialize the auto-computed step estimate
@@ -153,21 +103,18 @@ class LevelSetMachineLearning:
 
         for example in self.datasets_manager.iter_examples():
 
-            self._logger.progress("... initializing",
-                                  example.index, self.n_examples)
+            self._logger.progress(
+                "... initializing", example.index, self.n_examples)
 
             # Create dataset group if it doesn't exist.
             if ds not in tf:
                 tf.create_group(ds)
 
-            if self._fopts_normalize_images:
-                img = (example.img - example.img.mean()) / example.img.std()
-            else:
-                img = example.img
+            seed = seeder(example.img)
 
             # Compute the initializer for this example and seed value.
-            u0, dist, mask = self.initializer(img=img, band=self.band,
-                                              dx=example.dx, seed=seed)
+            u0, dist, mask = self.initializer(
+                img=example.img, band=self.band, dx=example.dx, seed=seed)
 
             # "Auto" step: only use training and validation datasets.
             if ds in ['tr', 'va']:
@@ -838,12 +785,109 @@ class LevelSetMachineLearning:
         else:
             return False, None
 
-    def fit(self):
+    def fit(self, data_filename, imgs=None, segs=None, dx=None,
+            normalize_imgs_on_convert=True, datasets_split=(0.6, 0.2, 0.2),
+            step=AUTO_STEP, max_iters=100, va_hist_len=5, va_hist_tol=0.0,
+            random_state=None):
+        """ Fit a level set machine learning segmentation model
+
+        Parameters
+        ----------
+        data_filename: str
+            The filename of the hdf5 file of converted data or the filename
+            of an existing hdf5 file with required structure. If the
+            file `h5_file` does not exist, then `imgs` and `segs` *must* be
+            provided.
+
+        imgs: list of ndarray, default=None
+            The list of images to be used if :code:`data_file` points to a
+            (currently) non-existent hdf5 file. The default of None
+            assumes that `data_file` points to an existing hdf5 file
+
+        segs: list of ndarray
+            The list of segmentation to be used if :code:`data_file` points to
+            a (currently) non-existent hdf5 file. The default of None
+            assumes that `data_file` points to an existing hdf5 file
+
+        dx: list of ndarray, default=None
+            The list of respective delta terms for the provided images.
+            :code:`dx[i]` should be a list or array corresponding to the
+            i'th image with length corresponding to the image dimensions.
+            The default of None assumes isotropicity with a value of 1.
+
+        normalize_imgs_on_convert: bool, default=True
+            If True, then the provided images are individually normalized
+            by their means and standard deviations on conversion to hdf5
+
+        datasets_split: 3-tuple, default=(0.6, 0.2, 0.2)
+            The items in the tuple correspond to the training, validation, and
+            testing datasets. If each item is a float, then the provided data
+            is randomly split with probabilities of respective values.
+            Alternatively, each item in the 3-tuple may be a list of integer
+            indexes explicitly prescribing each example to a specific dataset
+            for fitting.
+
+        step: float, default=level_set_machine_learning.AUTO_STEP
+            The step size for updating the level sets, i.e., the "delta t"
+            term in the discretization of :math:`u_t = \\nu \\| Du \\|`.
+
+            The default AUTO_STEP determines the step size automatically
+            by using the reciprocal of the maximum ground truth speed values
+            in the narrow band of the level sets in the training data at
+            the first iterate (i.e., at initializer). The CFL condition
+            is satisfied by taking the maximum speed over ALL spatial
+            coordinates, but we attempt to avoid this prohibitively
+            small step size by assuming that the maximum speed observed
+            will be in the first iteration (i.e., that u0 is farthest
+            from the ground-truth).
+
+            If AUTO_STEP, then `step` is replaced with the computed
+            value after `fit` is called.
+
+        random_state: numpy.random.RandomState, default=None
+            Provide for reproducible results.
+
         """
-        Run `set_fit_options` and `set_net_options` before calling `fit`.
-        """
+        # Create the datasets manager object
+        data_file = os.path.abspath(data_filename)
+        datasets_manager = DatasetsManager(
+            h5_file=data_file, imgs=imgs, segs=segs, dx=dx,
+            normalize_imgs_on_convert=normalize_imgs_on_convert)
+
+        if all([isinstance(item, float) for item in datasets_split]):
+            # Random split
+            datasets_manager.split_datasets_random(
+                probabilities=datasets_split, random_state=random_state)
+        elif all([
+            (isinstance(index_list, list) and
+             [isinstance(index, int) for index in index_list])
+            for index_list in datasets_split
+        ]):
+            # Designated split
+            datasets_manager.split_datasets(
+                training_dataset_indices=datasets_split[0],
+                validation_dataset_indices=datasets_split[1],
+                testing_dataset_indices=datasets_split[2])
+        else:
+            # Bad split
+            msg = "`datasets_split` should be list of floats or list of lists"
+            raise ValueError(msg)
+
+        if step != AUTO_STEP:
+            try:
+                step = float(step)
+            except (ValueError, TypeError):  # TypeError handles None
+                msg = "`step` must be '{}' or float"
+                raise ValueError(msg.format(AUTO_STEP))
+        raise Exception("Handle step somehow")
+
+        if random_state is None:
+            random_state = np.random.RandomState()
+            msg = "No RandomState provided: results will not be reproducible"
+            self._logger.warning(msg)
+
         if self._is_fitted:
-            raise RuntimeError("This model has already been fitted.")
+            raise RuntimeError("This model has already been fit")
 
         self._logger.info("Initializing...")
         self._initialize()
@@ -861,12 +905,12 @@ class LevelSetMachineLearning:
         self._models_path = os.path.join(self._fopts_tmp_dir, "models")
         os.mkdir(self._models_path)
 
-        maxiters = self._fopts_maxiters
+        max_iters = self._fopts_maxiters
         start_iter = 1
 
-        for self._iter in range(start_iter, maxiters+1):
+        for self._iter in range(start_iter, max_iters + 1):
             self._logger.progress("Beginning iteration.",
-                                  self._iter, maxiters)
+                                  self._iter, max_iters)
             iter_start = time.time()
 
             self._logger.info("Fitting model with method %s."
@@ -874,21 +918,21 @@ class LevelSetMachineLearning:
             self._fit_model()
 
             self._logger.progress("Updating level sets.",
-                                  self._iter, maxiters)
+                                  self._iter, max_iters)
             self._update_level_sets()
 
-            self._logger.progress("Collecting scores.", self._iter, maxiters)
+            self._logger.progress("Collecting scores.", self._iter, max_iters)
             self._collect_scores()
             self._logger.progress("Scores => TR: %.4f VA: %.4f TS: %.4f."
-                          % tuple(self._get_mean_scores_at_iter(self._iter)),
-                                  self._iter, maxiters)
+                                  % tuple(self._get_mean_scores_at_iter(self._iter)),
+                                  self._iter, max_iters)
 
             iter_stop = time.time()
             iter_time = (iter_stop-iter_start) / 3600.
 
             self._logger.progress(("End of iteration. Ellapsed time: "
                                    "%.3f hours.") % iter_time,
-                                  self._iter, maxiters)
+                                  self._iter, max_iters)
 
             self._logger.info("Saving model to %s." % self._fopts_save_file)
 

@@ -7,9 +7,9 @@ import numpy
 import skfmm
 
 
-TRAINING_DATASET_KEY = 'training-dataset'
-VALIDATION_DATASET_KEY = 'validation-dataset'
-TESTING_DATASET_KEY = 'testing-dataset'
+TRAINING_DATASET_KEY = 'training'
+VALIDATION_DATASET_KEY = 'validation'
+TESTING_DATASET_KEY = 'testing'
 DATASET_KEYS = (
     TRAINING_DATASET_KEY,
     VALIDATION_DATASET_KEY,
@@ -75,7 +75,6 @@ class DatasetsManager:
 
         """
         self.logger = logger
-
         self.h5_file = os.path.abspath(h5_file)
 
         if not os.path.exists(self.h5_file):
@@ -256,17 +255,15 @@ class DatasetsManager:
         self.datasets[VALIDATION_DATASET_KEY] = validation_dataset_indices
         self.datasets[TESTING_DATASET_KEY] = testing_dataset_indices
 
-    def split_datasets_random(self, keys, random_state,
-                              probabilities=(0.6, 0.2, 0.2), subset_size=None):
+    def split_datasets_random(self, random_state,
+                              probabilities=(0.6, 0.2, 0.2),
+                              subset_size=None):
         """
         Split a list `keys` randomly into training, validation,
         and testing sets
 
         Parameters
         ----------
-        keys: list of strings
-            List of keys to split into training, validation, and testing
-
         random_state: numpy.random.RandomState
             For reproducible results
 
@@ -281,8 +278,11 @@ class DatasetsManager:
             before splitting.
 
         """
+        with self.open_h5_file() as hf:
+            keys = hf.keys()
+
         if subset_size is not None and subset_size > len(keys):
-            raise ValueError("`subset_size` must be <= `len(keys)`.")
+            raise ValueError("`subset_size` must be <= `len(keys)`")
 
         if subset_size is None:
             subset_size = len(keys)
