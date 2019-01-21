@@ -15,11 +15,11 @@ TMP_H5_LOCK_FILE_NAME = '{}.lock'.format(TMP_H5_FILE_NAME)
 TMP_DIR_NAME = 'tmp'
 
 
-class TemporaryDataManager:
+class TemporaryDataHandler:
     """ Handles internal management of temporary data created during
     the fitting process of a LevelSetMachineLearning model
     """
-    def __init__(self, tmp_dir=os.curdir):
+    def __init__(self, tmp_dir=os.path.curdir):
         """ Initialize a model fitting data manager
 
         Parameters

@@ -1,10 +1,14 @@
 from collections import namedtuple
 import contextlib
+import logging
 import os
 
 import h5py
 import numpy
 import skfmm
+
+
+logger = logging.getLogger(__name__)
 
 
 TRAINING_DATASET_KEY = 'training'
@@ -27,13 +31,12 @@ DatasetExample = namedtuple(
     ['index', 'key', 'img', 'seg', 'dist', 'dx'])
 
 
-class DatasetsManager:
-    """ Handles internal dataset operations
+class DatasetsHandler:
+    """ Handles internal dataset operations during model fitting
     """
 
-    def __init__(self, h5_file, imgs=None, segs=None,
-                 dx=None, compress=True, logger=None,
-                 normalize_imgs_on_convert=True):
+    def __init__(self, h5_file, imgs=None, segs=None, dx=None,
+                 compress=True, normalize_imgs_on_convert=True):
         """ Initialize a dataset manager
 
         Parameters
@@ -57,9 +60,6 @@ class DatasetsManager:
             When the image and segmentation data are stored in the hdf5 file
             this flag indicates whether or not to use compression.
 
-        logger: level_set_machine_learning.core.CoreLogger, default=None
-            A logger for logging progress and errors
-
         normalize_imgs_on_convert: bool, default=True
             If True, then each image is normalized by subtracting its mean
             and dividing by its standard deviation on conversion to
@@ -74,8 +74,8 @@ class DatasetsManager:
         argument `h5_file`.
 
         """
-        self.logger = logger
         self.h5_file = os.path.abspath(h5_file)
+        self.datasets = None
 
         if not os.path.exists(self.h5_file):
             if imgs is None or segs is None:
@@ -84,12 +84,9 @@ class DatasetsManager:
                 raise ValueError(msg.format(h5_file))
 
             # Perform the conversion to hdf5
-            self.convert_to_hdf5(imgs=imgs, segs=segs,
-                                 dx=dx, compress=compress,
-                                 normalize_imgs=normalize_imgs_on_convert)
-
-        # To be assigned by a `split` method
-        self.datasets = {}
+            self.convert_to_hdf5(
+                imgs=imgs, segs=segs, dx=dx, compress=compress,
+                normalize_imgs=normalize_imgs_on_convert)
 
         with h5py.File(self.h5_file) as hf:
             self.n_examples = len(hf.keys())
@@ -110,13 +107,13 @@ class DatasetsManager:
 
         Parameters
         ----------
-        imgs: List(ndarray)
-            The list of image examples for the dataset.
+        imgs: list of ndarray
+            The list of image examples for the dataset
 
-        segs: List(ndarray)
-            The list of image examples for the dataset.
+        segs: list of ndarray
+            The list of image examples for the dataset
 
-        dx: ndarray, shape=(nexamples, img.ndim), default=None
+        dx: list of ndarray, shape=(n_examples, img.ndim), default=None
             The resolutions along each axis for each image. The default (None)
             assumes the resolution is 1 along each axis direction, but this
             might not be the case for anisotropic data.
@@ -124,6 +121,10 @@ class DatasetsManager:
         compress: bool, default=True
             If True, :code:`gzip` compression with default compression
             options (level=4) is used for the images and segmentations.
+
+        normalize_imgs: bool, default=True
+            If True, then each image is normalized by subtracting its mean
+            and dividing by its standard deviation
 
         """
         # Check if the file already exists and abort if so.
@@ -184,9 +185,8 @@ class DatasetsManager:
 
         for i in range(n_examples):
 
-            if self.logger:
-                msg = "Creating dataset entry {} / {}"
-                self.logger.info(msg.format(i+1, n_examples))
+            msg = "Creating dataset entry {} / {}"
+            logger.info(msg.format(i+1, n_examples))
 
             # Create a group for the i'th example
             g = hf.create_group(EXAMPLE_KEY.format(i))
@@ -216,24 +216,78 @@ class DatasetsManager:
         # Close up shop
         hf.close()
 
-    def split_datasets(self,
-                       training_dataset_indices,
-                       validation_dataset_indices,
-                       testing_dataset_indices):
+    def assign_examples_to_datasets(
+            self, training, validation, testing, random_state):
+        """ Assign the dataset example keys to training, validation, 
+        or testing. 
+        
+        training: float, or list of int
+            A probability value or a list of indices of examples that belong
+            to the training dataset
+            
+        validation: float, or list of int
+            A probability value or a list of indices of examples that belong
+            to the validation dataset
+        
+        testing: float, or list of int
+            A probability value or a list of indices of examples that belong
+            to the testing dataset
+        
+        random_state: numpy.random.RandomState, default=None
+            The random state is used only to perform the randomized split
+            into when training/validation/testing are provided as probability
+            values
+
+        """
+        if not random_state:
+            random_state = numpy.random.RandomState()
+            msg = ("RandomState not provided; results will "
+                   "not be reproducible")
+            logger.warning(msg)
+        elif not isinstance(random_state, numpy.random.RandomState):
+            msg = "`random_state` ({}) not instance numpy.random.RandomState"
+            raise TypeError(msg.format(type(random_state)))
+
+        if all([isinstance(item, float)
+                for item in (training, validation, testing)]):
+            # Random split
+            self.assign_examples_randomly(
+                probabilities=(training, validation, testing),
+                random_state=random_state)
+        elif all([
+            (isinstance(index_list, list) and
+             [isinstance(index, int) for index in index_list])
+            for index_list in (training, validation, testing)
+        ]):
+            # Each is list of ints
+            self.assign_examples_by_indices(
+                training_dataset_indices=training,
+                validation_dataset_indices=validation,
+                testing_dataset_indices=testing)
+        else:
+            # Bad values supplied
+            msg = ("`training`, `validation`, and `testing` should be "
+                   "all floats or all list of ints")
+            raise ValueError(msg)
+
+    def assign_examples_by_indices(self,
+                                   training_dataset_indices,
+                                   validation_dataset_indices,
+                                   testing_dataset_indices):
         """ Specify which of the data should belong to training, validation,
         and testing datasets. Automatic randomization is possible: see keyword
         argument parameters.
 
         Parameters
         ----------
-        training_dataset_indices: List(int)
+        training_dataset_indices: list of integers
             The list of indices of examples that belong to the training dataset
 
-        validation_dataset_indices: List(int)
+        validation_dataset_indices: list of integers
             The list of indices of examples that belong to the validation
             dataset
 
-        testing_dataset_indices: List(int)
+        testing_dataset_indices: list of integers
             The list of indices of examples that belong to the testing dataset
 
         """
@@ -255,27 +309,24 @@ class DatasetsManager:
         self.datasets[VALIDATION_DATASET_KEY] = validation_dataset_indices
         self.datasets[TESTING_DATASET_KEY] = testing_dataset_indices
 
-    def split_datasets_random(self, random_state,
-                              probabilities=(0.6, 0.2, 0.2),
-                              subset_size=None):
-        """
-        Split a list `keys` randomly into training, validation,
-        and testing sets
+    def assign_examples_randomly(self, probabilities,
+                                 subset_size, random_state):
+        """ Assign examples randomly into training, validation, and testing
 
         Parameters
         ----------
-        random_state: numpy.random.RandomState
-            For reproducible results
-
-        probabilities: 3-tuple of floats, default=(0.6, 0.2, 0.2)
+        probabilities: 3-tuple of floats
             The probability of being placed in the training, validation
             or testing
 
-        subset_size: int, default=None
+        subset_size: int
             If provided, then should be less than or equal to
             :code:`len(keys)`. If given, then :code:`keys` is first
             sub-sampled by :code:`subset_size`
             before splitting.
+
+        random_state: numpy.random.RandomState
+            Provide for reproducible results
 
         """
         with self.open_h5_file() as hf:
@@ -293,8 +344,8 @@ class DatasetsManager:
         # This generates a matrix size `(n_keys, 3)` where each row
         # is an indicator vector indicating to which dataset the key with
         # respective row index should be placed into.
-        indicators = random_state.multinomial(1, pvals=probabilities,
-                                              size=n_keys)
+        indicators = random_state.multinomial(
+            n=1, pvals=probabilities, size=n_keys)
 
         # Cast to numpy array for fancy indexing
         sub_keys_as_array = numpy.array(sub_keys)
@@ -320,19 +371,23 @@ class DatasetsManager:
         Returns
         -------
         dataset: generator
-            The return generator returns (i, key, img[i], seg[i])
+            The return generator returns
+            `(i, key, img[i], seg[i], dist[i], dx[i])`
             at each iteration, where i is the index and key is the
             key into the hdf5 dataset for the respective index
+
         """
         with self.open_h5_file() as hf:
             for i in range(self.n_examples):
+
                 example_key = EXAMPLE_KEY.format(i)
+
                 yield DatasetExample(
                     index=i,
                     key=example_key,
-                    img=hf[example_key][IMAGE_KEY],
-                    seg=hf[example_key][SEGMENTATION_KEY],
-                    dist=hf[example_key][DISTANCE_TRANSFORM_KEY],
+                    img=hf[example_key][IMAGE_KEY][...],
+                    seg=hf[example_key][SEGMENTATION_KEY][...],
+                    dist=hf[example_key][DISTANCE_TRANSFORM_KEY][...],
                     dx=hf[example_key].attrs['dx']
                 )
 

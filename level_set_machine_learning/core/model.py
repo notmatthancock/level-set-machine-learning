@@ -1,15 +1,11 @@
 import os
 import shutil
 import time
-import warnings
 import pickle
 
-import numpy as np
 import skfmm
-from sklearn.ensemble import RandomForestRegressor
 
-from level_set_machine_learning.core.logger import CoreLogger
-from level_set_machine_learning.core.datasets_manager import DatasetsManager
+from level_set_machine_learning.core.fit_job_handler import FitJobHandler
 from level_set_machine_learning.gradient import masked_gradient as mg
 from level_set_machine_learning.score_functions import jaccard
 from level_set_machine_learning.feature.feature_map import FeatureMap
@@ -17,20 +13,17 @@ from level_set_machine_learning.initializer.initializer_base import (
     InitializerBase)
 
 
-# Constant used to indicate auto-computed step size
-AUTO_STEP = 'auto'
-
-
 class LevelSetMachineLearning:
 
-    def __init__(self, features, initializer, model_class, model_kwargs,
-                 scorer=jaccard, band=3, log_filename=None, log_stdout=True):
+    def __init__(self, features, initializer,
+                 scorer=jaccard, band=3):
         """
         Initialize a level set machine learning object
-        
-        The parameters required at initialization
-        are those that can be used in *both* the training and run-time
-        phases of the algorithm.
+
+        Note
+        ----
+        The parameters required at initialization are those that are necessary
+        both at train- and run-time.
 
         Parameters
         ----------
@@ -62,17 +55,7 @@ class LevelSetMachineLearning:
         band: float, default=3
             The "narrow band" distance.
 
-        log_filename: str, default=None
-            The name of the log file to write. The default (None) writes to
-            `log.txt` in the current working directory.
-
-        log_stdout: bool, default=True
-            If True, the log will print to stdout (as well as logging to file)
-
         """
-        # Create the logger to be passed around
-        self._logger = CoreLogger(filename=log_filename, stdout=log_stdout)
-
         # Create the feature map comprising the given features
         self.feature_map = FeatureMap(features=features)
 
@@ -85,15 +68,7 @@ class LevelSetMachineLearning:
 
         self.scorer = scorer
         self.band = band
-
-        # Attach the model class and initialization kwargs
-        self.model_class = model_class
-        self.model_kwargs = model_kwargs
-        self.models = []
-
-        # Set up some private variables
         self._is_fitted = False
-        self._fit_opts_set = False
 
     def _initialize(self, seeder):
         """ TODO """
@@ -461,195 +436,7 @@ class LevelSetMachineLearning:
 
         return X, y
 
-    def _fit_nnet(self, nh, init):
-        """
-        Fit a neural network model.
-        """
-        # Create a unique random state seed from the inputs
-        # since we shouldn't rely on `self._random_state` in the multiprocess setting.
-        rs_seed = (nh+init+1)*(nh+init)/2 + init # <= Cantor pairing function
-        rs = np.random.RandomState(rs_seed)
 
-        nnet = nn.neural_network(self.feature_map.nfeatures, nh, rs=rs)
-        nnet.loss_tr = np.zeros(self._nopts_maxepochs+1)
-        nnet.loss_va = np.zeros(self._nopts_maxepochs+1)
-
-        nnet_name = "nnet-nh=%d-init=%d.pkl" % (nh, init)
-        gradstep  = self._nopts_step
-        iterspb   = self._nopts_iters_per_batch
-        balance   = self._nopts_balance
-
-        logger = CoreLogger(filename=os.path.join(self._iter_dir,
-                                              nnet_name[:-3] +"log"),
-                            stdout=False, stamp=False)
-
-        if self._nopts_batch_size_auto:
-            bs = self._auto_batch_size
-        else:
-            bs = self._nopts_batch_size
-
-        if self._nopts_batches_per_epoch is None:
-            bpe = self._auto_batches_per_epoch
-        else:
-            bpe = self._nopts_batches_per_epoch
-
-        bqtr = nn.batch_queue(bs)
-        bqva = nn.batch_queue(bs)
-
-        lstr = "Epoch %d / %d, Batch %d / %d."
-
-        # Stochastic gradient descent.
-        for epoch in range(self._nopts_maxepochs+1):
-            for batch in range(bpe):
-
-                if self._nopts_log_batch:
-                    logger.info(lstr % (epoch,
-                                        self._nopts_maxepochs,
-                                        batch+1,
-                                        bpe))
-
-                while len(bqtr) == 0:
-                    try:
-                        x,y = self._featurize_random_image(dataset='tr', 
-                                                           balance=balance, rs=rs)
-                    except Exception as e:
-                        logger.info(repr(e))
-                        raise e
-                    bqtr.update(x,y)
-
-                while len(bqva) == 0:
-                    try:
-                        x,y = self._featurize_random_image(dataset='va',
-                                                           balance=balance, rs=rs)
-                    except Exception as e:
-                        logger.info(repr(e))
-                        raise e
-                    bqva.update(x,y)
-
-                Xtr,ytr = bqtr.next()
-                Xva,yva = bqva.next()
-
-                # The initial epoch only computes loss.
-                if epoch == 0:
-                    ltr = nnet.loss(Xtr,ytr)
-                    lva = nnet.loss(Xva,yva)
-                else:
-                    ltr,lva = nnet.gradient_descent(Xtr, ytr, Xva, yva,
-                                                    step=gradstep, 
-                                                    iters=iterspb,
-                                                    ret_last=True,
-                                                    verbose=False,
-                                                    logger=logger)
-                nnet.loss_tr[epoch] += ltr / bpe
-                nnet.loss_va[epoch] += lva / bpe
-
-            logger.progress("Epoch. LTR=%.4f, LVA=%.4f" 
-                             % (nnet.loss_tr[epoch], nnet.loss_va[epoch]),
-                             epoch, self._nopts_maxepochs)
-
-            # Save the model if the validation loss is the best observed.
-            if epoch == 0 or nnet.loss_va[epoch] < nnet.loss_va[:epoch].min():
-                with open(os.path.join(self._iter_dir, nnet_name), 'w') as f:
-                    pickle.dump(nnet, f)
-
-            # Check for early stop conditions.
-            if nn.stop_early(nnet.loss_va[:epoch],
-                             self._nopts_va_hist_len,
-                             self._nopts_va_hist_tol):
-                loss_tr = nnet.loss_tr.copy()[:epoch+1]
-                loss_va = nnet.loss_va.copy()[:epoch+1]
-
-                # Load the model that had the best parameters under MSE on va.
-                with open(os.path.join(self._iter_dir, nnet_name)) as f:
-                    nnet = pickle.load(f)
-
-                # Attach the latest loss records to the best model and save.
-                nnet.loss_tr = loss_tr
-                nnet.loss_va = loss_va
-
-                with open(os.path.join(self._iter_dir, nnet_name), 'w') as f:
-                    pickle.dump(nnet, f)
-
-                # Break the epoch loop.
-                break
-
-        # Compute the average segmentation score over validation and save it.
-        avg_seg_score_va = self._validation_dummy_update(nnet)
-        np.save(os.path.join(self._iter_dir, nnet_name[:-3]+"npy"),
-                avg_seg_score_va)
-
-        logger.handlers[0].close()
-        del logger
-
-    def _compute_auto_batch_size(self):
-        df = self._data_file()
-        tf = self._tmp_file(mode='r')
-
-        mu = 0.0
-        balance = self._nopts_balance
-
-        for key,iseed,seed in self._iter_seeds('tr'):
-            mask = tf["tr/%s/seed-%d/mask" % (key,iseed)][...]
-            targ = df[key+"/dist"][...]
-
-            if not balance:
-                mu += mask.sum()*1.0 / self._ntr
-            else:
-                npos = (targ[mask] > 0).sum()
-                nneg = (targ[mask] < 0).sum()
-                
-                if 0 < nneg < npos:
-                    mu += 2.0*nneg / self._ntr
-                elif 0 < npos < nneg:
-                    mu += 2.0*npos / self._ntr
-                else:
-                    mu += max(npos, nneg) / self._ntr
-
-        self._auto_batch_size = int(mu) * self._nopts_batch_size
-        self._logger.info("Computed auto batch size is %d."
-                                 % self._auto_batch_size)
-
-        df.close()
-        tf.close()
-
-    def _compute_auto_batches_per_epoch(self):
-        df = self._data_file()
-        tf = self._tmp_file(mode='r')
-
-        total = 0.0
-        balance = self._nopts_balance
-
-        for key,iseed,seed in self._iter_seeds('tr'):
-            mask = tf["tr/%s/seed-%d/mask" % (key,iseed)][...]
-            targ = df[key+"/dist"][...]
-
-            if not balance:
-                total += mask.sum()
-            else:
-                npos = (targ > 0).sum()
-                nneg = (targ < 0).sum()
-                
-                if 0 < nneg < npos:
-                    total += 2*nneg
-                elif 0 < npos < nneg:
-                    total += 2*npos
-                else:
-                    total += max(npos, nneg)
-
-        if self._nopts_batch_size_auto:
-            self._auto_batches_per_epoch = int(total / self._auto_batch_size)
-        else:
-            self._auto_batches_per_epoch = int(total / self._nopts_batch_size)
-
-        # Make sure it's at least 1 batch per epoch.
-        self._auto_batches_per_epoch = max(1, self._auto_batches_per_epoch)
-
-        self._logger.info("Computed auto batches per epoch is %d."
-                                 % self._auto_batches_per_epoch)
-
-        df.close()
-        tf.close()
-        
     def _fit_model(self):
         """
         Fit a regression model for advancing the level set.
@@ -691,78 +478,6 @@ class LevelSetMachineLearning:
             shutil.rmtree(self._iter_dir)
         del self._iter_dir
 
-    def _fit_rf(self):
-
-        X = np.load(os.path.join(self._fopts_tmp_dir, 'X.npy'))
-        y = np.load(os.path.join(self._fopts_tmp_dir, 'y.npy'))
-
-        rs = np.random.RandomState(1234)
-
-        rf = RandomForestRegressor(
-            #max_features=self._rfopts_max_features,
-            #max_depth=self._rfopts_max_depth,
-            #criterion=lambda est, X, y: -((est.predict(X)-y)**2).mean(),
-            random_state=rs,
-        )
-
-        # Fit the decision tree regression model
-        rf.fit(X, y)
-
-        err = ((rf.predict(X) - y)**2).mean()
-        self._logger.info("Estimated tr MSE: {:.4f}".format(err))
-
-        # Update nu
-        self._update_nu(rf)
-
-        X, y = self._featurize_all_images('va', True, rs)
-
-        err = ((rf.predict(X) - y)**2).mean()
-
-        self._logger.info("Estimated va MSE: {:.4f}".format(err))
-
-        np.save(os.path.join(self._fopts_tmp_dir, 'fimp.npy'),
-                rf.feature_importances_)
-
-    def _update_nu(self, dtr):
-        df = self._data_file()
-        tf = self._tmp_file_write_lock()
-
-        n_estimators = self._rfopts_n_estimators
-
-        for ds,key,iseed,seed in self._iter_tmp():
-            dx = df[key].attrs['dx']
-            img = df[key + '/img'][...]
-
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
-
-            u    = tf[ds][key]['seed-%d'%iseed]['u'   ][...]
-            mask = tf[ds][key]['seed-%d'%iseed]['mask'][...]
-            dist = tf[ds][key]['seed-%d'%iseed]['dist'][...]
-
-            if not mask.any():
-                continue
-
-            features = self.feature_map(u=u, img=img, 
-                                        mask=mask, dist=dist,
-                                        dx=dx)
-
-            tf[ds][key]['seed-%d'%iseed]['nu'][mask] += \
-                    dtr.predict(features[mask])# / n_estimators
-
-        tf.close()
-        self._tmp_file_write_unlock()
-        df.close()
-
-    def _set_all_nu_zero(self):
-        tf = self._tmp_file_write_lock()
-
-        for ds,key,iseed,seed in self._iter_tmp():
-            tf[ds][key]['seed-%d'%iseed]['nu'][...] = 0.
-
-        tf.close()
-        self._tmp_file_write_unlock()
-
     def _check_early_exit(self):
         i = self._iter
         l = self._fopts_va_hist_len
@@ -785,9 +500,11 @@ class LevelSetMachineLearning:
         else:
             return False, None
 
-    def fit(self, data_filename, imgs=None, segs=None, dx=None,
+    def fit(self, data_filename, regression_model_class,
+            regression_model_kwargs, imgs=None, segs=None, dx=None,
             normalize_imgs_on_convert=True, datasets_split=(0.6, 0.2, 0.2),
-            step=AUTO_STEP, max_iters=100, va_hist_len=5, va_hist_tol=0.0,
+            step=None, temp_data_dir=os.path.curdir,
+            va_hist_len=5, va_hist_tol=0.0, max_iters=100,
             random_state=None):
         """ Fit a level set machine learning segmentation model
 
@@ -798,6 +515,18 @@ class LevelSetMachineLearning:
             of an existing hdf5 file with required structure. If the
             file `h5_file` does not exist, then `imgs` and `segs` *must* be
             provided.
+
+        regression_model_class: class
+            The regression model class. At each iteration of level set
+            evolution, a new instance of this class is instantiated to create
+            the respective velocity model for the iteration
+
+        regression_model_kwargs: dict
+            A dictionary of keyword arguments used to instantiate the provided
+            :code:`regression_model_class`. For example,
+            :code:`{'n_estimators': 100, 'random_state': RandomState(123)}`
+            might be used with corresponding :code:`RandomForestRegressor`
+            model class.
 
         imgs: list of ndarray, default=None
             The list of images to be used if :code:`data_file` points to a
@@ -827,11 +556,11 @@ class LevelSetMachineLearning:
             indexes explicitly prescribing each example to a specific dataset
             for fitting.
 
-        step: float, default=level_set_machine_learning.AUTO_STEP
+        step: float, default=None
             The step size for updating the level sets, i.e., the "delta t"
             term in the discretization of :math:`u_t = \\nu \\| Du \\|`.
 
-            The default AUTO_STEP determines the step size automatically
+            The default None determines the step size automatically
             by using the reciprocal of the maximum ground truth speed values
             in the narrow band of the level sets in the training data at
             the first iterate (i.e., at initializer). The CFL condition
@@ -841,356 +570,52 @@ class LevelSetMachineLearning:
             will be in the first iteration (i.e., that u0 is farthest
             from the ground-truth).
 
-            If AUTO_STEP, then `step` is replaced with the computed
-            value after `fit` is called.
+        temp_data_dir: str, default=os.path.curdir
+            Where to store the temporary data that is created during the
+            fitting process. This data is removed after fitting and includes,
+            for example, the per-iteration level set values
 
         random_state: numpy.random.RandomState, default=None
             Provide for reproducible results.
 
         """
-        # Create the datasets manager object
-        data_file = os.path.abspath(data_filename)
-        datasets_manager = DatasetsManager(
-            h5_file=data_file, imgs=imgs, segs=segs, dx=dx,
-            normalize_imgs_on_convert=normalize_imgs_on_convert)
-
-        if all([isinstance(item, float) for item in datasets_split]):
-            # Random split
-            datasets_manager.split_datasets_random(
-                probabilities=datasets_split, random_state=random_state)
-        elif all([
-            (isinstance(index_list, list) and
-             [isinstance(index, int) for index in index_list])
-            for index_list in datasets_split
-        ]):
-            # Designated split
-            datasets_manager.split_datasets(
-                training_dataset_indices=datasets_split[0],
-                validation_dataset_indices=datasets_split[1],
-                testing_dataset_indices=datasets_split[2])
-        else:
-            # Bad split
-            msg = "`datasets_split` should be list of floats or list of lists"
-            raise ValueError(msg)
-
-        if step != AUTO_STEP:
-            try:
-                step = float(step)
-            except (ValueError, TypeError):  # TypeError handles None
-                msg = "`step` must be '{}' or float"
-                raise ValueError(msg.format(AUTO_STEP))
-        raise Exception("Handle step somehow")
-
-        if random_state is None:
-            random_state = np.random.RandomState()
-            msg = "No RandomState provided: results will not be reproducible"
-            self._logger.warning(msg)
-
         if self._is_fitted:
             raise RuntimeError("This model has already been fit")
 
-        self._logger.info("Initializing...")
-        self._initialize()
-        self._iter = 0
+        fit_handler = FitJobHandler(
+            model=self, data_file=data_filename,
+            imgs=imgs, segs=segs, dx=dx, step=step,
+            datasets_split=datasets_split,
+            regression_model_class=regression_model_class,
+            regression_model_kwargs=regression_model_kwargs,
+            random_state=random_state, temp_data_dir=temp_data_dir)
 
-        self._logger.info("Collecting scores.")
-        self._collect_scores()
-        self._logger.progress(
-            "Scores => TR: %.4f VA: %.4f TS: %.4f."
-                % tuple(self._get_mean_scores_at_iter(self._iter)),
-            self._iter,
-            self._fopts_maxiters
-        )
+        # Set up the level sets according the initializer functions
+        fit_handler.initialize_level_sets()
 
-        self._models_path = os.path.join(self._fopts_tmp_dir, "models")
-        os.mkdir(self._models_path)
+        # Compute and store scores at initialization (iteration = 0)
+        fit_handler.compute_and_store_scores()
 
-        max_iters = self._fopts_maxiters
-        start_iter = 1
+        while fit_handler.can_continue():
 
-        for self._iter in range(start_iter, max_iters + 1):
-            self._logger.progress("Beginning iteration.",
-                                  self._iter, max_iters)
-            iter_start = time.time()
+            fit_handler.fit_regression_model()
+            fit_handler.update_level_sets()
+            fit_handler.compute_and_store_scores()
+            self.save()
 
-            self._logger.info("Fitting model with method %s."
-                              % self._fopts_model_fit_method)
-            self._fit_model()
+        # Remove temp data and toss models after max of validation data
+        fit_handler.clean_up()  # set model is_fitted = True
 
-            self._logger.progress("Updating level sets.",
-                                  self._iter, max_iters)
-            self._update_level_sets()
+        self.save()
 
-            self._logger.progress("Collecting scores.", self._iter, max_iters)
-            self._collect_scores()
-            self._logger.progress("Scores => TR: %.4f VA: %.4f TS: %.4f."
-                                  % tuple(self._get_mean_scores_at_iter(self._iter)),
-                                  self._iter, max_iters)
-
-            iter_stop = time.time()
-            iter_time = (iter_stop-iter_start) / 3600.
-
-            self._logger.progress(("End of iteration. Ellapsed time: "
-                                   "%.3f hours.") % iter_time,
-                                  self._iter, max_iters)
-
-            self._logger.info("Saving model to %s." % self._fopts_save_file)
-
-            # Swap the logger before saving since file objects don't pickle.
-            logger = self._logger
-            self._logger = None
-
-            # Save the model. 
-            with open(self._fopts_save_file, 'w') as f:
-                pickle.dump(self, f)
-
-            # Swap the logger back.
-            self._logger = logger
-
-            exit_early, trend = self._check_early_exit()
-            if trend is not None:
-                self._logger.info("Linear trend over VA: %.4f (tol=%.4f)."
-                                    % (trend, self._fopts_va_hist_tol))
-                if exit_early:
-                    self._logger.info("Trend less than tolerance. Exiting.")
-                    break
-
-        if self._fopts_remove_tmp:
-            self._logger.info("Removing temporary files at %s." 
-                                    % self._fopts_tmp_dir)
-            shutil.rmtree(self._fopts_tmp_dir)
-
-        scores = self._scores_over_iters('va')[0].mean(0)
-        nmax = scores.argmax()
-
-        if self._fopts_model_fit_method != 'rf':
-            self.models = self.models[:nmax] if nmax > 0 else []
-
-        self._is_fitted = True
-        self._logger.info("Fitting complete.")
-
-        self._logger.info("Saving model to %s." % self._fopts_save_file)
-
-        # Close I/O and file stream handlers before deleting the logger.
-        for h in self._logger.handlers: h.close()
-        del self._logger
-
-        # Save the model. 
-        with open(self._fopts_save_file, 'w') as f:
-            pickle.dump(self, f)
-
-    def set_fit_options(self, datasets=None, seeds=None, save_file=None,
-                        model_fit_method="nnet",
-                        normalize_images=True, tmp_dir=None, remove_tmp=False,
-                        maxiters=100, va_hist_len=5, va_hist_tol=0.0):
-        """
-        Parameters
-        ----------
-        datasets: dict, len=3, default=None
-            This should be a dict of 3 lists of the form::
-
-                datasets['tr'] = list of strings
-                datasets['va'] = list of strings
-                datasets['ts'] = list of strings
-
-            Each list of strings contains the keys into the h5py dataset
-            file for training ('tr'), validation ('va'), and testing ('ts').
-            So for example, `datasets['tr'][0]` yields a string that is a 
-            key into the dataset file for the first training example.
-
-            If `datasets` is None (default), then an auto split of 
-            60/20/20% is made using the 
-            `level_set_machine_learning.utils.data.splitter` utility.
-
-        seeds: dict, default=None
-            The seeds are used in the `initializer` provided at initializer.
-            Note that seed coordinates must be given in *index* coordinates, 
-            i.e., they should *not* take into account pixel spacing / 
-            resolution. However, fractional values are allowed (float type).
-
-            `seeds` format:
-
-            Let `ds` be in `['tr','va','ts']`. For each `key` (string) in 
-            `datasets[ds]`, we should have `seeds[ds][key]` being an iterable 
-            of iterables. `seeds[ds][key]` refers to the `key` example in 
-            dataset `ds`, and thus `seeds[ds][key]` should contain a list 
-            of seeds for that example (each seed being an iterable type).
-            
-            For example, we might have `seeds[ds][key] == [[25,34], [27,35]]`, 
-            which indicates there are two seeds for example `key` in 
-            dataset `ds`.
-
-            If None (default), then a single seed for each example is used 
-            and computed automatically: the center-of-mass of the ground-
-            truth segmentation of the respective examples.
-
-        save_file: str, default=None
-            The model will be pickled to this path.
-            The default (None) uses the file `lsl_model.pkl` at the current
-            working directory.
-
-        model_fit_method: str, default='nnet'
-            'nnet': uses neural network regression with online stocastic
-                    gradient descent for optimization.
-            'rf': uses random forest regression. NOTE: in this
-                  case, the regression models are *not* saved since tree
-                  models tend to be quite large in terms of data storage.
-
-        normalize_images: bool, default=True
-            If True, then whenever an image is loaded, we normalize it, i.e.,
-            we compute and use `(img - img.mean()) / img.std()` in place of
-            each image array, `img`.
-
-        tmp_dir: str, default=None
-            The working directory. Temporary data (e.g., intermediate
-            level set values) will be stored in this directory.
-            The default uses the current working directory.
-
-        maxiters: int, default=100
-            The maximum number of iterations (i.e., number of 
-            regression models).  Note that less than `maxiters` will be used 
-            if the validation set performance degrades (see `va_his_len` 
-            and `va_hist_tol`).
-
-        remove_tmp: bool, default=False
-            If True, the temporary files created over the fitting process 
-            are left in place and not deleted. This includes for example,
-            all the network models for the grid search procedure.
-
-        va_hist_len: int, default=5
-            The process terminates when the average segmentation quality 
-            over the last `va_hist_len` iterations is trending downward, or
-            when `maxiters` has been reached.
-
-        va_hist_tol: float, default=0.0
-            The linear trend over of the average segmentation quality over 
-            the last `va_hist_len` iterations is computed. The process 
-            terminates if the linear trend (slope of best fit line) is less 
-            than `va_hist_tol`, or when `maxiters` has been reached.
-
-        """
-        # This is hackish. It just sets most the arguments to member variables.
-        L = locals(); L.pop('self'); L.pop('datasets'); L.pop('seeds')
-        for l in L: setattr(self, "_fopts_%s"%l, L[l])
-
-        self._validate_datasets(datasets)
-        self._validate_seeds(seeds)
-
-        # Count the number of examples.
-        self._ntr = len([_ for _ in self._iter_seeds('tr')])
-        self._nva = len([_ for _ in self._iter_seeds('va')])
-        self._nts = len([_ for _ in self._iter_seeds('ts')])
-        self._ntotal = self._ntr + self._nva + self._nts
-
-        if self._fopts_save_file is None:
-            self._fopts_save_file = os.path.join(os.path.curdir,
-                                                 DEFAULT_MODEL_FILENAME)
-
-        self._fopts_save_file = os.path.abspath(
-            self._fopts_save_file
-        )
-
-        if self._fopts_tmp_dir is None:
-            self._fopts_tmp_dir = os.path.join(os.path.curdir, 'tmp')
-        else:
-            self._fopts_tmp_dir = os.path.join(self._fopts_tmp_dir, 'tmp')
-
-        self._fopts_tmp_dir = os.path.abspath(self._fopts_tmp_dir)
-
-        os.mkdir(self._fopts_tmp_dir)
-
-        self._logger = CoreLogger(filename=logfile, stamp=logstamp,
-                                  stdout=logstdout)
-        self._fit_opts_set = True
-
-    def set_net_options(self, nhidden=[64, 128, 256, 512], ninits=3,
-                        step=0.1, maxepochs=1000, batch_size=5,
-                        batch_size_auto=True,
-                        batches_per_epoch=None, iters_per_batch=1, 
-                        log_batch=False, balance=True, 
-                        va_hist_len=25, va_hist_tol=0.0):
-        """
-        nhidden: list of ints, default=[64, 128, 256, 512]
-            The number hidden hidden units to search over.
-
-        ninits: int, default=3
-            The number of random initializations to perform for optimization 
-            using each `nhidden` value.
-
-        step: float, default=0.1
-            The step size for stochastic gradient descent.
-
-        maxepochs: int, default=1000
-            The maximum allowable number of epochs.
-
-        batch_size: int, default=5
-            The batch size for stochastic gradient descent.
-            If `batch_size_image` is True (default), then `batch_size` 
-            should be interpreted as the (average) number of images 
-            in a single batch (i.e., the average number number of images 
-            used to collect feature vectors to compose a single batch).
-            Otherwise (`batch_size_image` False), `batch_size`
-            is interpretted as the number of feature vector examples 
-            to be included in a single batch.
-
-        batch_size_image: bool, default=True
-            See `batch_size`.
-
-        batches_per_epoch: int, default=None
-            The number of batch updates performed in each "epoch".
-            If None (default), then the effective number of batches
-            necessary to make one pass through the training data
-            (on average) is computed and used.
-
-        iters_per_batch: int, default=1
-            The number of gradient descent updates to perform with each batch.
-
-        log_batch: bool, default=False
-            If True, then the log file for each neural network training
-            session records the current batch number. This is in addition 
-            to recording the loss values over each epoch. Setting this 
-            flag to True is useful if you expect batches to take a long time, 
-            which in general should not be the case.
-
-        balance: bool, default=True
-            If True, the each batch is balanced by the positivity/negativity
-            of the target values in the batch.
-
-        va_hist_len: int, default=5
-            The process terminates when the mean-squared error over the 
-            validation dataset over the last `va_hist_len` epochs is 
-            trending downward, or when `maxepochs` has been reached.
-
-        va_hist_tol: float, default=0.0
-            The linear trend over of the MSE over 
-            the last `va_hist_len` epochs is computed. The process terminates 
-            if the linear trend (slope of best fit line) is less than 
-            `va_hist_tol`, or when `maxepochs` has been reached.
-        """
-        # This is hackish. It just sets all the arguments to member variables.
-        L = locals(); L.pop('self')
-        for l in L: setattr(self, "_nopts_%s"%l, L[l])
-        self._net_opts_set = True
-        if batch_size_auto and batch_size > 50:
-            warnings.warn(("`batch_size_auto` is True, but `batch_size` "
-                           "> 50. This could result in excessive train "
-                           "times and/or memory consumption."))
-
-    def set_rf_opts(self, n_estimators=100, max_features="auto",
-                    max_depth=None, criterion="mse",
-                    balance=True):
-        L = locals(); L.pop('self')
-        for l in L: setattr(self, "_rfopts_%s"%l, L[l])
-        self._rf_opts_set = True
-
-    def segment(self, img, seg=None, dx=None, verbose=True, memoize=True):
+    def segment(self, img, seg=None, dx=None, verbose=True):
         """
         Segment `img`.
 
         Parameters
         ----------
         img: ndarray
-            The image.
+            The image
 
         seg: ndarry, default=None
             The boolean segmentation volume. If provided (not None), then
@@ -1213,15 +638,7 @@ class LevelSetMachineLearning:
             the i'th iteration.
         """
         if not self._is_fitted:
-            raise RuntimeError("This model hasn't been fit yet.")
-        if self._fopts_model_fit_method == 'rf':
-            raise RuntimeError("Model are not stored for `rf` fit method.")
-
-        # If normalize, assign to `img_` so as to not overwrite `img`.
-        if self._fopts_normalize_images:
-            img_ = (img - img.mean()) / img.std()
-        else:
-            img_ = img
+            raise RuntimeError("This model has not been fit yet")
 
         iters = len(self.models)
         dx = np.ones(img_.ndim) if dx is None else dx
@@ -1291,80 +708,6 @@ class LevelSetMachineLearning:
         else:
             return u, scores
     
-    def _validate_datasets(self, datasets):
-        if datasets is None:
-            df = self._data_file()
-            datasets = level_set_machine_learning.util.datasets.split(df.keys(), random_state=self._random_state)
-            df.close()
-
-        # Check if all dataset keys are present.
-        for d in ['tr', 'va', 'ts']:
-            if d not in datasets:
-                raise ValueError("Missing %s dataset."%d)
-
-        if not all([np.iterable(datasets[d]) for d in datasets]):
-            raise ValueError("Each dataset should be an iterable of keys.")
-
-        if len(set(datasets['tr']).intersection(set(datasets['va']))) > 0:
-            raise ValueError("Training set keys overlap with validation.")
-
-        if len(set(datasets['tr']).intersection(set(datasets['ts']))) > 0:
-            raise ValueError("Training set indices overlap with testing.")
-
-        if len(set(datasets['va']).intersection(set(datasets['ts']))) > 0:
-            raise ValueError("Validation set indices overlap with testing.")
-
-        self._datasets = datasets
-
-    def _validate_seeds(self, seeds):
-        if seeds is None:
-            # Default behavior: use compute and use a single seed
-            # (the ground truth center of mass) for each.
-
-            df = self._data_file()
-            seeds = dict(tr={}, va={}, ts={})
-
-            for ds in ['tr','va','ts']:
-                for key in self._datasets[ds]:
-                    seg = df[key+"/seg"][...]
-
-                    # Get the index coordinates.
-                    inds = np.indices(seg.shape, dtype=np.float)
-
-                    total = seg.sum()
-
-                    # Compute the center of mass as the seed.
-                    seed = [(i*seg).sum() / total for i in inds]
-
-                    # Append the single seed as a list of length 1,
-                    # since, in general, the seed list can be longer for
-                    # a single example (i.e., for a single index).
-                    seeds[ds][key] = [seed]
-            df.close()
-
-        for ds in ['tr', 'va', 'ts']:
-            if ds not in seeds:
-                raise ValueError("Missing %s dataset in seeds dict." % ds)
-
-            if not np.iterable(seeds[ds]):
-                raise ValueError("Seed list %s is not iterable." % ds)
-
-            if len(self._datasets[ds]) != len(seeds[ds]):
-                raise ValueError(("List of seed lists length doesn't match "
-                                  " dataset %s length." % ds))
-
-            for key in seeds[ds]:
-                if len(seeds[ds][key]) == 0:
-                    raise ValueError("Each example must have at least 1 seed.")
-
-                for iseed,seed in enumerate(seeds[ds][key]):
-                    if not np.iterable(seed):
-                        raise ValueError("Each seed must be iterable.")
-                    if len(seed) != self._ndim:
-                        raise ValueError(("Number of seed coordinates doesn't "
-                                          "match image dimensions."))
-        self._seeds = seeds
-
     def _collect_scores(self):
         df = self._data_file()
         tf = self._tmp_file(mode='r')

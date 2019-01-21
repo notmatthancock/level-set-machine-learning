@@ -3,10 +3,10 @@ import unittest
 
 import numpy as np
 
-from level_set_machine_learning.core.datasets_manager import DatasetsManager
+from level_set_machine_learning.core.datasets_handler import DatasetsHandler
 
 
-class TestDatasetsManager(unittest.TestCase):
+class TestDatasetsHandler(unittest.TestCase):
 
     def setUp(self):
         self.random_state = np.random.RandomState(1234)
@@ -15,7 +15,7 @@ class TestDatasetsManager(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             # If the provided h5 file doesn't exist, then data must be supplied
-            DatasetsManager(h5_file='this file does not exist')
+            DatasetsHandler(h5_file='this file does not exist')
 
     def test_data_size_mismatches(self):
 
@@ -40,7 +40,7 @@ class TestDatasetsManager(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                DatasetsManager(h5_file=h5_file, imgs=imgs, segs=segs)
+                DatasetsHandler(h5_file=h5_file, imgs=imgs, segs=segs)
         finally:
             # If the test was successful and the exception was raised,
             # then this file should not have been created; but, if the test
@@ -70,7 +70,7 @@ class TestDatasetsManager(unittest.TestCase):
 
         try:
             with self.assertRaises(TypeError):
-                DatasetsManager(h5_file=h5_file, imgs=imgs, segs=segs)
+                DatasetsHandler(h5_file=h5_file, imgs=imgs, segs=segs)
         finally:
             if os.path.exists(h5_file):
                 os.remove(h5_file)
@@ -97,7 +97,7 @@ class TestDatasetsManager(unittest.TestCase):
 
         try:
             with self.assertRaises(TypeError):
-                DatasetsManager(h5_file=h5_file, imgs=imgs, segs=segs)
+                DatasetsHandler(h5_file=h5_file, imgs=imgs, segs=segs)
         finally:
             if os.path.exists(h5_file):
                 os.remove(h5_file)
@@ -127,7 +127,7 @@ class TestDatasetsManager(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                DatasetsManager(h5_file=h5_file, imgs=imgs, segs=segs)
+                DatasetsHandler(h5_file=h5_file, imgs=imgs, segs=segs)
         finally:
             if os.path.exists(h5_file):
                 os.remove(h5_file)
@@ -156,7 +156,7 @@ class TestDatasetsManager(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                DatasetsManager(h5_file=h5_file, imgs=imgs, segs=segs)
+                DatasetsHandler(h5_file=h5_file, imgs=imgs, segs=segs)
         finally:
             if os.path.exists(h5_file):
                 os.remove(h5_file)
@@ -185,7 +185,7 @@ class TestDatasetsManager(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                DatasetsManager(h5_file=h5_file, imgs=imgs, segs=segs, dx=dx)
+                DatasetsHandler(h5_file=h5_file, imgs=imgs, segs=segs, dx=dx)
         finally:
             if os.path.exists(h5_file):
                 os.remove(h5_file)
@@ -215,7 +215,7 @@ class TestDatasetsManager(unittest.TestCase):
         dx = self.random_state.rand(n_examples, n_dim)
 
         try:
-            datasets_mgmt = DatasetsManager(
+            datasets_mgmt = DatasetsHandler(
                 h5_file=h5_file, imgs=imgs, segs=segs, dx=dx,
                 normalize_imgs_on_convert=False)
 
@@ -268,7 +268,7 @@ class TestDatasetsManager(unittest.TestCase):
         dx = self.random_state.rand(n_examples, n_dim)
 
         try:
-            datasets_mgmt = DatasetsManager(
+            datasets_mgmt = DatasetsHandler(
                 h5_file=h5_file, imgs=imgs, segs=segs, dx=dx,
                 normalize_imgs_on_convert=True)
 
