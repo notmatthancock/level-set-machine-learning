@@ -365,7 +365,7 @@ class DatasetsHandler:
         finally:
             h5.close()
 
-    def iter_examples(self):
+    def iterate_examples(self):
         """ Iterates through the hdf5 dataset
 
         Returns

@@ -219,7 +219,7 @@ class TestDatasetsHandler(unittest.TestCase):
                 h5_file=h5_file, imgs=imgs, segs=segs, dx=dx,
                 normalize_imgs_on_convert=False)
 
-            for example in datasets_mgmt.iter_examples():
+            for example in datasets_mgmt.iterate_examples():
                 index = example.index
                 # Manually compute the distance transform
                 dist = skfmm.distance(2*segs[index].astype(float)-1,
@@ -272,7 +272,7 @@ class TestDatasetsHandler(unittest.TestCase):
                 h5_file=h5_file, imgs=imgs, segs=segs, dx=dx,
                 normalize_imgs_on_convert=True)
 
-            for example in datasets_mgmt.iter_examples():
+            for example in datasets_mgmt.iterate_examples():
                 index = example.index
 
                 # Assert image integrity

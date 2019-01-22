@@ -1,7 +1,5 @@
 import os
 import shutil
-import time
-import pickle
 
 import skfmm
 
@@ -15,8 +13,7 @@ from level_set_machine_learning.initializer.initializer_base import (
 
 class LevelSetMachineLearning:
 
-    def __init__(self, features, initializer,
-                 scorer=jaccard, band=3):
+    def __init__(self, features, initializer, scorer=jaccard, band=3):
         """
         Initialize a level set machine learning object
 
@@ -68,69 +65,9 @@ class LevelSetMachineLearning:
 
         self.scorer = scorer
         self.band = band
+
+        self.fit_job_handler = None
         self._is_fitted = False
-
-    def _initialize(self, seeder):
-        """ TODO """
-
-        # Initialize the auto-computed step estimate
-        step = np.inf
-
-        for example in self.datasets_manager.iter_examples():
-
-            self._logger.progress(
-                "... initializing", example.index, self.n_examples)
-
-            # Create dataset group if it doesn't exist.
-            if ds not in tf:
-                tf.create_group(ds)
-
-            seed = seeder(example.img)
-
-            # Compute the initializer for this example and seed value.
-            u0, dist, mask = self.initializer(
-                img=example.img, band=self.band, dx=example.dx, seed=seed)
-
-            # "Auto" step: only use training and validation datasets.
-            if ds in ['tr', 'va']:
-                # Compute the maximum velocity for the i'th example
-                mx = np.abs(df[key+"/dist"][mask]).max()
-
-                # Create the candidate step size for this example.
-                tmp = np.min(df[key].attrs['dx']) / mx
-
-                # Assign tmp to step if it is the smallest observed so far.
-                step = tmp if tmp < step else step
-
-            # Create a group for the i'th example.
-            if key not in tf[ds]:
-                tf[ds].create_group(key)
-
-            seed_group = tf[ds][key].create_group("seed-%d" % iseed)
-
-            # The group consists of the current "level set field" u, the 
-            # signed distance transform of u (only in the narrow band), and
-            # the boolean mask indicating the narrow band region.
-            seed_group.create_dataset("u",    data=u0,   compression='gzip')
-            seed_group.create_dataset("dist", data=dist, compression='gzip')
-            seed_group.create_dataset("mask", data=mask, compression='gzip')
-
-        if self.step == AUTO_STEP:
-            # Assign the computed step value to class attribute and log it
-            self.step = step
-
-            msg = "Computed auto step is {:.7f}"
-            self._logger.info(msg.format(self.step))
-
-        elif self.step != AUTO_STEP and self.step > step:
-
-            # Warn the user that the provided step argument may be too big
-            msg = "Computed step is {:.7f} but given step is {:.7f}"
-            self._logger.warning(msg.format(step, self.step))
-
-        df.close()
-        tf.close()
-        self._tmp_file_write_unlock()
 
     def _update_level_sets(self):
         df = self._data_file()
@@ -504,8 +441,8 @@ class LevelSetMachineLearning:
             regression_model_kwargs, imgs=None, segs=None, dx=None,
             normalize_imgs_on_convert=True, datasets_split=(0.6, 0.2, 0.2),
             step=None, temp_data_dir=os.path.curdir,
-            va_hist_len=5, va_hist_tol=0.0, max_iters=100,
-            random_state=None):
+            validation_history_len=5, validation_history_tol=0.0,
+            max_iters=100, random_state=None):
         """ Fit a level set machine learning segmentation model
 
         Parameters
@@ -575,36 +512,42 @@ class LevelSetMachineLearning:
             fitting process. This data is removed after fitting and includes,
             for example, the per-iteration level set values
 
+        validation_history_len: int, default=5
+            The number of past iterations back from the current to check
+            scores over the validation dataset to monitor progress from
+
+        validation_history_tol: float, default=0.0
+            If the linear trend in scores over the last
+            :code:`validation_history_len` iterations is less than this
+            value, then we exit early.
+
+        max_iters: int, default=100
+            The fixed maximum number of iterations
+
         random_state: numpy.random.RandomState, default=None
             Provide for reproducible results.
 
         """
-        if self._is_fitted:
-            raise RuntimeError("This model has already been fit")
-
-        fit_handler = FitJobHandler(
-            model=self, data_file=data_filename,
-            imgs=imgs, segs=segs, dx=dx, step=step,
-            datasets_split=datasets_split,
-            regression_model_class=regression_model_class,
-            regression_model_kwargs=regression_model_kwargs,
-            random_state=random_state, temp_data_dir=temp_data_dir)
+        # Dirty tricks
+        kwargs = locals()
+        kwargs['model'] = kwargs.pop('self')
+        self.fit_job_handler = FitJobHandler(**kwargs)
 
         # Set up the level sets according the initializer functions
-        fit_handler.initialize_level_sets()
+        self.fit_job_handler.initialize_level_sets()
 
         # Compute and store scores at initialization (iteration = 0)
-        fit_handler.compute_and_store_scores()
+        self.fit_job_handler.compute_and_store_scores()
 
-        while fit_handler.can_continue():
+        while self.fit_job_handler.can_continue():
 
-            fit_handler.fit_regression_model()
-            fit_handler.update_level_sets()
-            fit_handler.compute_and_store_scores()
+            self.fit_job_handler.self.fit_regression_model()
+            self.fit_job_handler.update_level_sets()
+            self.fit_job_handler.compute_and_store_scores()
             self.save()
 
         # Remove temp data and toss models after max of validation data
-        fit_handler.clean_up()  # set model is_fitted = True
+        self.fit_job_handler.clean_up()  # set model._is_fitted = True
 
         self.save()
 
