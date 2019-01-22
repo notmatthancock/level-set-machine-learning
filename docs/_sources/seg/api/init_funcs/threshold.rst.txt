@@ -1,5 +1,5 @@
-stat_learn_level_set.init_funcs.threshold
+LevelSetMachineLearning.init_funcs.threshold
 -----------------------------------------
 
-.. automodule:: stat_learn_level_set.init_funcs.threshold
+.. automodule:: LevelSetMachineLearning.init_funcs.threshold
     :members:

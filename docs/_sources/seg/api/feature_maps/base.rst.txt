@@ -1,5 +1,5 @@
-stat_learn_level_set.feature_maps
+LevelSetMachineLearning.feature_maps
 ----------------------------------------
 
-.. automodule:: stat_learn_level_set.feature_maps
+.. automodule:: LevelSetMachineLearning.feature_maps
     :members:

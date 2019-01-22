@@ -1,8 +1,8 @@
 import numpy as np
 
-from slls import stat_learn_level_set as SLLS
-from slls.feature_maps.dim2 import simple_feature_map as sfm
-from slls.init_funcs import random as rand_init
+from level_set_machine_learning import LevelSetMachineLearning as SLLS
+from level_set_machine_learning.feature.dim2 import simple_feature_map as sfm
+from level_set_machine_learning.initializer.provided import random_ball as rand_init
 
 # Seed a random number generator.
 rs = np.random.RandomState(1234)
@@ -11,7 +11,7 @@ rs = np.random.RandomState(1234)
 fmap = sfm.simple_feature_map(sigmas=[0,3])
 
 # Set the level set init routine.
-ifnc = rand_init.random(rs=rs)
+ifnc = rand_init.RandomBallInitializer(random_state=rs)
 
 # Initialize the model.
 slls = SLLS(data_file="./dataset.h5", feature_map=fmap,

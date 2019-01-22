@@ -1,5 +1,5 @@
-stat_learn_level_set.neural_network.neural_network
+LevelSetMachineLearning.NeuralNetwork.NeuralNetwork
 --------------------------------------------------
 
-.. automodule:: stat_learn_level_set.neural_network.neural_network
+.. automodule:: LevelSetMachineLearning.NeuralNetwork.NeuralNetwork
     :members:

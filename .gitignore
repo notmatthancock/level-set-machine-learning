@@ -63,3 +63,12 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# IDE
+.idea
+
+# HDF5 and fitting files
+*.h5
+*.pkl
+tmp/
+*log*.txt

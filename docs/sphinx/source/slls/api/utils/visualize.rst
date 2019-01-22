@@ -1,5 +1,5 @@
-stat_learn_level_set.utils.visualize
+LevelSetMachineLearning.utils.visualize
 ------------------------------------
 
-.. automodule:: stat_learn_level_set.utils.visualize
+.. automodule:: LevelSetMachineLearning.utils.visualize
     :members:

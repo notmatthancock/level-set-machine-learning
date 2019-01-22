@@ -1,5 +1,5 @@
-stat_learn_level_set.stat_learn_level_set
+LevelSetMachineLearning.LevelSetMachineLearning
 -----------------------------------------
 
-.. autoclass:: stat_learn_level_set.stat_learn_level_set
+.. autoclass:: LevelSetMachineLearning.LevelSetMachineLearning
     :members:

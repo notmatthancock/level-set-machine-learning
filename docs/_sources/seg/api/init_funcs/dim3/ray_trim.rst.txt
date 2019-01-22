@@ -1,5 +1,5 @@
-stat_learn_level_set.init_funcs.dim3.ray_trim
+LevelSetMachineLearning.init_funcs.dim3.RayTrim
 ---------------------------------------------
 
-.. automodule:: stat_learn_level_set.init_funcs.dim3.ray_trim
+.. automodule:: LevelSetMachineLearning.init_funcs.dim3.RayTrim
     :members:

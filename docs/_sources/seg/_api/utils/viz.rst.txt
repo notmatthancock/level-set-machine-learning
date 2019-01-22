@@ -1,5 +1,5 @@
 Visualization utilities
 -----------------------
 
-.. automodule:: stat_learn_level_set.utils.visualize
+.. automodule:: LevelSetMachineLearning.utils.visualize
     :members:

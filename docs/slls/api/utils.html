@@ -15,7 +15,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="prev" title="Stat Learn Level Set" href="stat_learn_level_set.html" />
+    <link rel="prev" title="Stat Learn Level Set" href="LevelSetMachineLearning.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
@@ -30,15 +30,15 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-stat_learn_level_set.utils.masked_grad">
-<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-stat_learn_level_set.utils.masked_grad" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-LevelSetMachineLearning.utils.masked_grad">
+<span id="utils"></span><h1>Utils<a class="headerlink" href="#module-LevelSetMachineLearning.utils.masked_grad" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="stat_learn_level_set.utils.masked_grad.gmag_os">
-<code class="descclassname">stat_learn_level_set.utils.masked_grad.</code><code class="descname">gmag_os</code><span class="sig-paren">(</span><em>A</em>, <em>nu</em>, <em>mask=None</em>, <em>dx=None</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.utils.masked_grad.gmag_os" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.utils.masked_grad.gradient_magnitude_osher_sethian">
+<code class="descclassname">LevelSetMachineLearning.utils.masked_grad.</code><code class="descname">gradient_magnitude_osher_sethian</code><span class="sig-paren">(</span><em>A</em>, <em>nu</em>, <em>mask=None</em>, <em>dx=None</em><span class="sig-paren">)</span><a class="headerlink" href="#LevelSetMachineLearning.utils.masked_grad.gradient_magnitude_osher_sethian" title="Permalink to this definition">¶</a></dt>
 <dd><p>This numerical approximation is an upwind approximation of 
 the velocity-dependent gradient magnitude term in the PDE:</p>
 <p>from Osher and Sethian [1]. This is why the function is called 
-<cite>gmag_os</cite>.</p>
+<cite>gradient_magnitude_osher_sethian</cite>.</p>
 <p>In the PDE, the gradient vector of u is assumed to point inward and 
  governs the velocity in the normal direction, with 
 positive values corresponding to movement in the outward normal
@@ -69,8 +69,8 @@ If None (default), then spacing is 1.0 along each axis.</dd>
 </dd></dl>
 
 <dl class="function">
-<dt id="stat_learn_level_set.utils.masked_grad.gradient_centered">
-<code class="descclassname">stat_learn_level_set.utils.masked_grad.</code><code class="descname">gradient_centered</code><span class="sig-paren">(</span><em>A</em>, <em>mask=None</em>, <em>dx=None</em>, <em>return_gmag=True</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.utils.masked_grad.gradient_centered" title="Permalink to this definition">¶</a></dt>
+<dt id="LevelSetMachineLearning.utils.masked_grad.gradient_centered">
+<code class="descclassname">LevelSetMachineLearning.utils.masked_grad.</code><code class="descname">gradient_centered</code><span class="sig-paren">(</span><em>A</em>, <em>mask=None</em>, <em>dx=None</em>, <em>return_gmag=True</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="headerlink" href="#LevelSetMachineLearning.utils.masked_grad.gradient_centered" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the centered difference approximations of the partial 
 derivatives of <cite>A</cite> along each coordinate axis, computed only 
 where <cite>mask</cite> is true.</p>
@@ -99,9 +99,9 @@ is optionally returned.</dd>
 </dl>
 </dd></dl>
 
-<span class="target" id="module-stat_learn_level_set.utils.visualize"></span><dl class="function">
-<dt id="stat_learn_level_set.utils.visualize.interactive2d">
-<code class="descclassname">stat_learn_level_set.utils.visualize.</code><code class="descname">interactive2d</code><span class="sig-paren">(</span><em>img</em>, <em>u</em>, <em>seg=None</em>, <em>scores=None</em>, <em>img_kwargs={'aspect': 1</em>, <em>'cmap': &lt;matplotlib.colors.LinearSegmentedColormap object at 0x7fb6beaf4c50&gt;</em>, <em>'interpolation': 'bilinear'}</em>, <em>u_kwargs={'c': 'b'</em>, <em>'ls': '-'</em>, <em>'lw': 2}</em>, <em>seg_kwargs={'c': 'r'</em>, <em>'ls': '-'</em>, <em>'lw': 2}</em><span class="sig-paren">)</span><a class="headerlink" href="#stat_learn_level_set.utils.visualize.interactive2d" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="module-LevelSetMachineLearning.utils.visualize"></span><dl class="function">
+<dt id="LevelSetMachineLearning.utils.visualize.interactive2d">
+<code class="descclassname">LevelSetMachineLearning.utils.visualize.</code><code class="descname">interactive2d</code><span class="sig-paren">(</span><em>img</em>, <em>u</em>, <em>seg=None</em>, <em>scores=None</em>, <em>img_kwargs={'aspect': 1</em>, <em>'cmap': &lt;matplotlib.colors.LinearSegmentedColormap object at 0x7fb6beaf4c50&gt;</em>, <em>'interpolation': 'bilinear'}</em>, <em>u_kwargs={'c': 'b'</em>, <em>'ls': '-'</em>, <em>'lw': 2}</em>, <em>seg_kwargs={'c': 'r'</em>, <em>'ls': '-'</em>, <em>'lw': 2}</em><span class="sig-paren">)</span><a class="headerlink" href="#LevelSetMachineLearning.utils.visualize.interactive2d" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="docutils">
 <dt>img: ndarray, ndim=2</dt>
 <dd>An image.</dd>
@@ -140,14 +140,14 @@ is optionally returned.</dd>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="stat_learn_level_set.html">Stat Learn Level Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="LevelSetMachineLearning.html">Stat Learn Level Set</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utils</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="stat_learn_level_set.html" title="previous chapter">Stat Learn Level Set</a></li>
+      <li>Previous: <a href="LevelSetMachineLearning.html" title="previous chapter">Stat Learn Level Set</a></li>
   </ul></li>
 </ul>
 </div>

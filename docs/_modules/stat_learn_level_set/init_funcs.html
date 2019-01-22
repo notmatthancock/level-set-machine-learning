@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>stat_learn_level_set.init_funcs &#8212; LIDC Dataset and Segmentation  documentation</title>
+    <title>LevelSetMachineLearning.init_funcs &#8212; LIDC Dataset and Segmentation  documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -30,12 +30,12 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for stat_learn_level_set.init_funcs</h1><div class="highlight"><pre>
+  <h1>Source code for LevelSetMachineLearning.init_funcs</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Tools for initialization of the zero level set.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="init_func_base"><a class="viewcode-back" href="../../slls/api/init_funcs/base.html#stat_learn_level_set.init_funcs.init_func_base">[docs]</a><span class="k">class</span> <span class="nc">init_func_base</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="InitializerBase"><a class="viewcode-back" href="../../slls/api/init_funcs/base.html#LevelSetMachineLearning.init_funcs.InitializerBase">[docs]</a><span class="k">class</span> <span class="nc">InitializerBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The template class for initialization functions.</span>
 
@@ -49,7 +49,7 @@
 <span class="sd">        All initialization functions must have the above __call__ signature</span>
 <span class="sd">        with *at least* these arguments (additional keyword arguments are</span>
 <span class="sd">        of course allowed, but won&#39;t be used by the `fit` routine</span>
-<span class="sd">        in the `stat_learn_level_set` module).</span>
+<span class="sd">        in the `LevelSetMachineLearning` module).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </pre></div>
