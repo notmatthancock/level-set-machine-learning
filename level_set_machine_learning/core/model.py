@@ -440,7 +440,7 @@ class LevelSetMachineLearning:
     def fit(self, data_filename, regression_model_class,
             regression_model_kwargs, imgs=None, segs=None, dx=None,
             normalize_imgs_on_convert=True, datasets_split=(0.6, 0.2, 0.2),
-            step=None, temp_data_dir=os.path.curdir,
+            subset_size=None, step=None, temp_data_dir=os.path.curdir,
             validation_history_len=5, validation_history_tol=0.0,
             max_iters=100, random_state=None):
         """ Fit a level set machine learning segmentation model
@@ -493,6 +493,10 @@ class LevelSetMachineLearning:
             indexes explicitly prescribing each example to a specific dataset
             for fitting.
 
+        subset_size: int, default=None
+            If datasets are randomly partitioned, then the full dataset
+            is first down-sampled to be `subset_size` before partitioning
+
         step: float, default=None
             The step size for updating the level sets, i.e., the "delta t"
             term in the discretization of :math:`u_t = \\nu \\| Du \\|`.
@@ -528,7 +532,7 @@ class LevelSetMachineLearning:
             Provide for reproducible results.
 
         """
-        # Dirty tricks
+        # Dirty tricks to initialize the fit handler...
         kwargs = locals()
         kwargs['model'] = kwargs.pop('self')
         self.fit_job_handler = FitJobHandler(**kwargs)
@@ -537,19 +541,19 @@ class LevelSetMachineLearning:
         self.fit_job_handler.initialize_level_sets()
 
         # Compute and store scores at initialization (iteration = 0)
-        self.fit_job_handler.compute_and_store_scores()
+        #self.fit_job_handler.compute_and_store_scores()
 
-        while self.fit_job_handler.can_continue():
+        #while self.fit_job_handler.can_continue():
 
-            self.fit_job_handler.self.fit_regression_model()
-            self.fit_job_handler.update_level_sets()
-            self.fit_job_handler.compute_and_store_scores()
-            self.save()
+        #    self.fit_job_handler.self.fit_regression_model()
+        #    self.fit_job_handler.update_level_sets()
+        #    self.fit_job_handler.compute_and_store_scores()
+        #    self.save()
 
-        # Remove temp data and toss models after max of validation data
-        self.fit_job_handler.clean_up()  # set model._is_fitted = True
+        ## Remove temp data and toss models after max of validation data
+        #self.fit_job_handler.clean_up()  # set model._is_fitted = True
 
-        self.save()
+        #self.save()
 
     def segment(self, img, seg=None, dx=None, verbose=True):
         """

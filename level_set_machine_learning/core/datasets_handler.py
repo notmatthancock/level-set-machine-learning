@@ -217,7 +217,7 @@ class DatasetsHandler:
         hf.close()
 
     def assign_examples_to_datasets(
-            self, training, validation, testing, random_state):
+            self, training, validation, testing, subset_size, random_state):
         """ Assign the dataset example keys to training, validation, 
         or testing. 
         
@@ -232,7 +232,11 @@ class DatasetsHandler:
         testing: float, or list of int
             A probability value or a list of indices of examples that belong
             to the testing dataset
-        
+
+        subset_size: int or None
+            If datasets are randomly partitioned, then the full dataset
+            is first down-sampled to be `subset_size` before partitioning
+
         random_state: numpy.random.RandomState, default=None
             The random state is used only to perform the randomized split
             into when training/validation/testing are provided as probability
@@ -240,6 +244,7 @@ class DatasetsHandler:
 
         """
         if not random_state:
+            import ipdb; ipdb.set_trace()
             random_state = numpy.random.RandomState()
             msg = ("RandomState not provided; results will "
                    "not be reproducible")
@@ -253,6 +258,7 @@ class DatasetsHandler:
             # Random split
             self.assign_examples_randomly(
                 probabilities=(training, validation, testing),
+                subset_size=subset_size,
                 random_state=random_state)
         elif all([
             (isinstance(index_list, list) and
@@ -291,23 +297,33 @@ class DatasetsHandler:
             The list of indices of examples that belong to the testing dataset
 
         """
-
-        if not all([isinstance(index) for index in training_dataset_indices]):
+        if not all([isinstance(index, int)
+                    for index in training_dataset_indices]):
             msg = "Training data indices must be a list of integers"
             raise ValueError(msg)
 
-        if not all([isinstance(index)
+        if not all([isinstance(index, int)
                     for index in validation_dataset_indices]):
             msg = "Validation data indices must be a list of integers"
             raise ValueError(msg)
 
-        if not all([isinstance(index) for index in testing_dataset_indices]):
+        if not all([isinstance(index, int)
+                    for index in testing_dataset_indices]):
             msg = "Training data indices must be a list of integers"
             raise ValueError(msg)
 
-        self.datasets[TRAINING_DATASET_KEY] = training_dataset_indices
-        self.datasets[VALIDATION_DATASET_KEY] = validation_dataset_indices
-        self.datasets[TESTING_DATASET_KEY] = testing_dataset_indices
+        self.datasets[TRAINING_DATASET_KEY] = [
+            self._example_key_from_index(index)
+            for index in training_dataset_indices
+        ]
+        self.datasets[VALIDATION_DATASET_KEY] = [
+            self._example_key_from_index(index)
+            for index in validation_dataset_indices
+        ]
+        self.datasets[TESTING_DATASET_KEY] = [
+            self._example_key_from_index(index)
+            for index in testing_dataset_indices
+        ]
 
     def assign_examples_randomly(self, probabilities,
                                  subset_size, random_state):
@@ -350,7 +366,10 @@ class DatasetsHandler:
         # Cast to numpy array for fancy indexing
         sub_keys_as_array = numpy.array(sub_keys)
 
-        for idataset_key, dataset_key in enumerate(_iterate_dataset_keys()):
+        # Get the dataset keys for iteration
+        dataset_keys = self._iterate_dataset_keys()
+
+        for idataset_key, dataset_key in enumerate(dataset_keys):
 
             indices_for_dataset_key = numpy.where(indicators == idataset_key)
             as_list = list(sub_keys_as_array[indices_for_dataset_key])
@@ -358,12 +377,43 @@ class DatasetsHandler:
 
     @contextlib.contextmanager
     def open_h5_file(self):
-        """ Opens the data file"""
+        """ Opens the data file
+        """
+        h5 = None
         try:
             h5 = h5py.File(self.h5_file, 'r')
             yield h5
         finally:
-            h5.close()
+            if h5:
+                h5.close()
+
+    def _iterate_dataset_keys(self):
+        """ Iterates through the dataset keys
+        """
+        for dataset_key in DATASET_KEYS:
+            yield dataset_key
+
+    def _example_key_from_index(self, index):
+        """ Get the example key for the corresponding index
+        """
+        return EXAMPLE_KEY.format(index)
+
+    def get_example_by_index(self, index):
+        """ Get the `DatasetExample` corresponding to `index`
+        """
+        with self.open_h5_file() as hf:
+
+            example_key = self._example_key_from_index(i)
+
+            example = DatasetExample(
+                key=example_key,
+                img=hf[example_key][IMAGE_KEY][...],
+                seg=hf[example_key][SEGMENTATION_KEY][...],
+                dist=hf[example_key][DISTANCE_TRANSFORM_KEY][...],
+                dx=hf[example_key].attrs['dx']
+            )
+
+        return example
 
     def iterate_examples(self):
         """ Iterates through the hdf5 dataset
@@ -380,7 +430,7 @@ class DatasetsHandler:
         with self.open_h5_file() as hf:
             for i in range(self.n_examples):
 
-                example_key = EXAMPLE_KEY.format(i)
+                example_key = self._example_key_from_index(i)
 
                 yield DatasetExample(
                     index=i,
@@ -391,8 +441,20 @@ class DatasetsHandler:
                     dx=hf[example_key].attrs['dx']
                 )
 
+    def _is_in_dataset(self, example_key, dataset_key):
+        return example_key in self.datasets[dataset_key]
 
-def _iterate_dataset_keys():
+    def in_training_dataset(self, example_key):
+        """ Returns True if example key is in the training dataset
+        """
+        return self._is_in_dataset(example_key, TRAINING_DATASET_KEY)
 
-    for dataset_key in DATASET_KEYS:
-        yield dataset_key
+    def in_validation_dataset(self, example_key):
+        """ Returns True if example key is in the validation dataset
+        """
+        return self._is_in_dataset(example_key, VALIDATION_DATASET_KEY)
+
+    def in_testing_dataset(self, example_key):
+        """ Returns True if example key is in the testing dataset
+        """
+        return self._is_in_dataset(example_key, TESTING_DATASET_KEY)
