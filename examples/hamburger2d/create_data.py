@@ -19,8 +19,9 @@ img_dim = 51
 # Create a dataset with 50 samples. The images are square, size 50px.
 # rad, cb, cthick all set the ranges of the random values to generate
 # the parameters of the images.
-imgs, segs = hamburger.make_dataset(N=n_samples, n=img_dim,
-                                    rad=[10, 16], cb=[1, 10], cthick=[1, 5])
+imgs, segs = hamburger.make_dataset(
+        N=n_samples, n=img_dim, rad=[10, 16], cb=[1, 10], cthick=[1, 5],
+        verbose=False)
 
 # Set the path where the hdf5 file will be saved.
 #h5file = './dataset.h5'

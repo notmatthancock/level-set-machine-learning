@@ -71,12 +71,14 @@ class TemporaryDataHandler:
         self._wait_for_h5_file_unlock()
 
         try:
+            h5 = None
             if lock:
                 self._create_h5_file_lock()
             h5 = h5py.File(self._get_h5_file_path())
             yield h5
         finally:
-            h5.close()
+            if h5:
+                h5.close()
             if lock:
                 # Remove the lock if necessary
                 self._remove_h5_file_lock()

@@ -13,17 +13,23 @@ logger = logging.getLogger(__name__)
 def setup_logging():
     """ Sets up logging formatting, etc
     """
+    logger_filename = "fit-log.txt"
+
+    line_fmt = ("[%(asctime)s] [%(name)s:%(lineno)d] "
+                "%(levelname)-8s %(message)s")
+
+    date_fmt = "%Y-%m-%d %H:%M:%S"
+
     logging.basicConfig(
-        filename="fit-log.txt",
-        format="[%(asctime)s] [%(name)] %(levelname)-8s %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S")
+        filename=logger_filename, format=line_fmt,
+        datefmt=date_fmt, level=logging.DEBUG)
 
 
 class FitJobHandler:
     """ Manages attributes and model fitting data/procedures
     """
     def __init__(self, model, data_filename, imgs, segs, dx,
-                 normalize_imgs_on_convert, datasets_split,
+                 normalize_imgs_on_convert, datasets_split, seeds,
                  random_state, step, temp_data_dir, subset_size,
                  regression_model_class, regression_model_kwargs,
                  validation_history_len, validation_history_tol, max_iters):
@@ -33,6 +39,15 @@ class FitJobHandler:
         if model._is_fitted:
             msg = "This model has already been fit"
             raise ModelAlreadyFit(msg)
+
+        # Validate seeds argument
+        if not callable(seeds):
+            if not all([isinstance(seed, int) for seed in seeds]):
+                msg = "`seeds` should list of ints or callable"
+                raise TypeError(msg)
+
+        # Store the seeds list or function
+        self.seeds = seeds
 
         # Set up logging formatting, file location, etc.
         setup_logging()
@@ -78,9 +93,18 @@ class FitJobHandler:
         # Initialize temp data handler for managing per-iteration level set
         # values, etc.
         self.temp_data_handler = TemporaryDataHandler(tmp_dir=temp_data_dir)
+        self.temp_data_handler.make_tmp_location()
+
+    def get_seed(self, example):
+        if callable(self.seeds):
+            return self.seeds(example)
+        else:
+            return self.seeds[example.index]
 
     def initialize_level_sets(self):
-        """ TODO """
+        """ Initialize the level sets and store their values in the temp data
+        hdf5 file. Also compute the automatic step size if specified
+        """
 
         # Initialize the auto-computed step estimate
         step = numpy.inf
@@ -89,15 +113,15 @@ class FitJobHandler:
             for example in self.datasets_handler.iterate_examples():
 
                 msg = "Initializing level set {} / {}"
-                msg = msg.format(example.index,
+                msg = msg.format(example.index+1,
                                  self.datasets_handler.n_examples)
                 logger.info(msg)
 
                 # Create dataset group if it doesn't exist.
                 group = temp_file.create_group(example.key)
 
-                # FIXME: how to pass seeds?!
-                seed = self.get_seed(example.img)
+                seed = self.get_seed(example)
+                print(seed)
 
                 # Compute the initializer for this example and seed value
                 u0, dist, mask = self.model.initializer(

@@ -4,11 +4,12 @@ import shutil
 import skfmm
 
 from level_set_machine_learning.core.fit_job_handler import FitJobHandler
-from level_set_machine_learning.gradient import masked_gradient as mg
-from level_set_machine_learning.score_functions import jaccard
 from level_set_machine_learning.feature.feature_map import FeatureMap
+from level_set_machine_learning.gradient import masked_gradient as mg
 from level_set_machine_learning.initializer.initializer_base import (
     InitializerBase)
+from level_set_machine_learning.initializer.seed import center_of_mass_seeder
+from level_set_machine_learning.score_functions import jaccard
 
 
 class LevelSetMachineLearning:
@@ -32,13 +33,6 @@ class LevelSetMachineLearning:
             Provides the initial segmentation guess, given an image.
             A subclass of
             :class:`level_set_machine_learning.initializer.InitializerBase`
-
-        model_class: class
-            The regression model for modeling the level set velocity
-
-        model_kwargs: dict
-            The keyword arguments to supply :code:`model_class` on
-            instantiation
 
         scorer: function, default=jaccard
             Has signature::
@@ -373,7 +367,6 @@ class LevelSetMachineLearning:
 
         return X, y
 
-
     def _fit_model(self):
         """
         Fit a regression model for advancing the level set.
@@ -439,8 +432,9 @@ class LevelSetMachineLearning:
 
     def fit(self, data_filename, regression_model_class,
             regression_model_kwargs, imgs=None, segs=None, dx=None,
-            normalize_imgs_on_convert=True, datasets_split=(0.6, 0.2, 0.2),
-            subset_size=None, step=None, temp_data_dir=os.path.curdir,
+            normalize_imgs_on_convert=True, seeds=center_of_mass_seeder,
+            datasets_split=(0.6, 0.2, 0.2), subset_size=None, step=None,
+            temp_data_dir=os.path.curdir,
             validation_history_len=5, validation_history_tol=0.0,
             max_iters=100, random_state=None):
         """ Fit a level set machine learning segmentation model
@@ -480,6 +474,14 @@ class LevelSetMachineLearning:
             :code:`dx[i]` should be a list or array corresponding to the
             i'th image with length corresponding to the image dimensions.
             The default of None assumes isotropicity with a value of 1.
+
+        seeds: list or callable, default=center_of_mass_seeder
+            A list of seed points for each image example. Each respective
+            seed point is passed to the :code:`initializer` function.
+            Alternatively, a callable can be passed with signature,
+            :code:`seeds(dataset_example)`, where the argument is an instance
+            of :code:`DatasetExample` from 
+            :module:`level_set_machine_learning.core.datasets_handler`.
 
         normalize_imgs_on_convert: bool, default=True
             If True, then the provided images are individually normalized

@@ -75,7 +75,8 @@ class DatasetsHandler:
 
         """
         self.h5_file = os.path.abspath(h5_file)
-        self.datasets = None
+        self.datasets = {
+            dataset_key: [] for dataset_key in self._iterate_dataset_keys()}
 
         if not os.path.exists(self.h5_file):
             if imgs is None or segs is None:
@@ -244,7 +245,6 @@ class DatasetsHandler:
 
         """
         if not random_state:
-            import ipdb; ipdb.set_trace()
             random_state = numpy.random.RandomState()
             msg = ("RandomState not provided; results will "
                    "not be reproducible")
@@ -346,7 +346,7 @@ class DatasetsHandler:
 
         """
         with self.open_h5_file() as hf:
-            keys = hf.keys()
+            keys = list(hf.keys())
 
         if subset_size is not None and subset_size > len(keys):
             raise ValueError("`subset_size` must be <= `len(keys)`")
@@ -363,17 +363,19 @@ class DatasetsHandler:
         indicators = random_state.multinomial(
             n=1, pvals=probabilities, size=n_keys)
 
-        # Cast to numpy array for fancy indexing
-        sub_keys_as_array = numpy.array(sub_keys)
-
         # Get the dataset keys for iteration
         dataset_keys = self._iterate_dataset_keys()
 
         for idataset_key, dataset_key in enumerate(dataset_keys):
 
-            indices_for_dataset_key = numpy.where(indicators == idataset_key)
-            as_list = list(sub_keys_as_array[indices_for_dataset_key])
-            self.datasets[dataset_key] = as_list
+            # Include example indexes when the indicator array is 1
+            # in the respective slot for the given dataset index in the
+            # outer for loop
+            self.datasets[dataset_key] = [
+                self._example_key_from_index(index)
+                for index, indicator in enumerate(indicators)
+                if list(indicator).index(1) == idataset_key
+            ]
 
     @contextlib.contextmanager
     def open_h5_file(self):
