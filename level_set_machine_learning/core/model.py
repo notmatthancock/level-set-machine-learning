@@ -408,28 +408,6 @@ class LevelSetMachineLearning:
             shutil.rmtree(self._iter_dir)
         del self._iter_dir
 
-    def _check_early_exit(self):
-        i = self._iter
-        l = self._fopts_va_hist_len
-        t = self._fopts_va_hist_tol
-
-        if i >= l-1:
-            if not hasattr(self, '_va_hist_x'):
-                self._va_hist_x = np.c_[np.ones(l), np.arange(l)]
-            x = self._va_hist_x
-            s = self._scores_over_iters('va')[0].mean(0)
-
-            # Scores over past `l` iters (current iteration inclusive).
-            y = s[i+1-l:i+1]
-
-            # The slope of the best fit line.
-            m = np.linalg.lstsq(x, y, rcond=None)[0][1]
-
-            # True if slope is less than tolerance.
-            return m < t, m
-        else:
-            return False, None
-
     def fit(self, data_filename, regression_model_class,
             regression_model_kwargs, imgs=None, segs=None, dx=None,
             normalize_imgs_on_convert=True, seeds=center_of_mass_seeder,
@@ -543,14 +521,15 @@ class LevelSetMachineLearning:
         self.fit_job_handler.initialize_level_sets()
 
         # Compute and store scores at initialization (iteration = 0)
-        #self.fit_job_handler.compute_and_store_scores()
+        self.fit_job_handler.compute_and_collect_scores()
 
-        #while self.fit_job_handler.can_continue():
-
+        for self.fit_job_handler.iteration in range(max_iters):
         #    self.fit_job_handler.self.fit_regression_model()
         #    self.fit_job_handler.update_level_sets()
         #    self.fit_job_handler.compute_and_store_scores()
         #    self.save()
+            if self.fit_job_handler.can_exit_early():
+                break
 
         ## Remove temp data and toss models after max of validation data
         #self.fit_job_handler.clean_up()  # set model._is_fitted = True

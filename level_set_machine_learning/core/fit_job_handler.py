@@ -2,7 +2,9 @@ import logging
 
 import numpy
 
-from .datasets_handler import DatasetsHandler
+from .datasets_handler import (
+    DatasetsHandler,
+    TESTING_DATASET_KEY, TRAINING_DATASET_KEY, VALIDATION_DATASET_KEY)
 from .exception import ModelAlreadyFit
 from .temporary_data_handler import (
     LEVEL_SET_KEY, MASK_KEY, SIGNED_DIST_KEY, TemporaryDataHandler,)
@@ -58,6 +60,7 @@ class FitJobHandler:
 
         # Initialize the iteration number
         self.iteration = 0
+        self.max_iters = max_iters
 
         # Store the model class and keyword arguments
         self.regression_model_class = regression_model_class
@@ -170,9 +173,12 @@ class FitJobHandler:
                 msg = "Computed step is {:.7f} but given step is {:.7f}"
                 logger.warning(msg.format(step, self.step))
 
-    def collect_and_store_scores(self):
+    def compute_and_collect_scores(self):
         """ Collect and store the scores at the current iteration
         """
+
+        msg = "Collecting scores (iteration = {})"
+        logger.info(msg.format(self.iteration))
 
         with self.temp_data_handler.open_h5_file() as temp_file:
             for example in self.datasets_handler.iterate_examples():
@@ -182,3 +188,58 @@ class FitJobHandler:
                 score = self.model.scorer(u, seg)
 
                 self.scores[example.key].append(score)
+
+    def _get_scores_for_dataset(self, dataset_key):
+        """ Get an array of scores, shape `(n_iterations, n_examples)`
+        """
+        return numpy.array([
+            scores_for_example
+            for example in self.datasets_handler.datasets[dataset_key]
+            for scores_for_example in self.scores[example]
+        ]).T  # <= transpose to get desired shape
+
+    @property
+    def training_scores(self):
+        return self._get_scores_for_dataset(TRAINING_DATASET_KEY)
+
+    @property
+    def validation_scores(self):
+        return self._get_scores_for_dataset(VALIDATION_DATASET_KEY)
+
+    @property
+    def testing_scores(self):
+        return self._get_scores_for_dataset(TESTING_DATASET_KEY)
+
+    def can_exit_early(self):
+        """ Returns True when the early exit condition is satisfied
+        """
+        iteration = self.iteration
+        va_hist_len = self.validation_history_len
+        va_hist_tol = self.validation_history_tol
+
+        logger.info("Checking early exit condition...")
+
+        if iteration >= va_hist_len-1:
+
+            # Set up variables for linear trend fit
+            x = numpy.c_[numpy.ones(va_hist_len), numpy.arange(va_hist_len)]
+            # Get scores over past `va_hist_len` iters
+            # (current iteration inclusive)
+            scores = self.training_scores.mean(axis=1)
+            y = scores[iteration+1-va_hist_len:iteration+1]
+
+            # The slope of the best fit line.
+            slope = numpy.linalg.lstsq(x, y, rcond=None)[0][1]
+
+            msg = ("Trend in validation scores over past {:d} "
+                   "iterations is {:.7f} (tolerance = {.7f})")
+            logger.info(msg.format(va_hist_len, slope, va_hist_tol))
+
+            if slope < va_hist_tol:  # trend is not increasing sufficiently
+                msg = "Early exit condition satisfied"
+                logger.info(msg)
+                return True
+
+        logger.info("Early stop conditions not satisfied")
+        return False
+
