@@ -657,28 +657,6 @@ class LevelSetMachineLearning:
         else:
             return u, scores
     
-    def _collect_scores(self):
-        df = self._data_file()
-        tf = self._tmp_file(mode='r')
-
-        if not hasattr(self, '_scores'):
-            self._scores = {}
-            for ds,key,iseed,seed in self._iter_tmp():
-                if ds not in self._scores:
-                    self._scores[ds] = {}
-                if key not in self._scores[ds]:
-                    self._scores[ds][key] = {}
-                self._scores[ds][key][iseed] = []
-
-        for ds,key,iseed,seed in self._iter_tmp():
-            u   = tf["%s/%s/seed-%d/u" % (ds,key,iseed)][...]
-            seg = df[key+"/seg"][...]
-            score = self.scorer(u, seg)
-            self._scores[ds][key][iseed].append(score)
-
-        df.close()
-        tf.close()
-
     def _get_mean_scores_at_iter(self, iter):
         mu = {}
         for ds in ['tr','va','ts']:

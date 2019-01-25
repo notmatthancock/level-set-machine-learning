@@ -400,12 +400,31 @@ class DatasetsHandler:
         """
         return EXAMPLE_KEY.format(index)
 
+    def get_dataset_for_example_key(self, example_key):
+        """ Get the dataset for the corresponding example key
+
+        Returns
+        -------
+        dataset_key: str or None
+            One of TRAINING_DATASET_KEY, VALIDATION_DATASET_KEY, or
+            TESTING_DATASET_KEY if found; otherwise, returns None.
+
+        """
+        if self.in_training_dataset(example_key):
+            return TRAINING_DATASET_KEY
+        elif self.in_validation_dataset(example_key):
+            return VALIDATION_DATASET_KEY
+        elif self.in_testing_dataset(example_key):
+            return TESTING_DATASET_KEY
+        else:
+            return None
+
     def get_example_by_index(self, index):
         """ Get the `DatasetExample` corresponding to `index`
         """
         with self.open_h5_file() as hf:
 
-            example_key = self._example_key_from_index(i)
+            example_key = self._example_key_from_index(index)
 
             example = DatasetExample(
                 key=example_key,

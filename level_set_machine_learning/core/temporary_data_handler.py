@@ -15,6 +15,12 @@ TMP_H5_LOCK_FILE_NAME = '{}.lock'.format(TMP_H5_FILE_NAME)
 TMP_DIR_NAME = 'tmp'
 
 
+# Keys into the temporary dataset
+LEVEL_SET_KEY = 'level-set-field'
+SIGNED_DIST_KEY = 'signed-distance'
+MASK_KEY = 'mask'
+
+
 class TemporaryDataHandler:
     """ Handles internal management of temporary data created during
     the fitting process of a LevelSetMachineLearning model

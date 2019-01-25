@@ -4,7 +4,8 @@ import numpy
 
 from .datasets_handler import DatasetsHandler
 from .exception import ModelAlreadyFit
-from .temporary_data_handler import TemporaryDataHandler
+from .temporary_data_handler import (
+    LEVEL_SET_KEY, MASK_KEY, SIGNED_DIST_KEY, TemporaryDataHandler,)
 
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,12 @@ class FitJobHandler:
             subset_size=subset_size,
             random_state=random_state)
 
+        # Initialize the dictionary holding the scores
+        self.scores = {
+            example.key: []
+            for example in self.datasets_handler.iterate_examples()
+        }
+
         # Initialize temp data handler for managing per-iteration level set
         # values, etc.
         self.temp_data_handler = TemporaryDataHandler(tmp_dir=temp_data_dir)
@@ -121,7 +128,6 @@ class FitJobHandler:
                 group = temp_file.create_group(example.key)
 
                 seed = self.get_seed(example)
-                print(seed)
 
                 # Compute the initializer for this example and seed value
                 u0, dist, mask = self.model.initializer(
@@ -146,9 +152,12 @@ class FitJobHandler:
                 # The group consists of the current "level set field" u, the
                 # signed distance transform of u (only in the narrow band), and
                 # the boolean mask indicating the narrow band region.
-                group.create_dataset("u",    data=u0,   compression='gzip')
-                group.create_dataset("dist", data=dist, compression='gzip')
-                group.create_dataset("mask", data=mask, compression='gzip')
+                group.create_dataset(
+                    LEVEL_SET_KEY, data=u0, compression='gzip')
+                group.create_dataset(
+                    SIGNED_DIST_KEY, data=dist, compression='gzip')
+                group.create_dataset(
+                    MASK_KEY, data=mask, compression='gzip')
 
             if self.step is None:
                 # Assign the computed step value to class attribute and log it
@@ -160,3 +169,16 @@ class FitJobHandler:
                 # Warn the user that the provided step argument may be too big
                 msg = "Computed step is {:.7f} but given step is {:.7f}"
                 logger.warning(msg.format(step, self.step))
+
+    def collect_and_store_scores(self):
+        """ Collect and store the scores at the current iteration
+        """
+
+        with self.temp_data_handler.open_h5_file() as temp_file:
+            for example in self.datasets_handler.iterate_examples():
+
+                u = temp_file[example.key][LEVEL_SET_KEY][...]
+                seg = example.seg
+                score = self.model.scorer(u, seg)
+
+                self.scores[example.key].append(score)
