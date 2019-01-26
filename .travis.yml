@@ -1,13 +1,15 @@
 language: python
 sudo: required
+os: linux
 python:
   - "3.6"
 
 before_install:
   - pip install -r requirements.txt
+  - make -C level_set_machine_learning/gradient
 
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then python -m unittest discover; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then python -m unittest discover -v; fi
 
 notifications:
   email:
