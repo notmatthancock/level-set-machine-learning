@@ -1,0 +1,15 @@
+language: python
+sudo: required
+python:
+  - "3.6"
+
+before_install:
+  - pip install -r requirements.txt
+
+script:
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then python -m unittest discover; fi
+
+notifications:
+  email:
+    - not.matt.hancock@gmail.com
+
