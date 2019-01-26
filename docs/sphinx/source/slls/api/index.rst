@@ -21,4 +21,4 @@ SLLS API
     init_funcs/base
     init_funcs/threshold
     init_funcs/random
-    init_funcs/dim3/RayTrim
+    init_funcs/dim3/RayTrimInitializer

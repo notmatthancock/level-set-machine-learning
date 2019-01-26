@@ -19,7 +19,12 @@ def center_of_mass_seeder(dataset_example):
 
     """
     seg = dataset_example.seg
+
     indices = numpy.indices(seg.shape, dtype=numpy.float)
+    all_slice = slice(None, None, None)
+    new_axes_slices = (None,) * seg.ndim
+    indices *= dataset_example.dx[(all_slice,) + new_axes_slices]
+
     total = seg.sum()
 
-    return [(ind*seg).sum() / total for ind in indices]
+    return numpy.array([(ind*seg).sum() / total for ind in indices])

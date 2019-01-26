@@ -8,7 +8,7 @@ from level_set_machine_learning.initializer.initializer_base import InitializerB
 from level_set_machine_learning.initializer.provided.util import radii_from_mask as rfm
 
 
-class RayTrim(InitializerBase):
+class RayTrimInitializer(InitializerBase):
     """
     Local thresholding followed by radius trimming.
 
