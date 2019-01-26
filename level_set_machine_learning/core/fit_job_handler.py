@@ -189,6 +189,17 @@ class FitJobHandler:
 
                 self.scores[example.key].append(score)
 
+    def fit_regression_model(self):
+        """ Fit the regression model to approximate the velocity field
+        for level set motion at the current iteration
+        """
+        pass
+
+    def update_level_sets(self):
+        """ Update all the level sets using the learned regression model
+        """
+        pass
+
     def can_exit_early(self):
         """ Returns True when the early exit condition is satisfied
         """

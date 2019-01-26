@@ -526,9 +526,13 @@ class LevelSetMachineLearning:
         self.fit_job_handler.compute_and_collect_scores()
 
         for self.fit_job_handler.iteration in range(max_iters):
-            self.fit_job_handler.self.fit_regression_model()
-        #    self.fit_job_handler.update_level_sets()
+
+            self.fit_job_handler.fit_regression_model()
+
+            self.fit_job_handler.update_level_sets()
+
             self.fit_job_handler.compute_and_collect_scores()
+
         #    self.save()
 
             if self.fit_job_handler.can_exit_early():
