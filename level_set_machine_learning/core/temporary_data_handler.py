@@ -1,5 +1,6 @@
 import contextlib
 import os
+import shutil
 import time
 
 import h5py
@@ -47,7 +48,7 @@ class TemporaryDataHandler:
     def remove_tmp_data(self):
         """ Delete the temporary data folder and contents
         """
-        os.removedirs(self.tmp_data_location)
+        shutil.rmtree(self.tmp_data_location)
 
     def _get_h5_file_path(self):
         """ Returns the full path to the hdf5 file holding the temporary data

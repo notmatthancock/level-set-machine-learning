@@ -2,8 +2,10 @@ import os
 import shutil
 
 import skfmm
+import numpy
 
 from level_set_machine_learning.core.fit_job_handler import FitJobHandler
+from level_set_machine_learning.core.exception import ModelNotFit
 from level_set_machine_learning.feature.feature_map import FeatureMap
 from level_set_machine_learning.gradient import masked_gradient as mg
 from level_set_machine_learning.initializer.initializer_base import (
@@ -526,13 +528,14 @@ class LevelSetMachineLearning:
         for self.fit_job_handler.iteration in range(max_iters):
         #    self.fit_job_handler.self.fit_regression_model()
         #    self.fit_job_handler.update_level_sets()
-        #    self.fit_job_handler.compute_and_store_scores()
+            self.fit_job_handler.compute_and_collect_scores()
         #    self.save()
+
             if self.fit_job_handler.can_exit_early():
                 break
 
-        ## Remove temp data and toss models after max of validation data
-        #self.fit_job_handler.clean_up()  # set model._is_fitted = True
+        # Handle fit related exit tasks
+        self.fit_job_handler.clean_up()
 
         #self.save()
 
@@ -566,7 +569,7 @@ class LevelSetMachineLearning:
             the i'th iteration.
         """
         if not self._is_fitted:
-            raise RuntimeError("This model has not been fit yet")
+            raise ModelNotFit("This model has not been fit yet")
 
         iters = len(self.models)
         dx = np.ones(img_.ndim) if dx is None else dx
@@ -635,21 +638,30 @@ class LevelSetMachineLearning:
             return u
         else:
             return u, scores
-    
-    def _get_mean_scores_at_iter(self, iter):
-        mu = {}
-        for ds in ['tr','va','ts']:
-            mu[ds] = 0.0
-            for key,iseed,seed in self._iter_seeds(ds):
-                score = self._scores[ds][key][iseed][iter]
-                mu[ds] += score / getattr(self, '_n'+ds)
-        return [mu[ds] for ds in ['tr','va','ts']]
 
-    def _scores_over_iters(self, dataset):
-        assert dataset in ['tr','va','ts']
-        names  = []
-        scores = []
-        for key,iseed,seed in self._iter_seeds(dataset):
-            names.append("%s/%s/seed-%d" % (dataset,key,iseed))
-            scores.append(self._scores[dataset][key][iseed])
-        return np.vstack(scores), names
+    def _get_scores_for_dataset(self, dataset_key):
+        """ Get an array of scores, shape `(n_iterations, n_examples)`
+        """
+        if not self._is_fitted:
+            msg = "Cannot get scores of un-fitted model"
+            raise ModelNotFit(msg)
+
+        return numpy.array([
+            self.fit_job_handler.scores[example]
+            for example in self.fit_job_handler.datasets_handler.datasets[dataset_key]  # noqa
+        ]).T  # <= transpose to get desired shape
+
+    @property
+    def training_scores(self):
+        from .datasets_handler import TRAINING_DATASET_KEY
+        return self._get_scores_for_dataset(TRAINING_DATASET_KEY)
+
+    @property
+    def validation_scores(self):
+        from .datasets_handler import VALIDATION_DATASET_KEY
+        return self._get_scores_for_dataset(VALIDATION_DATASET_KEY)
+
+    @property
+    def testing_scores(self):
+        from .datasets_handler import TESTING_DATASET_KEY
+        return self._get_scores_for_dataset(TESTING_DATASET_KEY)

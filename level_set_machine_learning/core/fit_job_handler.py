@@ -189,27 +189,6 @@ class FitJobHandler:
 
                 self.scores[example.key].append(score)
 
-    def _get_scores_for_dataset(self, dataset_key):
-        """ Get an array of scores, shape `(n_iterations, n_examples)`
-        """
-        return numpy.array([
-            scores_for_example
-            for example in self.datasets_handler.datasets[dataset_key]
-            for scores_for_example in self.scores[example]
-        ]).T  # <= transpose to get desired shape
-
-    @property
-    def training_scores(self):
-        return self._get_scores_for_dataset(TRAINING_DATASET_KEY)
-
-    @property
-    def validation_scores(self):
-        return self._get_scores_for_dataset(VALIDATION_DATASET_KEY)
-
-    @property
-    def testing_scores(self):
-        return self._get_scores_for_dataset(TESTING_DATASET_KEY)
-
     def can_exit_early(self):
         """ Returns True when the early exit condition is satisfied
         """
@@ -243,3 +222,9 @@ class FitJobHandler:
         logger.info("Early stop conditions not satisfied")
         return False
 
+    def clean_up(self):
+        """ Handles exit procedures, e.g., removing temp data
+        """
+        self.temp_data_handler.remove_tmp_data()
+        self.model._is_fitted = True
+        logger.error("FIXME: truncate models based on validation scores")
