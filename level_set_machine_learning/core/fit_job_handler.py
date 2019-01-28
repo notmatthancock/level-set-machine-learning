@@ -58,6 +58,9 @@ class FitJobHandler:
         # The LevelSetMachineLearning instance
         self.model = model
 
+        # Initialize the regression models to empty list
+        self.regression_models = []
+
         # Initialize the iteration number
         self.iteration = 0
         self.max_iters = max_iters
@@ -189,16 +192,210 @@ class FitJobHandler:
 
                 self.scores[example.key].append(score)
 
+    def _balance_mask(self, y, rs=None):
+        """
+        Return a mask for balancing `y` to have equal negative and positive.
+        """
+        rs = np.random.RandomState() if rs is None else rs
+
+        n = y.shape[0]
+        npos = (y > 0).sum()
+        nneg = (y < 0).sum()
+
+        if npos > nneg: # then down-sample the positive elements
+            wpos = np.where(y > 0)[0]
+            inds = rs.choice(wpos, replace=False, size=nneg)
+            mask = y <= 0
+            mask[inds] = True
+        elif npos < nneg: # then down-sample the negative elements.
+            wneg = np.where(y < 0)[0]
+            inds = rs.choice(wneg, replace=False, size=npos)
+            mask = y >= 0
+            mask[inds] = True
+        else: # n = npos or n == nneg or npos == nneg
+            mask = np.ones(y.shape, dtype=np.bool)
+
+        return mask
+
+    def _featurize_all_images(self, dataset, balance, rs):
+        """ Featurize all the images in the dataset given by the argument
+
+        dataset: str
+            Should be in ['tr','va','ts']
+
+        balance: bool
+            Balance by neg/pos of target value.
+
+        random_state: numpy.RandomState
+            To make results reproducible. The random state
+            should be passed here rather than using the `self._random_state`
+            attribute, since in the multiprocessing setting we can't
+            rely on `self._random_state`.
+
+        Returns
+        -------
+        X, y: ndarray (n_examples, n_features), ndarray (n_examples,)
+            X is a matrix storing the feature vector in each row, whereas
+            y is a vector storing the corresponding target value for
+            each feature vector (i.e., the ground-truth signed distance
+            value at the spatial coordinate for which the feature vector
+            was computed).
+        """
+        assert dataset in ['tr','va','ts']
+
+        ###########################################################
+        # Precompute total number of feature vector examples
+
+        # Count the number of points collected
+        count = 0
+
+        if balance:
+            balance_masks = []
+
+        for key, iseed, seed in self._iter_seeds(dataset):
+
+            with self._tmp_file(mode='r') as tf:
+                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
+
+            if balance:
+
+                with self._data_file() as df:
+                    target = df[key+"/dist"][...]
+
+                balance_mask = self._balance_mask(target[mask], rs=rs)
+                balance_masks.append(balance_mask)
+                count += balance_mask.sum()
+
+            else:
+                count += mask.sum()
+
+        X = np.zeros((count, self.feature_map.nfeatures))
+        y = np.zeros((count,))
+
+        index = 0
+
+        ###########################################################
+        # Compute the feature vectors and place them in
+        # the feature matrix
+
+        for i, (key, iseed, seed) in enumerate(self._iter_seeds(dataset)):
+
+            with self._data_file() as df:
+                img    = df[key+"/img"][...]
+                target = df[key+"/dist"][...]
+                dx     = df[key].attrs['dx']
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
+            with self._tmp_file(mode='r') as tf:
+                u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
+                dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
+                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
+
+            if not mask.any():
+                continue # Otherwise, repeat the loop until a non-empty mask.
+
+            # Compute features.
+            features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
+
+            if balance:
+                bmask = balance_masks[i]
+                next_index = index + target[mask][bmask].shape[0]
+                X[index:next_index] = features[mask][bmask]
+                y[index:next_index] =   target[mask][bmask]
+            else:
+                next_index = index + mask.sum()
+                X[index:next_index] = features[mask]
+                y[index:next_index] =   target[mask]
+
+            index = next_index
+
+        return X, y
+
     def fit_regression_model(self):
         """ Fit the regression model to approximate the velocity field
         for level set motion at the current iteration
         """
-        pass
+
+        # Get input and output variables
+        X, y = self._featurize_all_images('tr', balance=True,
+                                          rs=self.random_state)
+
+        # Instantiate the regression model
+        regression_model = self.regression_model_class(
+            **self.regression_model_kwargs)
+
+        # Fit it!
+        regression_model.fit(X, y)
+
+        # Add it to the list
+        self.regression_models.append(regression_model)
 
     def update_level_sets(self):
         """ Update all the level sets using the learned regression model
         """
-        pass
+        df = self._data_file()
+        tf = self._tmp_file_write_lock()
+
+        model = self.models[-1]
+
+        # Loop over all indices in the validation dataset.
+        for ds, key, iseed, seed in self._iter_tmp():
+            img = df[key+"/img"][...]
+
+            if self._fopts_normalize_images:
+                img = (img - img.mean()) / img.std()
+
+            dx = df[key].attrs['dx']
+
+            u    = tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...]
+            dist = tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...]
+            mask = tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...]
+
+            # Don't update if the mask is empty.
+            if not mask.any():
+                continue
+
+            # Compute features.
+            features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
+
+            # Compute approximate velocity from features.
+            nu = np.zeros_like(u)
+            nu[mask] = model.predict(features[mask])
+
+            # Compute gradient magnitude using upwind Osher/Sethian method.
+            gmag = mg.gradient_magnitude_osher_sethian(u, nu, mask=mask, dx=dx)
+
+            # Here's the actual level set update.
+            u[mask] += self.step*nu[mask]*gmag[mask]
+
+            # Update the distance transform and mask,
+            # checking if the zero level set has vanished.
+            if (u > 0).all() or (u < 0).all():
+                mask = np.zeros_like(mask)
+                dist = np.zeros_like(dist)
+            else:
+                # Update the distance and mask for u.
+                dist = skfmm.distance(u, narrow=self.band, dx=dx)
+
+                if hasattr(dist, 'mask'):
+                    mask = ~dist.mask
+                    dist = dist.data
+                else:
+                    # The distance transform might not yield a mask
+                    # if band is very large or the object is very large.
+                    mask = np.ones(dist.shape, dtype=np.bool)
+
+            # Update the data in the hdf5 file.
+            tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...] = u
+            tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...] = dist
+            tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...] = mask
+
+        df.close()
+        tf.close()
+        self._tmp_file_write_unlock()
+
 
     def can_exit_early(self):
         """ Returns True when the early exit condition is satisfied

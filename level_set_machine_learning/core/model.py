@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import skfmm
 import numpy
@@ -38,11 +37,11 @@ class LevelSetMachineLearning:
 
         scorer: function, default=jaccard
             Has signature::
-                
+
                 scorer(u, seg)
 
             where `u` is a level set iterate and `seg` is the ground-truth
-            segmentation. The default (None) uses the jaccard overlap 
+            segmentation. The default (None) uses the jaccard overlap
             between `u > 0` and `seg`.
 
         band: float, default=3
@@ -64,351 +63,6 @@ class LevelSetMachineLearning:
 
         self.fit_job_handler = None
         self._is_fitted = False
-
-    def _update_level_sets(self):
-        df = self._data_file()
-        tf = self._tmp_file_write_lock()
-
-        model = self.models[-1]
-
-        # Loop over all indices in the validation dataset.
-        for ds, key, iseed, seed in self._iter_tmp():
-            img = df[key+"/img"][...]
-
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
-
-            dx = df[key].attrs['dx']
-
-            u    = tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...]
-            dist = tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...]
-            mask = tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...]
-
-            # Don't update if the mask is empty.
-            if not mask.any():
-                continue
-
-            # Compute features.
-            features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
-
-            # Compute approximate velocity from features.
-            nu = np.zeros_like(u)
-            nu[mask] = model.predict(features[mask])
-
-            # Compute gradient magnitude using upwind Osher/Sethian method.
-            gmag = mg.gradient_magnitude_osher_sethian(u, nu, mask=mask, dx=dx)
-
-            # Here's the actual level set update.
-            u[mask] += self.step*nu[mask]*gmag[mask]
-
-            # Update the distance transform and mask,
-            # checking if the zero level set has vanished.
-            if (u > 0).all() or (u < 0).all():
-                mask = np.zeros_like(mask)
-                dist = np.zeros_like(dist)
-            else:
-                # Update the distance and mask for u.
-                dist = skfmm.distance(u, narrow=self.band, dx=dx)
-                
-                if hasattr(dist, 'mask'):
-                    mask = ~dist.mask
-                    dist = dist.data
-                else:
-                    # The distance transform might not yield a mask
-                    # if band is very large or the object is very large.
-                    mask = np.ones(dist.shape, dtype=np.bool)
-
-            # Update the data in the hdf5 file.
-            tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...] = u
-            tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...] = dist
-            tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...] = mask
-
-        df.close()
-        tf.close()
-        self._tmp_file_write_unlock()
-
-    def _validation_dummy_update(self, nnet):
-        """
-        Do a "dummy" update over the validation dataset to 
-        record segmentation scores.
-        """
-        df = self._data_file()
-        tf = self._tmp_file(mode='r')
-
-        mu = 0.
-
-        # Loop over all indices in the validation dataset.
-        for key,iseed,seed in self._iter_seeds('va'):
-            img = df[key+"/img"][...]
-
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
-
-            seg = df[key+"/seg"][...]
-            dx  = df[key].attrs['dx']
-
-            u    = tf["va/%s/seed-%d/u"    % (key,iseed)][...]
-            dist = tf["va/%s/seed-%d/dist" % (key,iseed)][...]
-            mask = tf["va/%s/seed-%d/mask" % (key,iseed)][...]
-
-            if mask.any():
-                if self._fopts_model_fit_method != 'rf':
-                    # Compute features.
-                    F = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
-
-                    # Compute approximate velocity from features.
-                    nu = np.zeros_like(u)
-                    nu[mask] = nnet.predict(F[mask])
-                else:
-                    nu = tf["%s/%s/seed-%d/nu" % (ds, key, iseed)][...]
-
-                # Compute gradient magnitude using 
-                # upwind Osher/Sethian method.
-                gmag = mg.gradient_magnitude_osher_sethian(u, nu, mask=mask, dx=dx)
-
-                # Here's the dummy update.
-                utmp = u.copy()
-                utmp[mask] += self.step*nu[mask]*gmag[mask]
-
-            mu += self.scorer(utmp, seg) * 1.0 / self._nva
-
-        df.close()
-        tf.close()
-
-        return mu
-
-    def _balance_mask(self, y, rs=None):
-        """
-        Return a mask for balancing `y` to have equal negative and positive.
-        """
-        rs = np.random.RandomState() if rs is None else rs
-
-        n = y.shape[0]
-        npos = (y > 0).sum()
-        nneg = (y < 0).sum()
-
-        if npos > nneg: # then down-sample the positive elements
-            wpos = np.where(y > 0)[0]
-            inds = rs.choice(wpos, replace=False, size=nneg)
-            mask = y <= 0
-            mask[inds] = True
-        elif npos < nneg: # then down-sample the negative elements.
-            wneg = np.where(y < 0)[0]
-            inds = rs.choice(wneg, replace=False, size=npos)
-            mask = y >= 0
-            mask[inds] = True
-        else: # n = npos or n == nneg or npos == nneg
-            mask = np.ones(y.shape, dtype=np.bool)
-
-        return mask
-
-    def _featurize_all_images(self, dataset, balance, rs):
-        """ Featurize all the images in the dataset given by the argument
-        
-        dataset: str
-            Should be in ['tr','va','ts']
-
-        balance: bool
-            Balance by neg/pos of target value.
-
-        random_state: numpy.RandomState
-            To make results reproducible. The random state
-            should be passed here rather than using the `self._random_state`
-            attribute, since in the multiprocessing setting we can't
-            rely on `self._random_state`.
-
-        Returns
-        -------
-        X, y: ndarray (n_examples, n_features), ndarray (n_examples,)
-            X is a matrix storing the feature vector in each row, whereas
-            y is a vector storing the corresponding target value for
-            each feature vector (i.e., the ground-truth signed distance
-            value at the spatial coordinate for which the feature vector
-            was computed).
-        """
-        assert dataset in ['tr','va','ts']
-
-        ###########################################################
-        # Precompute total number of feature vector examples
-
-        # Count the number of points collected
-        count = 0
-
-        if balance:
-            balance_masks = []
-
-        for key, iseed, seed in self._iter_seeds(dataset):
-
-            with self._tmp_file(mode='r') as tf:
-                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
-
-            if balance:
-
-                with self._data_file() as df:
-                    target = df[key+"/dist"][...]
-
-                balance_mask = self._balance_mask(target[mask], rs=rs)
-                balance_masks.append(balance_mask)
-                count += balance_mask.sum()
-
-            else:
-                count += mask.sum()
-
-        X = np.zeros((count, self.feature_map.nfeatures))
-        y = np.zeros((count,))
-
-        index = 0
-
-        ###########################################################
-        # Compute the feature vectors and place them in
-        # the feature matrix
-
-        for i, (key, iseed, seed) in enumerate(self._iter_seeds(dataset)):
-
-            with self._data_file() as df:
-                img    = df[key+"/img"][...]
-                target = df[key+"/dist"][...]
-                dx     = df[key].attrs['dx']
-
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
-
-            with self._tmp_file(mode='r') as tf:
-                u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
-                dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
-                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
-
-            if not mask.any():
-                continue # Otherwise, repeat the loop until a non-empty mask.
-
-            # Compute features.
-            features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
-
-            if balance:
-                bmask = balance_masks[i]
-                next_index = index + target[mask][bmask].shape[0]
-                X[index:next_index] = features[mask][bmask]
-                y[index:next_index] =   target[mask][bmask]
-            else:
-                next_index = index + mask.sum()
-                X[index:next_index] = features[mask]
-                y[index:next_index] =   target[mask]
-
-            index = next_index
-
-        return X, y
-
-    def _featurize_random_image(self, dataset, balance, rs):
-        """
-        dataset: str
-            Should be in ['tr','va','ts']
-
-        balance: bool
-            Balance by neg/pos of target value.
-
-        random_state: numpy.RandomState
-            To make results reproducible. The random state
-            should be passed here rather than using the `self._random_state`
-            attribute, since in the multiprocessing setting we can't
-            rely on `self._random_state`.
-        """
-        assert dataset in ['tr','va','ts']
-        who = ['tr','va','ts'].index(dataset)
-
-        while True:
-            # Get a random image from the appropriate dataset.
-            key   = rs.choice(self._seeds[dataset].keys())
-            iseed = rs.choice(len(self._seeds[dataset][key]))
-
-            with self._data_file() as df:
-                img    = df[key+"/img"][...]
-                target = df[key+"/dist"][...]
-                dx     = df[key].attrs['dx']
-
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
-
-            with self._tmp_file(mode='r') as tf:
-                u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
-                dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
-                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
-
-            if mask.any():
-                break # Otherwise, repeat the loop until a non-empty mask.
-
-        # Precompute data size.
-        if balance:
-            npos = (target[mask] > 0).sum()
-            nneg = (target[mask] < 0).sum()
-            if min(npos,nneg) > 0:
-                count = 2*min(npos,nneg)
-            else:
-                count = max(npos, nneg)
-        else:
-            count = mask.sum()
-
-        X = np.zeros((count, self.feature_map.nfeatures))
-        y = np.zeros((count,))
-
-        # Compute features.
-        features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
-
-        if balance:
-            bmask = self._balance_mask(target[mask], rs=rs)
-            X = features[mask][bmask]
-            y =   target[mask][bmask]
-        else:
-            X = features[mask]
-            y =   target[mask]
-
-        # Shuffle the data.
-        state = rs.get_state()
-        rs.shuffle(X)
-        rs.set_state(state)
-        rs.shuffle(y)
-
-        return X, y
-
-    def _fit_model(self):
-        """
-        Fit a regression model for advancing the level set.
-        """
-        self._iter_dir = os.path.join(self._models_path, 
-                                      "iter-%d" % self._iter)
-        os.mkdir(self._iter_dir)
-
-        self._logger.info('Featurizing training images.')
-
-        # Get input and output variables
-        X, y = self._featurize_all_images('tr', balance=True,
-                                          rs=self._random_state)
-        # Create and fit the model
-        model = self.model(**self.model_kwargs)
-        model.fit(X, y)
-        self.models.append(model)
-
-        #np.save(os.path.join(self._fopts_tmp_dir, 'X.npy'), X)
-        #np.save(os.path.join(self._fopts_tmp_dir, 'y.npy'), y)
-
-        #self._logger.info("Fitting random forest.")
-
-        ## Fit in a new process for memory release
-        #p = mp.Process(target=self._fit_rf, args=(), name='rf fit')
-
-        #p.start()
-        #p.join()
-
-        #if p.exitcode != 0:
-        #    msg = ("An error occured during tree training (%s)."
-        #            % p.name)
-        #    self._logger.error(msg)
-        #    raise RuntimeError(msg)
-
-        # Remove the temporary neural net files if necessary.
-        if self._fopts_remove_tmp:
-            self._logger.info("Removing tmp files at %s." % self._iter_dir)
-            shutil.rmtree(self._iter_dir)
-        del self._iter_dir
 
     def fit(self, data_filename, regression_model_class,
             regression_model_kwargs, imgs=None, segs=None, dx=None,
@@ -460,7 +114,7 @@ class LevelSetMachineLearning:
             seed point is passed to the :code:`initializer` function.
             Alternatively, a callable can be passed with signature,
             :code:`seeds(dataset_example)`, where the argument is an instance
-            of :code:`DatasetExample` from 
+            of :code:`DatasetExample` from
             :module:`level_set_machine_learning.core.datasets_handler`.
 
         normalize_imgs_on_convert: bool, default=True
@@ -525,15 +179,12 @@ class LevelSetMachineLearning:
         # Compute and store scores at initialization (iteration = 0)
         self.fit_job_handler.compute_and_collect_scores()
 
-        for self.fit_job_handler.iteration in range(max_iters):
+        for self.fit_job_handler.iteration in range(1, max_iters+1):
 
             self.fit_job_handler.fit_regression_model()
-
             self.fit_job_handler.update_level_sets()
-
             self.fit_job_handler.compute_and_collect_scores()
-
-        #    self.save()
+            # self.save()
 
             if self.fit_job_handler.can_exit_early():
                 break
@@ -541,8 +192,25 @@ class LevelSetMachineLearning:
         # Handle fit related exit tasks
         self.fit_job_handler.clean_up()
 
-        #self.save()
+        # Write the model to disk
+        # self.save()
 
+    #################################################################
+    # Attributes / methods available after model fit
+    #################################################################
+
+    def _requires_fit(method):
+        """ Decorator for methods that require a fitted model
+        """
+        def method_wrapped(self, *args, **kwargs):
+            if not self._is_fitted:
+                raise ModelNotFit("This model has not been fit yet")
+
+            return method(self, *args, **kwargs)
+
+        return method_wrapped
+
+    @_requires_fit
     def segment(self, img, seg=None, dx=None, verbose=True):
         """
         Segment `img`.
@@ -554,11 +222,11 @@ class LevelSetMachineLearning:
 
         seg: ndarry, default=None
             The boolean segmentation volume. If provided (not None), then
-            the score for the model against the ground-truth `seg` is 
+            the score for the model against the ground-truth `seg` is
             computed and returned.
 
         dx: ndarray or list, default=None
-            List of the spatial delta terms along each axis. The default 
+            List of the spatial delta terms along each axis. The default
             uses ones.
 
         verbose: bool, default=True
@@ -568,12 +236,10 @@ class LevelSetMachineLearning:
         -------
         u[, scores]: ndarray[, ndarray]
             `u` is shape `(len(self.models)+1,) + img.shape`, where `u[i]`
-            is the i'th iterate of the level set function and `u[i] > 0` 
+            is the i'th iterate of the level set function and `u[i] > 0`
             yields an approximate boolean-mask segmentation of `img` at
             the i'th iteration.
         """
-        if not self._is_fitted:
-            raise ModelNotFit("This model has not been fit yet")
 
         iters = len(self.models)
         dx = np.ones(img_.ndim) if dx is None else dx
@@ -643,13 +309,10 @@ class LevelSetMachineLearning:
         else:
             return u, scores
 
+    @_requires_fit
     def _get_scores_for_dataset(self, dataset_key):
         """ Get an array of scores, shape `(n_iterations, n_examples)`
         """
-        if not self._is_fitted:
-            msg = "Cannot get scores of un-fitted model"
-            raise ModelNotFit(msg)
-
         return numpy.array([
             self.fit_job_handler.scores[example]
             for example in self.fit_job_handler.datasets_handler.datasets[dataset_key]  # noqa
@@ -669,3 +332,8 @@ class LevelSetMachineLearning:
     def testing_scores(self):
         from .datasets_handler import TESTING_DATASET_KEY
         return self._get_scores_for_dataset(TESTING_DATASET_KEY)
+
+    @property
+    @_requires_fit
+    def regression_models(self):
+        return self.fit_job_handler.regression_models

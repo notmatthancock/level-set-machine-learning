@@ -245,8 +245,6 @@ class TestDatasetsHandler(unittest.TestCase):
 
     def test_convert_to_hdf5_valid_with_image_normalization(self):
 
-        import skfmm
-
         n_examples = 3
         n_dim = 3
 

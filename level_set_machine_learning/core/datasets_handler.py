@@ -219,17 +219,17 @@ class DatasetsHandler:
 
     def assign_examples_to_datasets(
             self, training, validation, testing, subset_size, random_state):
-        """ Assign the dataset example keys to training, validation, 
-        or testing. 
-        
+        """ Assign the dataset example keys to training, validation,
+        or testing
+
         training: float, or list of int
             A probability value or a list of indices of examples that belong
             to the training dataset
-            
+
         validation: float, or list of int
             A probability value or a list of indices of examples that belong
             to the validation dataset
-        
+
         testing: float, or list of int
             A probability value or a list of indices of examples that belong
             to the testing dataset
