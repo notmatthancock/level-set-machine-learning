@@ -192,28 +192,25 @@ class FitJobHandler:
 
                 self.scores[example.key].append(score)
 
-    def _balance_mask(self, y, rs=None):
+    def _balance_mask(self, y, random_state):
+        """ Return a mask for balancing `y` to have equal negative and positive
         """
-        Return a mask for balancing `y` to have equal negative and positive.
-        """
-        rs = np.random.RandomState() if rs is None else rs
-
         n = y.shape[0]
         npos = (y > 0).sum()
         nneg = (y < 0).sum()
 
         if npos > nneg: # then down-sample the positive elements
-            wpos = np.where(y > 0)[0]
-            inds = rs.choice(wpos, replace=False, size=nneg)
+            wpos = numpy.where(y > 0)[0]
+            inds = random_state.choice(wpos, replace=False, size=nneg)
             mask = y <= 0
             mask[inds] = True
         elif npos < nneg: # then down-sample the negative elements.
-            wneg = np.where(y < 0)[0]
-            inds = rs.choice(wneg, replace=False, size=npos)
+            wneg = numpy.where(y < 0)[0]
+            inds = random_state.choice(wneg, replace=False, size=npos)
             mask = y >= 0
             mask[inds] = True
         else: # n = npos or n == nneg or npos == nneg
-            mask = np.ones(y.shape, dtype=np.bool)
+            mask = numpy.ones(y.shape, dtype=numpy.bool)
 
         return mask
 
@@ -262,7 +259,7 @@ class FitJobHandler:
                 with self._data_file() as df:
                     target = df[key+"/dist"][...]
 
-                balance_mask = self._balance_mask(target[mask], rs=rs)
+                balance_mask = self._balance_mask(target[mask], random_state=rs)
                 balance_masks.append(balance_mask)
                 count += balance_mask.sum()
 
