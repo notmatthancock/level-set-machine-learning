@@ -35,8 +35,7 @@ class DatasetsHandler:
     """ Handles internal dataset operations during model fitting
     """
 
-    def __init__(self, h5_file, imgs=None, segs=None, dx=None,
-                 compress=True, normalize_imgs_on_convert=True):
+    def __init__(self, h5_file, imgs=None, segs=None, dx=None, compress=True):
         """ Initialize a dataset manager
 
         Parameters
@@ -60,11 +59,6 @@ class DatasetsHandler:
             When the image and segmentation data are stored in the hdf5 file
             this flag indicates whether or not to use compression.
 
-        normalize_imgs_on_convert: bool, default=True
-            If True, then each image is normalized by subtracting its mean
-            and dividing by its standard deviation on conversion to
-            hdf5 storage format
-
         Note
         ----
         Either :code:`h5_file` should be the name of an existing h5 file with
@@ -86,14 +80,12 @@ class DatasetsHandler:
 
             # Perform the conversion to hdf5
             self.convert_to_hdf5(
-                imgs=imgs, segs=segs, dx=dx, compress=compress,
-                normalize_imgs=normalize_imgs_on_convert)
+                imgs=imgs, segs=segs, dx=dx, compress=compress)
 
         with h5py.File(self.h5_file) as hf:
             self.n_examples = len(hf.keys())
 
-    def convert_to_hdf5(self, imgs, segs, dx=None, compress=True,
-                        normalize_imgs=True):
+    def convert_to_hdf5(self, imgs, segs, dx=None, compress=True):
         """ Convert a dataset of images and boolean segmentations
         to hdf5 format, which is required for the level set routine.
 
@@ -122,10 +114,6 @@ class DatasetsHandler:
         compress: bool, default=True
             If True, :code:`gzip` compression with default compression
             options (level=4) is used for the images and segmentations.
-
-        normalize_imgs: bool, default=True
-            If True, then each image is normalized by subtracting its mean
-            and dividing by its standard deviation
 
         """
         # Check if the file already exists and abort if so.
@@ -193,13 +181,8 @@ class DatasetsHandler:
             g = hf.create_group(EXAMPLE_KEY.format(i))
 
             # Store the i'th image
-            if normalize_imgs:
-                img = (imgs[i] - imgs[i].mean()) / imgs[i].std()
-            else:
-                img = imgs[i]
-
             g.create_dataset(IMAGE_KEY,
-                             data=img, compression=compress_method)
+                             data=imgs[i], compression=compress_method)
 
             # Store the i'th segmentation
             g.create_dataset(SEGMENTATION_KEY,
@@ -427,6 +410,7 @@ class DatasetsHandler:
             example_key = self._example_key_from_index(index)
 
             example = DatasetExample(
+                index=index,
                 key=example_key,
                 img=hf[example_key][IMAGE_KEY][...],
                 seg=hf[example_key][SEGMENTATION_KEY][...],
@@ -436,8 +420,13 @@ class DatasetsHandler:
 
         return example
 
-    def iterate_examples(self):
+    def iterate_examples(self, dataset_key=None):
         """ Iterates through the hdf5 dataset
+
+        Parameters
+        ----------
+        dataset_key: str, default=None
+            Limit the iterations to the given dataset; None yields all examples
 
         Returns
         -------
@@ -453,6 +442,11 @@ class DatasetsHandler:
 
                 example_key = self._example_key_from_index(i)
 
+                # Skip if the example is not in the desired dataset
+                if (dataset_key and
+                        not self._in_dataset(example_key, dataset_key)):
+                    continue
+
                 yield DatasetExample(
                     index=i,
                     key=example_key,
@@ -462,20 +456,20 @@ class DatasetsHandler:
                     dx=hf[example_key].attrs['dx']
                 )
 
-    def _is_in_dataset(self, example_key, dataset_key):
+    def _in_dataset(self, example_key, dataset_key):
         return example_key in self.datasets[dataset_key]
 
     def in_training_dataset(self, example_key):
         """ Returns True if example key is in the training dataset
         """
-        return self._is_in_dataset(example_key, TRAINING_DATASET_KEY)
+        return self._in_dataset(example_key, TRAINING_DATASET_KEY)
 
     def in_validation_dataset(self, example_key):
         """ Returns True if example key is in the validation dataset
         """
-        return self._is_in_dataset(example_key, VALIDATION_DATASET_KEY)
+        return self._in_dataset(example_key, VALIDATION_DATASET_KEY)
 
     def in_testing_dataset(self, example_key):
         """ Returns True if example key is in the testing dataset
         """
-        return self._is_in_dataset(example_key, TESTING_DATASET_KEY)
+        return self._in_dataset(example_key, TESTING_DATASET_KEY)

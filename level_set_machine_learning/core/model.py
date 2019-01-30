@@ -11,6 +11,8 @@ from level_set_machine_learning.initializer.initializer_base import (
     InitializerBase)
 from level_set_machine_learning.initializer.seed import center_of_mass_seeder
 from level_set_machine_learning.score_functions import jaccard
+from level_set_machine_learning.util.distance_transform import (
+    distance_transform)
 
 
 class LevelSetMachineLearning:
@@ -64,13 +66,27 @@ class LevelSetMachineLearning:
         self.fit_job_handler = None
         self._is_fitted = False
 
-    def fit(self, data_filename, regression_model_class,
-            regression_model_kwargs, imgs=None, segs=None, dx=None,
-            normalize_imgs_on_convert=True, seeds=center_of_mass_seeder,
-            datasets_split=(0.6, 0.2, 0.2), subset_size=None, step=None,
+    def fit(self,
+            # Args
+            data_filename,
+            regression_model_class,
+            regression_model_kwargs,
+            # KWArgs
+            balance_regression_targets=True,
+            datasets_split=(0.6, 0.2, 0.2),
+            dx=None,
+            imgs=None,
+            max_iters=100,
+            normalize_imgs=True,
+            random_state=None,
+            seeds=center_of_mass_seeder,
+            segs=None,
+            step=None,
+            subset_size=None,
             temp_data_dir=os.path.curdir,
-            validation_history_len=5, validation_history_tol=0.0,
-            max_iters=100, random_state=None):
+            validation_history_len=5,
+            validation_history_tol=0.0,
+            ):
         """ Fit a level set machine learning segmentation model
 
         Parameters
@@ -92,6 +108,11 @@ class LevelSetMachineLearning:
             :code:`{'n_estimators': 100, 'random_state': RandomState(123)}`
             might be used with corresponding :code:`RandomForestRegressor`
             model class.
+
+        balance_regression_targets: bool, default=True
+            If True (default), then the target arrays for regression
+            are balanced by randomly down-sampling to contain equal negative
+            and positive portions
 
         imgs: list of ndarray, default=None
             The list of images to be used if :code:`data_file` points to a
@@ -117,9 +138,9 @@ class LevelSetMachineLearning:
             of :code:`DatasetExample` from
             :module:`level_set_machine_learning.core.datasets_handler`.
 
-        normalize_imgs_on_convert: bool, default=True
+        normalize_imgs: bool, default=True
             If True, then the provided images are individually normalized
-            by their means and standard deviations on conversion to hdf5
+            by their means and standard deviations
 
         datasets_split: 3-tuple, default=(0.6, 0.2, 0.2)
             The items in the tuple correspond to the training, validation, and
@@ -220,7 +241,7 @@ class LevelSetMachineLearning:
         img: ndarray
             The image
 
-        seg: ndarry, default=None
+        seg: ndarray, default=None
             The boolean segmentation volume. If provided (not None), then
             the score for the model against the ground-truth `seg` is
             computed and returned.
@@ -241,73 +262,71 @@ class LevelSetMachineLearning:
             the i'th iteration.
         """
 
-        iters = len(self.models)
-        dx = np.ones(img_.ndim) if dx is None else dx
+        if self.fit_job_handler.normalize_imgs:
+            img_ = (img - img.mean()) / img.std()
+        else:
+            img_ = img
+
+        iters = len(self.regression_models)
+        dx = numpy.ones(img_.ndim) if dx is None else dx
 
         if dx.shape[0] != img_.ndim:
             raise ValueError("`dx` has incorrect number of elements.")
 
-        u = np.zeros((iters+1,) + img_.shape)
+        u = numpy.zeros((iters+1,) + img_.shape)
         u[0], dist, mask = self.initializer(img_, self.band, dx=dx)
 
         if seg is not None:
-            scores = np.zeros((iters+1,))
+            scores = numpy.zeros((iters+1,))
             scores[0] = self.scorer(u[0], seg)
 
-        nu = np.zeros(img_.shape)
+        nu = numpy.zeros(img_.shape)
 
         if verbose:
             if seg is None:
-                pstr = "Iter: %02d"
-                print(pstr % 0)
+                print_string = "Iter: {:02d}"
+                print(print_string.format(0))
             else:
-                pstr = "Iter: %02d, Score: %0.5f"
-                print(pstr % (0, scores[0]))
+                print_string = "Iter: {:02d}, Score: {:0.5f}"
+                print(print_string.format(0, scores[0]))
 
         for i in range(iters):
             u[i+1] = u[i].copy()
 
             if mask.any():
-                # Compute the features, and use the model to predict speeds.
-                mem = 'create' if i == 0 else 'use'
-                mem = mem if memoize else None
+                # Compute the features, and use the model to predict velocity
+                features = self.feature_map(
+                    u=u[i], img=img_, dist=dist, mask=mask, dx=dx)
 
-                features = self.feature_map(u[i], img_, dist=dist,
-                                            mask=mask, memoize=mem, dx=dx)
+                nu[mask] = self.regression_models[i].predict(features[mask])
 
-                nu[mask] = self.models[i].predict(features[mask])
-
-                gmag = mg.gradient_magnitude_osher_sethian(u[i], nu, mask=mask, dx=dx)
+                gmag = mg.gradient_magnitude_osher_sethian(
+                    u[i], nu, mask=mask, dx=dx)
                     
                 # Update the level set.
                 u[i+1][mask] += self.step*nu[mask]*gmag[mask]
 
                 # Check for level set vanishing.
-                if (u[i+1] > 0).all() or (u[i+1] < 0).all():
-                    mask = np.zeros_like(mask)
-                    dist = np.zeros_like(dist)
-                else:
-                    # Update the signed distance function for phi.
-                    dist = skfmm.distance(u[i+1], narrow=self.band, dx=dx)
-
-                    if hasattr(dist, 'mask'):
-                        mask = ~dist.mask
-                        dist =  dist.data
-                    else:
-                        mask = np.ones(u[i+1].shape, dtype=np.bool)
+                dist, mask = distance_transform(
+                    arr=u[i+1], band=self.band, dx=dx)
 
             if seg is not None:
-                scores[i+1] = self.scorer(u[i + 1], seg)
+                scores[i+1] = self.scorer(u[i+1], seg)
 
-            if verbose and seg is None:
-                print(pstr % (i+1))
-            elif verbose and seg is not None:
-                print(pstr % (i+1, scores[i+1]))
+            if verbose:
+                if seg is None:
+                    print(print_string % (i+1))
+                else:
+                    print(print_string % (i+1, scores[i+1]))
 
         if seg is None:
             return u
         else:
             return u, scores
+
+    @_requires_fit
+    def step(self):
+        return self.fit_job_handler.step
 
     @_requires_fit
     def _get_scores_for_dataset(self, dataset_key):

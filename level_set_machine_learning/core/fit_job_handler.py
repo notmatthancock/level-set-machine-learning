@@ -2,12 +2,11 @@ import logging
 
 import numpy
 
-from .datasets_handler import (
-    DatasetsHandler,
-    TESTING_DATASET_KEY, TRAINING_DATASET_KEY, VALIDATION_DATASET_KEY)
+from .datasets_handler import DatasetsHandler
 from .exception import ModelAlreadyFit
 from .temporary_data_handler import (
     LEVEL_SET_KEY, MASK_KEY, SIGNED_DIST_KEY, TemporaryDataHandler,)
+from level_set_machine_learning.util.balance_mask import balance_mask
 
 
 logger = logging.getLogger(__name__)
@@ -31,12 +30,28 @@ def setup_logging():
 class FitJobHandler:
     """ Manages attributes and model fitting data/procedures
     """
-    def __init__(self, model, data_filename, imgs, segs, dx,
-                 normalize_imgs_on_convert, datasets_split, seeds,
-                 random_state, step, temp_data_dir, subset_size,
-                 regression_model_class, regression_model_kwargs,
-                 validation_history_len, validation_history_tol, max_iters):
-        """ See :class:`level_set_machine_learning.LevelSetMachineLearning`
+    def __init__(self,
+                 balance_regression_targets,
+                 data_filename,
+                 datasets_split,
+                 dx,
+                 imgs,
+                 max_iters,
+                 model,
+                 normalize_imgs,
+                 random_state,
+                 regression_model_class,
+                 regression_model_kwargs,
+                 seeds,
+                 segs,
+                 step,
+                 subset_size,
+                 temp_data_dir,
+                 validation_history_len,
+                 validation_history_tol,
+                 ):
+        """
+        See :class:`level_set_machine_learning.LevelSetMachineLearning`
         for complete descriptions of parameters
         """
         if model._is_fitted:
@@ -49,17 +64,27 @@ class FitJobHandler:
                 msg = "`seeds` should list of ints or callable"
                 raise TypeError(msg)
 
+        # Set up logging formatting, file location, etc.
+        setup_logging()
+
         # Store the seeds list or function
         self.seeds = seeds
 
-        # Set up logging formatting, file location, etc.
-        setup_logging()
+        # Store the RandomState instance for re-used
+        # on balancing masks
+        self.random_state = random_state
+
+        # Store the balancing option flag
+        self.balance_regression_targets = balance_regression_targets
 
         # The LevelSetMachineLearning instance
         self.model = model
 
         # Initialize the regression models to empty list
         self.regression_models = []
+
+        # Store the flag to indicate image normalization should be used
+        self.normalize_imgs = normalize_imgs
 
         # Initialize the iteration number
         self.iteration = 0
@@ -86,8 +111,7 @@ class FitJobHandler:
 
         # Create the manager for the datasets
         self.datasets_handler = DatasetsHandler(
-            h5_file=data_filename, imgs=imgs, segs=segs, dx=dx,
-            normalize_imgs_on_convert=normalize_imgs_on_convert)
+            h5_file=data_filename, imgs=imgs, segs=segs, dx=dx)
 
         # Split the examples into corresponding datasets
         self.datasets_handler.assign_examples_to_datasets(
@@ -192,53 +216,21 @@ class FitJobHandler:
 
                 self.scores[example.key].append(score)
 
-    def _balance_mask(self, y, random_state):
-        """ Return a mask for balancing `y` to have equal negative and positive
-        """
-        n = y.shape[0]
-        npos = (y > 0).sum()
-        nneg = (y < 0).sum()
-
-        if npos > nneg: # then down-sample the positive elements
-            wpos = numpy.where(y > 0)[0]
-            inds = random_state.choice(wpos, replace=False, size=nneg)
-            mask = y <= 0
-            mask[inds] = True
-        elif npos < nneg: # then down-sample the negative elements.
-            wneg = numpy.where(y < 0)[0]
-            inds = random_state.choice(wneg, replace=False, size=npos)
-            mask = y >= 0
-            mask[inds] = True
-        else: # n = npos or n == nneg or npos == nneg
-            mask = numpy.ones(y.shape, dtype=numpy.bool)
-
-        return mask
-
-    def _featurize_all_images(self, dataset, balance, rs):
+    def _featurize_all_images(self, dataset_key):
         """ Featurize all the images in the dataset given by the argument
 
         dataset: str
-            Should be in ['tr','va','ts']
-
-        balance: bool
-            Balance by neg/pos of target value.
-
-        random_state: numpy.RandomState
-            To make results reproducible. The random state
-            should be passed here rather than using the `self._random_state`
-            attribute, since in the multiprocessing setting we can't
-            rely on `self._random_state`.
+            The key for the dataset for which we will featurize the images
 
         Returns
         -------
-        X, y: ndarray (n_examples, n_features), ndarray (n_examples,)
-            X is a matrix storing the feature vector in each row, whereas
-            y is a vector storing the corresponding target value for
-            each feature vector (i.e., the ground-truth signed distance
-            value at the spatial coordinate for which the feature vector
-            was computed).
+        features, targets: ndarray (n_examples, n_features) and (n_examples,)
+            features is a matrix storing the feature vector in each row,
+            whereas targets is a vector storing the corresponding target
+            value for each feature vector (i.e., the ground-truth signed
+            distance value at the spatial coordinate for which the
+            feature vector was computed).
         """
-        assert dataset in ['tr','va','ts']
 
         ###########################################################
         # Precompute total number of feature vector examples
@@ -246,28 +238,29 @@ class FitJobHandler:
         # Count the number of points collected
         count = 0
 
-        if balance:
-            balance_masks = []
+        if self.balance_regression_targets:
+            bal_masks = []
 
-        for key, iseed, seed in self._iter_seeds(dataset):
+        examples = self.datasets_handler.iterate_examples(
+            dataset_key=dataset_key)
 
-            with self._tmp_file(mode='r') as tf:
-                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
+        for example in examples:
 
-            if balance:
+            with self.temp_data_handler.open_h5_file() as temp_file:
+                mask = temp_file[example.key][MASK_KEY][...]
 
-                with self._data_file() as df:
-                    target = df[key+"/dist"][...]
+            if self.balance_regression_targets:
 
-                balance_mask = self._balance_mask(target[mask], random_state=rs)
-                balance_masks.append(balance_mask)
-                count += balance_mask.sum()
+                bal_mask = balance_mask(
+                    example.dist[mask], random_state=self.random_state)
+                count += bal_mask.sum()
+                bal_masks.append(bal_mask)
 
             else:
                 count += mask.sum()
 
-        X = np.zeros((count, self.feature_map.nfeatures))
-        y = np.zeros((count,))
+        features = numpy.zeros((count, self.model.feature_map.n_features))
+        targets = numpy.zeros((count,))
 
         index = 0
 
@@ -275,56 +268,65 @@ class FitJobHandler:
         # Compute the feature vectors and place them in
         # the feature matrix
 
-        for i, (key, iseed, seed) in enumerate(self._iter_seeds(dataset)):
+        examples = self.datasets_handler.iterate_examples(
+            dataset_key=dataset_key)
 
-            with self._data_file() as df:
-                img    = df[key+"/img"][...]
-                target = df[key+"/dist"][...]
-                dx     = df[key].attrs['dx']
+        for i, example in enumerate(examples):
 
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
+            if self.normalize_imgs:
+                img_ = (example.img - example.img.mean()) / example.img.std()
+            else:
+                img_ = example.img
 
-            with self._tmp_file(mode='r') as tf:
-                u    = tf["%s/%s/seed-%d/u"    % (dataset, key, iseed)][...]
-                dist = tf["%s/%s/seed-%d/dist" % (dataset, key, iseed)][...]
-                mask = tf["%s/%s/seed-%d/mask" % (dataset, key, iseed)][...]
+            with self.temp_data_handler.open_h5_file() as tf:
+                u = tf[example.key][LEVEL_SET_KEY][...]
+                dist = tf[example.key][SIGNED_DIST_KEY][...]
+                mask = tf[example.key][MASK_KEY][...]
 
             if not mask.any():
-                continue # Otherwise, repeat the loop until a non-empty mask.
+                continue  # Otherwise, repeat the loop until a non-empty mask
 
             # Compute features.
-            features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
+            features = self.model.feature_map(
+                u=u, img=img_, dist=dist, mask=mask, dx=example.dx)
 
-            if balance:
-                bmask = balance_masks[i]
-                next_index = index + target[mask][bmask].shape[0]
-                X[index:next_index] = features[mask][bmask]
-                y[index:next_index] =   target[mask][bmask]
+            if self.balance_regression_targets:
+                bmask = bal_masks[i]
+                next_index = index + example.dist[mask][bmask].shape[0]
+                features[index:next_index] = features[mask][bmask]
+                targets[index:next_index] = example.dist[mask][bmask]
             else:
                 next_index = index + mask.sum()
-                X[index:next_index] = features[mask]
-                y[index:next_index] =   target[mask]
+                features[index:next_index] = features[mask]
+                targets[index:next_index] = example.dist[mask]
 
             index = next_index
 
-        return X, y
+        return features, targets
 
     def fit_regression_model(self):
         """ Fit the regression model to approximate the velocity field
         for level set motion at the current iteration
         """
+        from level_set_machine_learning.core.datasets_handler import (
+            TRAINING_DATASET_KEY)
 
         # Get input and output variables
-        X, y = self._featurize_all_images('tr', balance=True,
-                                          rs=self.random_state)
+        features, targets = self._featurize_all_images(
+            dataset_key=TRAINING_DATASET_KEY)
+
+        # Balance the data if required
+        if self.balance_regression_targets:
+            mask = balance_mask(arr=targets, random_state=self.random_state)
+            features = features[mask]
+            targets = targets[mask]
 
         # Instantiate the regression model
         regression_model = self.regression_model_class(
             **self.regression_model_kwargs)
 
         # Fit it!
-        regression_model.fit(X, y)
+        regression_model.fit(features, targets)
 
         # Add it to the list
         self.regression_models.append(regression_model)
@@ -392,7 +394,6 @@ class FitJobHandler:
         df.close()
         tf.close()
         self._tmp_file_write_unlock()
-
 
     def can_exit_early(self):
         """ Returns True when the early exit condition is satisfied

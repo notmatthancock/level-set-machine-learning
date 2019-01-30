@@ -18,7 +18,10 @@ class FeatureMap(object):
         """
         self._validate_features(features)
         self.features = features
-        self.n_features = len(self.features)
+
+    @property
+    def n_features(self):
+        return len(self.features)
 
     def _validate_features(self, features):
 
