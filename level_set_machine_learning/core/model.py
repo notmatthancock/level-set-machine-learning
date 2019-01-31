@@ -1,6 +1,5 @@
 import os
 
-import skfmm
 import numpy
 
 from level_set_machine_learning.core.fit_job_handler import FitJobHandler
@@ -302,7 +301,7 @@ class LevelSetMachineLearning:
 
                 gmag = mg.gradient_magnitude_osher_sethian(
                     u[i], nu, mask=mask, dx=dx)
-                    
+
                 # Update the level set.
                 u[i+1][mask] += self.step*nu[mask]*gmag[mask]
 

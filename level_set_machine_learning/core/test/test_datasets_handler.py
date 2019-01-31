@@ -1,7 +1,8 @@
 import os
 import unittest
 
-import numpy as np
+import numpy
+import skfmm
 
 from level_set_machine_learning.core.datasets_handler import DatasetsHandler
 
@@ -9,7 +10,7 @@ from level_set_machine_learning.core.datasets_handler import DatasetsHandler
 class TestDatasetsHandler(unittest.TestCase):
 
     def setUp(self):
-        self.random_state = np.random.RandomState(1234)
+        self.random_state = numpy.random.RandomState(1234)
 
     def test_no_data_at_init(self):
 
@@ -150,7 +151,7 @@ class TestDatasetsHandler(unittest.TestCase):
             for i in range(n_examples)
         ]
 
-        segs[0] = np.ones((4,), dtype=np.bool)
+        segs[0] = numpy.ones((4,), dtype=numpy.bool)
 
         h5_file = 'tmp.h5'
 
@@ -192,8 +193,6 @@ class TestDatasetsHandler(unittest.TestCase):
 
     def test_convert_to_hdf5_valid(self):
 
-        import skfmm
-
         n_examples = 3
         n_dim = 3
 
@@ -216,8 +215,7 @@ class TestDatasetsHandler(unittest.TestCase):
 
         try:
             datasets_mgmt = DatasetsHandler(
-                h5_file=h5_file, imgs=imgs, segs=segs, dx=dx,
-                normalize_imgs_on_convert=False)
+                h5_file=h5_file, imgs=imgs, segs=segs, dx=dx)
 
             for example in datasets_mgmt.iterate_examples():
                 index = example.index
@@ -227,57 +225,17 @@ class TestDatasetsHandler(unittest.TestCase):
 
                 # Assert image integrity
                 self.assertLess(
-                    np.linalg.norm(imgs[index] - example.img), 1e-8)
+                    numpy.linalg.norm(imgs[index] - example.img), 1e-8)
 
                 # Assert segmentation integrity
                 self.assertEqual(0, (segs[index] != example.seg).sum())
 
                 # Assert distance transform integrity
                 self.assertLess(
-                    np.linalg.norm(dist - example.dist), 1e-8)
+                    numpy.linalg.norm(dist - example.dist), 1e-8)
 
                 # Assert delta term integrity
-                self.assertLess(np.linalg.norm(dx[index] - example.dx), 1e-8)
-
-        finally:
-            if os.path.exists(h5_file):
-                os.remove(h5_file)
-
-    def test_convert_to_hdf5_valid_with_image_normalization(self):
-
-        n_examples = 3
-        n_dim = 3
-
-        # Create some fake image data
-        imgs = [
-            self.random_state.randn(
-                *self.random_state.randint(10, 41, size=n_dim))
-            for _ in range(n_examples)
-        ]
-
-        # Create some fake segmentation data
-        segs = [
-            imgs[i] > 0
-            for i in range(n_examples)
-        ]
-
-        h5_file = 'tmp.h5'
-
-        dx = self.random_state.rand(n_examples, n_dim)
-
-        try:
-            datasets_mgmt = DatasetsHandler(
-                h5_file=h5_file, imgs=imgs, segs=segs, dx=dx,
-                normalize_imgs_on_convert=True)
-
-            for example in datasets_mgmt.iterate_examples():
-                index = example.index
-
-                # Assert image integrity
-                img = imgs[index]
-                img_normalized = (img - img.mean()) / img.std()
-                self.assertLess(
-                    np.linalg.norm(img_normalized - example.img), 1e-8)
+                self.assertLess(numpy.linalg.norm(dx[index] - example.dx), 1e-8)
 
         finally:
             if os.path.exists(h5_file):
