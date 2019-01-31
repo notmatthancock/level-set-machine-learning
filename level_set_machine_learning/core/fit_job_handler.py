@@ -6,7 +6,10 @@ from .datasets_handler import DatasetsHandler
 from .exception import ModelAlreadyFit
 from .temporary_data_handler import (
     LEVEL_SET_KEY, MASK_KEY, SIGNED_DIST_KEY, TemporaryDataHandler,)
+from level_set_machine_learning.gradient import masked_gradient
 from level_set_machine_learning.util.balance_mask import balance_mask
+from level_set_machine_learning.util.distance_transform import (
+    distance_transform)
 
 
 logger = logging.getLogger(__name__)
@@ -230,6 +233,7 @@ class FitJobHandler:
             value for each feature vector (i.e., the ground-truth signed
             distance value at the spatial coordinate for which the
             feature vector was computed).
+
         """
 
         ###########################################################
@@ -264,9 +268,8 @@ class FitJobHandler:
 
         index = 0
 
-        ###########################################################
-        # Compute the feature vectors and place them in
-        # the feature matrix
+        ##################################################################
+        # Compute the feature vectors and place them in the feature matrix
 
         examples = self.datasets_handler.iterate_examples(
             dataset_key=dataset_key)
@@ -315,12 +318,6 @@ class FitJobHandler:
         features, targets = self._featurize_all_images(
             dataset_key=TRAINING_DATASET_KEY)
 
-        # Balance the data if required
-        if self.balance_regression_targets:
-            mask = balance_mask(arr=targets, random_state=self.random_state)
-            features = features[mask]
-            targets = targets[mask]
-
         # Instantiate the regression model
         regression_model = self.regression_model_class(
             **self.regression_model_kwargs)
@@ -334,70 +331,53 @@ class FitJobHandler:
     def update_level_sets(self):
         """ Update all the level sets using the learned regression model
         """
-        df = self._data_file()
-        tf = self._tmp_file_write_lock()
-
-        model = self.models[-1]
+        regression_model = self.regression_models[-1]
 
         # Loop over all indices in the validation dataset.
-        for ds, key, iseed, seed in self._iter_tmp():
-            img = df[key+"/img"][...]
+        for example in self.datasets_handler.iterate_examples():
 
-            if self._fopts_normalize_images:
-                img = (img - img.mean()) / img.std()
-
-            dx = df[key].attrs['dx']
-
-            u    = tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...]
-            dist = tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...]
-            mask = tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...]
-
-            # Don't update if the mask is empty.
-            if not mask.any():
-                continue
-
-            # Compute features.
-            features = self.feature_map(u, img, dist=dist, mask=mask, dx=dx)
-
-            # Compute approximate velocity from features.
-            nu = np.zeros_like(u)
-            nu[mask] = model.predict(features[mask])
-
-            # Compute gradient magnitude using upwind Osher/Sethian method.
-            gmag = mg.gradient_magnitude_osher_sethian(u, nu, mask=mask, dx=dx)
-
-            # Here's the actual level set update.
-            u[mask] += self.step*nu[mask]*gmag[mask]
-
-            # Update the distance transform and mask,
-            # checking if the zero level set has vanished.
-            if (u > 0).all() or (u < 0).all():
-                mask = np.zeros_like(mask)
-                dist = np.zeros_like(dist)
+            if self.normalize_imgs:
+                img_ = (example.img - example.img.mean()) / example.img.std()
             else:
-                # Update the distance and mask for u.
-                dist = skfmm.distance(u, narrow=self.band, dx=dx)
+                img_ = example.img
 
-                if hasattr(dist, 'mask'):
-                    mask = ~dist.mask
-                    dist = dist.data
-                else:
-                    # The distance transform might not yield a mask
-                    # if band is very large or the object is very large.
-                    mask = np.ones(dist.shape, dtype=np.bool)
+            with self.temp_data_handler.open_h5_file(lock=True) as tf:
+                mask = tf[example.key][MASK_KEY][...]
 
-            # Update the data in the hdf5 file.
-            tf["%s/%s/seed-%d/u"    % (ds, key, iseed)][...] = u
-            tf["%s/%s/seed-%d/dist" % (ds, key, iseed)][...] = dist
-            tf["%s/%s/seed-%d/mask" % (ds, key, iseed)][...] = mask
+                # Only update if the mask is not empty
+                if mask.any():
+                    u = tf[example.key][LEVEL_SET_KEY][...]
+                    dist = tf[example.key][SIGNED_DIST_KEY][...]
 
-        df.close()
-        tf.close()
-        self._tmp_file_write_unlock()
+                    # Compute features.
+                    features = self.model.feature_map(
+                        u=u, img=img_, dist=dist, mask=mask, dx=example.dx)
+
+                    # Compute approximate velocity from features
+                    velocity = numpy.zeros_like(u)
+                    velocity[mask] = regression_model.predict(features[mask])
+
+                    # Compute gradient magnitude using upwind method
+                    gmag = masked_gradient.gradient_magnitude_osher_sethian(
+                        arr=u, nu=velocity, mask=mask, dx=example.dx)
+
+                    # Here's the actual level set update.
+                    u[mask] += self.step*velocity[mask]*gmag[mask]
+
+                    dist, mask = distance_transform(
+                        arr=u, band=self.model.band, dx=example.dx)
+
+                    # Update the data in the temp file
+                    tf[example.key][LEVEL_SET_KEY][...] = u
+                    tf[example.key][SIGNED_DIST_KEY][...] = dist
+                    tf[example.key][MASK_KEY][...] = mask
 
     def can_exit_early(self):
         """ Returns True when the early exit condition is satisfied
         """
+        from level_set_machine_learning.core.datasets_handler import (
+            VALIDATION_DATASET_KEY)
+
         iteration = self.iteration
         va_hist_len = self.validation_history_len
         va_hist_tol = self.validation_history_tol
@@ -408,9 +388,15 @@ class FitJobHandler:
 
             # Set up variables for linear trend fit
             x = numpy.c_[numpy.ones(va_hist_len), numpy.arange(va_hist_len)]
+
             # Get scores over past `va_hist_len` iters
             # (current iteration inclusive)
-            scores = self.training_scores.mean(axis=1)
+            scores = numpy.array([
+                self.scores[example_key]
+                for example_key in self.datasets_handler.iterate_keys(
+                    dataset_key=VALIDATION_DATASET_KEY)
+            ]).mean(axis=1)
+
             y = scores[iteration+1-va_hist_len:iteration+1]
 
             # The slope of the best fit line.

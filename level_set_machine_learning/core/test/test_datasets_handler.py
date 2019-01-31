@@ -235,7 +235,8 @@ class TestDatasetsHandler(unittest.TestCase):
                     numpy.linalg.norm(dist - example.dist), 1e-8)
 
                 # Assert delta term integrity
-                self.assertLess(numpy.linalg.norm(dx[index] - example.dx), 1e-8)
+                self.assertLess(
+                    numpy.linalg.norm(dx[index] - example.dx), 1e-8)
 
         finally:
             if os.path.exists(h5_file):

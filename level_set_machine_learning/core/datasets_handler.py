@@ -402,6 +402,15 @@ class DatasetsHandler:
         else:
             return None
 
+    def iterate_keys(self, dataset_key=None):
+        for i in range(self.n_examples):
+
+            example_key = self._example_key_from_index(i)
+
+            if (dataset_key and self._in_dataset(
+                    example_key=example_key, dataset_key=dataset_key)):
+                yield example_key
+
     def get_example_by_index(self, index):
         """ Get the `DatasetExample` corresponding to `index`
         """

@@ -279,7 +279,7 @@ class LevelSetMachineLearning:
             scores = numpy.zeros((iters+1,))
             scores[0] = self.scorer(u[0], seg)
 
-        nu = numpy.zeros(img_.shape)
+        velocity = numpy.zeros(img_.shape)
 
         if verbose:
             if seg is None:
@@ -297,13 +297,14 @@ class LevelSetMachineLearning:
                 features = self.feature_map(
                     u=u[i], img=img_, dist=dist, mask=mask, dx=dx)
 
-                nu[mask] = self.regression_models[i].predict(features[mask])
+                velocity[mask] = self.regression_models[i].predict(
+                    features[mask])
 
                 gmag = mg.gradient_magnitude_osher_sethian(
-                    u[i], nu, mask=mask, dx=dx)
+                    arr=u[i], nu=velocity, mask=mask, dx=dx)
 
                 # Update the level set.
-                u[i+1][mask] += self.step*nu[mask]*gmag[mask]
+                u[i+1][mask] += self.step*velocity[mask]*gmag[mask]
 
                 # Check for level set vanishing.
                 dist, mask = distance_transform(

@@ -1,6 +1,7 @@
 import unittest
 
-from level_set_machine_learning.initializer.provided import ThresholdInitializer
+from level_set_machine_learning.initializer.provided import (
+    ThresholdInitializer)
 
 
 class TestThresholdInitialize(unittest.TestCase):
