@@ -77,7 +77,7 @@ class LevelSetMachineLearning:
             imgs=None,
             max_iters=100,
             normalize_imgs=True,
-            random_state=None,
+            random_state=numpy.random.RandomState(),
             seeds=center_of_mass_seeder,
             segs=None,
             step=None,
@@ -184,7 +184,7 @@ class LevelSetMachineLearning:
         max_iters: int, default=100
             The fixed maximum number of iterations
 
-        random_state: numpy.random.RandomState, default=None
+        random_state: numpy.random.RandomState
             Provide for reproducible results.
 
         """

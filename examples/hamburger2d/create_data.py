@@ -40,4 +40,4 @@ lsml = LevelSetMachineLearning(
 
 lsml.fit('dataset.h5', imgs=imgs, segs=segs,
          regression_model_class=RandomForestRegressor,
-         regression_model_kwargs={}, max_iters=1)
+         regression_model_kwargs={}, max_iters=50)

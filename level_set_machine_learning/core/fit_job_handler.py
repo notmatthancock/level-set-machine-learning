@@ -290,17 +290,17 @@ class FitJobHandler:
                 continue  # Otherwise, repeat the loop until a non-empty mask
 
             # Compute features.
-            features = self.model.feature_map(
+            features_current = self.model.feature_map(
                 u=u, img=img_, dist=dist, mask=mask, dx=example.dx)
 
             if self.balance_regression_targets:
                 bmask = bal_masks[i]
                 next_index = index + example.dist[mask][bmask].shape[0]
-                features[index:next_index] = features[mask][bmask]
+                features[index:next_index] = features_current[mask][bmask]
                 targets[index:next_index] = example.dist[mask][bmask]
             else:
                 next_index = index + mask.sum()
-                features[index:next_index] = features[mask]
+                features[index:next_index] = features_current[mask]
                 targets[index:next_index] = example.dist[mask]
 
             index = next_index
@@ -403,7 +403,7 @@ class FitJobHandler:
             slope = numpy.linalg.lstsq(x, y, rcond=None)[0][1]
 
             msg = ("Trend in validation scores over past {:d} "
-                   "iterations is {:.7f} (tolerance = {.7f})")
+                   "iterations is {:.7f} (tolerance = {:.7f})")
             logger.info(msg.format(va_hist_len, slope, va_hist_tol))
 
             if slope < va_hist_tol:  # trend is not increasing sufficiently
