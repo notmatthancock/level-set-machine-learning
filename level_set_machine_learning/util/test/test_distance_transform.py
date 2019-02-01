@@ -14,7 +14,7 @@ class TestDistanceTransform(unittest.TestCase):
         dist, mask = distance_transform(arr, band=1, dx=[1.])
 
         true_dist = np.r_[0., -0.5, 0.5, -0.5, 0.]
-        true_mask = np.r_[False,  True,  True,  True, False]
+        true_mask = np.r_[False, True, True, True, False]
 
         # Floating point comparison is okay here, numbers are 0, 0.5, 1, etc
         self.assertTrue((dist == true_dist).all())

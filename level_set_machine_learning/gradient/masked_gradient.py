@@ -54,12 +54,12 @@ def _get_gradient_magnitude_osher_sethian_func(ndim):
     delta_args = (ctypes.c_double,) * ndim
 
     func.argtypes = (
-            array_dimension_args +
-            array_arg +
-            mask_arg +
-            nu_arg +
-            gradient_magnitude_arg +
-            delta_args
+        array_dimension_args +
+        array_arg +
+        mask_arg +
+        nu_arg +
+        gradient_magnitude_arg +
+        delta_args
     )
 
     return func

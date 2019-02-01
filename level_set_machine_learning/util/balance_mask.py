@@ -42,4 +42,3 @@ def balance_mask(arr, random_state):
         mask = numpy.ones(arr.shape, dtype=numpy.bool)
 
     return mask
-

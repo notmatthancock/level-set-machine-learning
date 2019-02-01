@@ -50,7 +50,7 @@ class RandomBallInitializer(InitializerBase):
 
         indices = [numpy.arange(img.shape[i], dtype=numpy.float)*dx[i]
                    for i in range(img.ndim)]
-        
+
         # Select the center point uniformly at random.
         # Expected center is at the center of image, but could
         # be terribly far away in general.
@@ -69,7 +69,7 @@ class RandomBallInitializer(InitializerBase):
         indices *= dx.reshape(shape)
         indices -= center.reshape(shape)
         indices **= 2
-        
+
         init_mask = indices.sum(axis=0)**0.5 <= radius
 
         return init_mask

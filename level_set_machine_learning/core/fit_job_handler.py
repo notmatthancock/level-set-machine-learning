@@ -41,7 +41,6 @@ class FitJobHandler:
                  imgs,
                  max_iters,
                  model,
-                 normalize_imgs,
                  random_state,
                  regression_model_class,
                  regression_model_kwargs,
@@ -85,9 +84,6 @@ class FitJobHandler:
 
         # Initialize the regression models to empty list
         self.regression_models = []
-
-        # Store the flag to indicate image normalization should be used
-        self.normalize_imgs = normalize_imgs
 
         # Initialize the iteration number
         self.iteration = 0
@@ -134,6 +130,9 @@ class FitJobHandler:
         # values, etc.
         self.temp_data_handler = TemporaryDataHandler(tmp_dir=temp_data_dir)
         self.temp_data_handler.make_tmp_location()
+
+    def _log_info_with_iter(self, msg):
+        logger.info("(Iteration = {:03d}) {:s}".format(self.iteration, msg))
 
     def get_seed(self, example):
         if callable(self.seeds):
@@ -206,9 +205,7 @@ class FitJobHandler:
     def compute_and_collect_scores(self):
         """ Collect and store the scores at the current iteration
         """
-
-        msg = "Collecting scores (iteration = {})"
-        logger.info(msg.format(self.iteration))
+        self._log_info_with_iter("Collecting scores")
 
         with self.temp_data_handler.open_h5_file() as temp_file:
             for example in self.datasets_handler.iterate_examples():
@@ -218,6 +215,23 @@ class FitJobHandler:
                 score = self.model.scorer(u, seg)
 
                 self.scores[example.key].append(score)
+
+        ################################################
+        # Report scores via the logger
+
+        from level_set_machine_learning.core.datasets_handler import (
+            TRAINING_DATASET_KEY, VALIDATION_DATASET_KEY, TESTING_DATASET_KEY)
+
+        dataset_keys = (
+            TRAINING_DATASET_KEY, VALIDATION_DATASET_KEY, TESTING_DATASET_KEY)
+
+        for dataset_key in dataset_keys:
+            mean = numpy.mean([
+                self.scores[key][-1]
+                for key in self.datasets_handler.iterate_keys(dataset_key)
+            ])
+            msg = "Average score over {:s} = {:.7f}"
+            self._log_info_with_iter(msg.format(dataset_key, mean))
 
     def _featurize_all_images(self, dataset_key):
         """ Featurize all the images in the dataset given by the argument
@@ -276,7 +290,7 @@ class FitJobHandler:
 
         for i, example in enumerate(examples):
 
-            if self.normalize_imgs:
+            if self.model.normalize_imgs:
                 img_ = (example.img - example.img.mean()) / example.img.std()
             else:
                 img_ = example.img
@@ -314,6 +328,8 @@ class FitJobHandler:
         from level_set_machine_learning.core.datasets_handler import (
             TRAINING_DATASET_KEY)
 
+        self._log_info_with_iter("Fitting regression model")
+
         # Get input and output variables
         features, targets = self._featurize_all_images(
             dataset_key=TRAINING_DATASET_KEY)
@@ -331,12 +347,14 @@ class FitJobHandler:
     def update_level_sets(self):
         """ Update all the level sets using the learned regression model
         """
+        self._log_info_with_iter("Updating level sets")
+
         regression_model = self.regression_models[-1]
 
         # Loop over all indices in the validation dataset.
         for example in self.datasets_handler.iterate_examples():
 
-            if self.normalize_imgs:
+            if self.model.normalize_imgs:
                 img_ = (example.img - example.img.mean()) / example.img.std()
             else:
                 img_ = example.img
@@ -382,7 +400,7 @@ class FitJobHandler:
         va_hist_len = self.validation_history_len
         va_hist_tol = self.validation_history_tol
 
-        logger.info("Checking early exit condition...")
+        self._log_info_with_iter("Checking early exit condition")
 
         if iteration >= va_hist_len-1:
 
@@ -395,23 +413,23 @@ class FitJobHandler:
                 self.scores[example_key]
                 for example_key in self.datasets_handler.iterate_keys(
                     dataset_key=VALIDATION_DATASET_KEY)
-            ]).mean(axis=1)
+            ]).mean(axis=0)
 
             y = scores[iteration+1-va_hist_len:iteration+1]
 
             # The slope of the best fit line.
             slope = numpy.linalg.lstsq(x, y, rcond=None)[0][1]
 
-            msg = ("Trend in validation scores over past {:d} "
-                   "iterations is {:.7f} (tolerance = {:.7f})")
-            logger.info(msg.format(va_hist_len, slope, va_hist_tol))
+            msg = "Trend in validation scores is {:.7f} (tol = {:.7f})"
+            self._log_info_with_iter(
+                msg.format(va_hist_len, slope, va_hist_tol))
 
             if slope < va_hist_tol:  # trend is not increasing sufficiently
                 msg = "Early exit condition satisfied"
-                logger.info(msg)
+                self._log_info_with_iter(msg)
                 return True
 
-        logger.info("Early stop conditions not satisfied")
+        self._log_info_with_iter("Early stop conditions not satisfied")
         return False
 
     def clean_up(self):

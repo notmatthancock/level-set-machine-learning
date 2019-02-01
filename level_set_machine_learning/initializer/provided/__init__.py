@@ -1,3 +1,2 @@
-from .random_ball import RandomBallInitializer
-from .threshold import ThresholdInitializer
-
+from .random_ball import RandomBallInitializer  # noqa
+from .threshold import ThresholdInitializer  # noqa

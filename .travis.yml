@@ -7,8 +7,10 @@ python:
 before_install:
   - pip install -r requirements.txt
   - make -C level_set_machine_learning/gradient
+  - pip install flake8
 
 script:
+  - flake8 --ignore E228,E226,W504 --exclude lidc*,ray*,data* level_set_machine_learning
   - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then python -m unittest discover -v; fi
 
 notifications:

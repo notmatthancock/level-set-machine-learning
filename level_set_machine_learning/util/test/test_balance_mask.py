@@ -42,4 +42,3 @@ class TestBalanceMask(unittest.TestCase):
         mask = balance_mask(arr, random_state)
 
         self.assertEqual(arr.shape[0], mask.sum())
-

@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy
@@ -14,9 +15,13 @@ from level_set_machine_learning.util.distance_transform import (
     distance_transform)
 
 
+logger = logging.getLogger(__name__)
+
+
 class LevelSetMachineLearning:
 
-    def __init__(self, features, initializer, scorer=jaccard, band=3):
+    def __init__(self, features, initializer, scorer=jaccard, band=3,
+                 normalize_imgs=True):
         """
         Initialize a level set machine learning object
 
@@ -48,6 +53,11 @@ class LevelSetMachineLearning:
         band: float, default=3
             The "narrow band" distance.
 
+        normalize_imgs: bool, default=True
+            If True, then the provided images are individually normalized
+            by their means and standard deviations
+
+
         """
         # Create the feature map comprising the given features
         self.feature_map = FeatureMap(features=features)
@@ -61,6 +71,7 @@ class LevelSetMachineLearning:
 
         self.scorer = scorer
         self.band = band
+        self.normalize_imgs = normalize_imgs
 
         self.fit_job_handler = None
         self._is_fitted = False
@@ -76,7 +87,6 @@ class LevelSetMachineLearning:
             dx=None,
             imgs=None,
             max_iters=100,
-            normalize_imgs=True,
             random_state=numpy.random.RandomState(),
             seeds=center_of_mass_seeder,
             segs=None,
@@ -137,10 +147,6 @@ class LevelSetMachineLearning:
             of :code:`DatasetExample` from
             :module:`level_set_machine_learning.core.datasets_handler`.
 
-        normalize_imgs: bool, default=True
-            If True, then the provided images are individually normalized
-            by their means and standard deviations
-
         datasets_split: 3-tuple, default=(0.6, 0.2, 0.2)
             The items in the tuple correspond to the training, validation, and
             testing datasets. If each item is a float, then the provided data
@@ -200,6 +206,10 @@ class LevelSetMachineLearning:
         self.fit_job_handler.compute_and_collect_scores()
 
         for self.fit_job_handler.iteration in range(1, max_iters+1):
+            logger.info("*"*40)
+            msg = "Beginning iteration {:03d}"
+            logger.info(msg.format(self.fit_job_handler.iteration))
+            logger.info("*"*40)
 
             self.fit_job_handler.fit_regression_model()
             self.fit_job_handler.update_level_sets()
@@ -261,7 +271,7 @@ class LevelSetMachineLearning:
             the i'th iteration.
         """
 
-        if self.fit_job_handler.normalize_imgs:
+        if self.normalize_imgs:
             img_ = (img - img.mean()) / img.std()
         else:
             img_ = img
@@ -272,14 +282,14 @@ class LevelSetMachineLearning:
         if dx.shape[0] != img_.ndim:
             raise ValueError("`dx` has incorrect number of elements.")
 
-        u = numpy.zeros((iters+1,) + img_.shape)
+        u = numpy.zeros((iters+1,) + img.shape)
         u[0], dist, mask = self.initializer(img_, self.band, dx=dx)
 
         if seg is not None:
             scores = numpy.zeros((iters+1,))
             scores[0] = self.scorer(u[0], seg)
 
-        velocity = numpy.zeros(img_.shape)
+        velocity = numpy.zeros(img.shape)
 
         if verbose:
             if seg is None:
@@ -315,15 +325,16 @@ class LevelSetMachineLearning:
 
             if verbose:
                 if seg is None:
-                    print(print_string % (i+1))
+                    print(print_string.format(i+1))
                 else:
-                    print(print_string % (i+1, scores[i+1]))
+                    print(print_string.format(i+1, scores[i+1]))
 
         if seg is None:
             return u
         else:
             return u, scores
 
+    @property
     @_requires_fit
     def step(self):
         return self.fit_job_handler.step

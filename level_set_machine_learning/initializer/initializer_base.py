@@ -1,7 +1,6 @@
 import abc
 
 import numpy
-import skfmm
 
 from level_set_machine_learning.util.distance_transform import (
     distance_transform)
@@ -59,4 +58,3 @@ class InitializerBase(abc.ABC):
     @abc.abstractmethod
     def initialize(self, img, dx, seed):
         raise NotImplementedError
-

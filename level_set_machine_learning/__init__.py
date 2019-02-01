@@ -1,1 +1,1 @@
-from .core.model import LevelSetMachineLearning
+from .core.model import LevelSetMachineLearning  # noqa

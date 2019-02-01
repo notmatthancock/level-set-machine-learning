@@ -32,7 +32,7 @@ class ThresholdInitializer(InitializerBase):
             blur = gaussian_filter(img, self.sigma)
 
         threshold_value = threshold_otsu(blur)
-        
+
         init_mask = blur >= threshold_value
 
         return init_mask
