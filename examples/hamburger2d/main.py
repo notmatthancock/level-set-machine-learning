@@ -13,7 +13,7 @@ from level_set_machine_learning.initializer.provided.random_ball import (
 
 # Create a dataset with 50 samples with randomly generated "hamburger" images
 n_samples = 50
-imgs, segs = hamburger.make_dataset(N=n_samples)
+imgs, segs = hamburger.make_dataset(N=n_samples, n=51, rad=[10,21])
 
 # Set up the features to be used
 features = [
@@ -43,4 +43,4 @@ lsml.fit('dataset.h5', imgs=imgs, segs=segs,
          regression_model_class=RandomForestRegressor,
          regression_model_kwargs={'n_estimators': 100,
                                   'random_state': random_state},
-         max_iters=100, random_state=random_state)
+         max_iters=5, random_state=random_state)

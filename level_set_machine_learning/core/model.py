@@ -264,7 +264,8 @@ class LevelSetMachineLearning:
         return method_wrapped
 
     @_requires_fit
-    def segment(self, img, seg=None, dx=None, verbose=True):
+    def segment(self, img, seg=None, dx=None, verbose=True,
+                iterate_until_validation_max=True):
         """
         Segment `img`.
 
@@ -279,11 +280,16 @@ class LevelSetMachineLearning:
             computed and returned.
 
         dx: ndarray or list, default=None
-            List of the spatial delta terms along each axis. The default
-            uses ones.
+            List of the spatial delta terms along each axis; default is ones
 
         verbose: bool, default=True
-            Print progress.
+            Print progress
+
+        iterate_until_validation_max: bool, default=True
+            If True, then the iteration will stop at the index corresponding
+            to the global max over the validation data; otherwise, iterations
+            continue for all possible, i.e., for the number regression models
+            that exist
 
         Returns
         -------
@@ -292,24 +298,28 @@ class LevelSetMachineLearning:
             is the i'th iterate of the level set function and `u[i] > 0`
             yields an approximate boolean-mask segmentation of `img` at
             the i'th iteration.
-        """
 
+        """
         if self.normalize_imgs:
             img_ = (img - img.mean()) / img.std()
         else:
             img_ = img
 
-        iters = len(self.regression_models)
+        if iterate_until_validation_max:
+            n_iters = self.validation_scores.mean(axis=1).argmax()
+        else:
+            n_iters = len(self.regression_models)
+
         dx = numpy.ones(img_.ndim) if dx is None else dx
 
         if dx.shape[0] != img_.ndim:
             raise ValueError("`dx` has incorrect number of elements.")
 
-        u = numpy.zeros((iters+1,) + img.shape)
+        u = numpy.zeros((n_iters+1,) + img.shape)
         u[0], dist, mask = self.initializer(img_, self.band, dx=dx)
 
         if seg is not None:
-            scores = numpy.zeros((iters+1,))
+            scores = numpy.zeros((n_iters+1,))
             scores[0] = self.scorer(u[0], seg)
 
         velocity = numpy.zeros(img.shape)
@@ -322,7 +332,7 @@ class LevelSetMachineLearning:
                 print_string = "Iter: {:02d}, Score: {:0.5f}"
                 print(print_string.format(0, scores[0]))
 
-        for i in range(iters):
+        for i in range(n_iters):
             u[i+1] = u[i].copy()
 
             if mask.any():

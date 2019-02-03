@@ -422,8 +422,7 @@ class FitJobHandler:
             slope = numpy.linalg.lstsq(x, y, rcond=None)[0][1]
 
             msg = "Trend in validation scores is {:.7f} (tol = {:.7f})"
-            self._log_info_with_iter(
-                msg.format(va_hist_len, slope, va_hist_tol))
+            self._log_info_with_iter(msg.format(slope, va_hist_tol))
 
             if slope < va_hist_tol:  # trend is not increasing sufficiently
                 msg = "Early exit condition satisfied"
@@ -438,4 +437,3 @@ class FitJobHandler:
         """
         self.temp_data_handler.remove_tmp_data()
         self.model._is_fitted = True
-        logger.error("FIXME: truncate models based on validation scores")
