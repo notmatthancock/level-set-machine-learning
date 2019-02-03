@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 
 import numpy
 
@@ -16,6 +17,8 @@ from level_set_machine_learning.util.distance_transform import (
 
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_MODEL_FILENAME = 'LSML-model.pkl'
 
 
 class LevelSetMachineLearning:
@@ -88,6 +91,7 @@ class LevelSetMachineLearning:
             imgs=None,
             max_iters=100,
             random_state=numpy.random.RandomState(),
+            save_filename=DEFAULT_MODEL_FILENAME,
             seeds=center_of_mass_seeder,
             segs=None,
             step=None,
@@ -146,6 +150,10 @@ class LevelSetMachineLearning:
             :code:`seeds(dataset_example)`, where the argument is an instance
             of :code:`DatasetExample` from
             :module:`level_set_machine_learning.core.datasets_handler`.
+
+        save_filename: str
+            The filename to where the fitted level set machine learning model
+            will be pickled
 
         datasets_split: 3-tuple, default=(0.6, 0.2, 0.2)
             The items in the tuple correspond to the training, validation, and
@@ -214,7 +222,7 @@ class LevelSetMachineLearning:
             self.fit_job_handler.fit_regression_model()
             self.fit_job_handler.update_level_sets()
             self.fit_job_handler.compute_and_collect_scores()
-            # self.save()
+            self.save(save_filename)
 
             if self.fit_job_handler.can_exit_early():
                 break
@@ -223,7 +231,22 @@ class LevelSetMachineLearning:
         self.fit_job_handler.clean_up()
 
         # Write the model to disk
-        # self.save()
+        self.save(save_filename)
+
+    def save(self, filename):
+        """ Write the LevelSetMachineLearning to disk
+        """
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(filename):
+        """ Load a LevelSetMachineLearning model from disk
+        """
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+
+        return model
 
     #################################################################
     # Attributes / methods available after model fit

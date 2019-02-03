@@ -44,6 +44,7 @@ class FitJobHandler:
                  random_state,
                  regression_model_class,
                  regression_model_kwargs,
+                 save_filename,
                  seeds,
                  segs,
                  step,

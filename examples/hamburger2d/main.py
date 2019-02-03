@@ -13,13 +13,9 @@ from level_set_machine_learning.initializer.provided.random_ball import (
 
 # Create a dataset with 50 samples with randomly generated "hamburger" images
 n_samples = 50
-img_dim = 71
-imgs, segs = hamburger.make_dataset(
-    N=n_samples, n=img_dim, rad=[10, 16], cb=[1, 10],
-    cthick=[1, 5], verbose=False)
+imgs, segs = hamburger.make_dataset(N=n_samples)
 
-# Set up the features
-
+# Set up the features to be used
 features = [
     # Image features
     ImageSample(sigma=0, ndim=2),
@@ -45,5 +41,6 @@ lsml = LevelSetMachineLearning(
 random_state = np.random.RandomState(1234)
 lsml.fit('dataset.h5', imgs=imgs, segs=segs,
          regression_model_class=RandomForestRegressor,
-         regression_model_kwargs={}, max_iters=100,
-         random_state=random_state)
+         regression_model_kwargs={'n_estimators': 100,
+                                  'random_state': random_state},
+         max_iters=100, random_state=random_state)
