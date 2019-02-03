@@ -367,7 +367,10 @@ class FitJobHandler:
         fit_proc.join()
 
         if fit_proc.exitcode != 0:
-            msg = "An error occurred during regression model fit"
+            msg = ("Exiting due to error during regression model fit; temp "
+                   "data remains intact at {}").format(
+                self.temp_data_handler.tmp_data_location)
+
             self._log_with_iter(msg, level='error')
             raise RuntimeError(msg)
 
@@ -376,6 +379,7 @@ class FitJobHandler:
         """
 
         try:
+
             features = self.temp_data_handler.load_array('features.npy')
             targets = self.temp_data_handler.load_array('targets.npy')
 
@@ -389,7 +393,10 @@ class FitJobHandler:
             self._store_regression_model(regression_model)
 
         except Exception as e:
-            self._log_with_iter(repr(e), level='error')
+            import traceback
+            msg = "Error occurred during regression model fit:\n{}"
+            msg = msg.format(traceback.format_exc())
+            self._log_with_iter(msg, level='error')
             raise e
 
     def _store_regression_model(self, regression_model, iteration=None):
@@ -423,7 +430,7 @@ class FitJobHandler:
                                              regression_model_filename)
 
         # Un-pickle it!
-        with open(regression_model_path, 'wb') as f:
+        with open(regression_model_path, 'rb') as f:
             regression_model = pickle.load(f)
 
         return regression_model

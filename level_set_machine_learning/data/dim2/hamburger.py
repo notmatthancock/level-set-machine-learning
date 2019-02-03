@@ -4,7 +4,9 @@ import numpy as np
 from scipy.stats import beta
 from scipy.ndimage import gaussian_filter
 
-logger = loggin.getLogger(__name__)
+
+logger = logging.getLogger(__name__)
+
 
 def make(n=101, r=25, ishift=0, jshift=0,
          sigma_noise=0.1, sigma_smooth=2, 

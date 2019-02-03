@@ -308,7 +308,7 @@ class LevelSetMachineLearning:
         if iterate_until_validation_max:
             n_iters = self.validation_scores.mean(axis=1).argmax()
         else:
-            n_iters = len(self.regression_models)
+            n_iters = len(self.fit_job_handler.iteration)
 
         dx = numpy.ones(img_.ndim) if dx is None else dx
 
@@ -340,8 +340,10 @@ class LevelSetMachineLearning:
                 features = self.feature_map(
                     u=u[i], img=img_, dist=dist, mask=mask, dx=dx)
 
-                velocity[mask] = self.regression_models[i].predict(
-                    features[mask])
+                #velocity[mask] = self.regression_models[i].predict(
+                #    features[mask])
+                velocity[mask] = self._get_regression_model_prediction(
+                    iteration=i, features=features[mask])
 
                 gmag = mg.gradient_magnitude_osher_sethian(
                     arr=u[i], nu=velocity, mask=mask, dx=dx)
@@ -366,6 +368,13 @@ class LevelSetMachineLearning:
             return u
         else:
             return u, scores
+
+    @_requires_fit
+    def _get_regression_model_prediction(self, iteration, features):
+        regression_model = self.fit_job_handler._load_regression_model(
+            iteration=iteration)
+        velocity = regression_model.predict(features)
+        return velocity
 
     @property
     @_requires_fit
