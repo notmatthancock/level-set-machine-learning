@@ -1,7 +1,10 @@
+import logging
+
 import numpy as np
 from scipy.stats import beta
 from scipy.ndimage import gaussian_filter
 
+logger = loggin.getLogger(__name__)
 
 def make(n=101, r=25, ishift=0, jshift=0,
          sigma_noise=0.1, sigma_smooth=2, 
@@ -166,7 +169,7 @@ def make_dataset(N, n=101, rad=[30,50], shift=[0,0],
                 meta.append(info)
             i+=1
             
-            if verbose: print(pstr % i)
+            if verbose: logger.info(pstr % i)
         except ValueError as e:
             if print_mistakes:
                 print("Bad params:", e, "... Continuing to next iteration")

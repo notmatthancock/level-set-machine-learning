@@ -1,4 +1,7 @@
 import logging
+import multiprocessing
+import os
+import pickle
 
 import numpy
 
@@ -14,11 +17,17 @@ from level_set_machine_learning.util.distance_transform import (
 
 logger = logging.getLogger(__name__)
 
+REGRESSION_MODEL_DIRNAME = 'regression-models'
+REGRESSION_MODEL_FILENAME = 'regression-model-{:d}.pkl'
+
 
 def setup_logging():
     """ Sets up logging formatting, etc
     """
     logger_filename = "fit-log.txt"
+
+    if os.path.exists(logger_filename):
+        os.remove(logger_filename)
 
     line_fmt = ("[%(asctime)s] [%(name)s:%(lineno)d] "
                 "%(levelname)-8s %(message)s")
@@ -132,8 +141,23 @@ class FitJobHandler:
         self.temp_data_handler = TemporaryDataHandler(tmp_dir=temp_data_dir)
         self.temp_data_handler.make_tmp_location()
 
-    def _log_info_with_iter(self, msg):
-        logger.info("(Iteration = {:03d}) {:s}".format(self.iteration, msg))
+    def _log_with_iter(self, msg, level='info'):
+        """ Write to the logger with the current iteration number prepended
+        to the log message
+        """
+
+        full_message = "(Iteration = {:03d}) {:s}".format(self.iteration, msg)
+
+        if level == 'info':
+            logger.info(full_message)
+        elif level == 'debug':
+            logger.debug(full_message)
+        elif level == 'warning':
+            logger.warning(full_message)
+        elif level == 'error':
+            logger.error(full_message)
+        else:
+            raise ValueError("Unknown log level: {}".format(level))
 
     def get_seed(self, example):
         if callable(self.seeds):
@@ -206,7 +230,7 @@ class FitJobHandler:
     def compute_and_collect_scores(self):
         """ Collect and store the scores at the current iteration
         """
-        self._log_info_with_iter("Collecting scores")
+        self._log_with_iter("Collecting scores")
 
         with self.temp_data_handler.open_h5_file() as temp_file:
             for example in self.datasets_handler.iterate_examples():
@@ -232,7 +256,7 @@ class FitJobHandler:
                 for key in self.datasets_handler.iterate_keys(dataset_key)
             ])
             msg = "Average score over {:s} = {:.7f}"
-            self._log_info_with_iter(msg.format(dataset_key, mean))
+            self._log_with_iter(msg.format(dataset_key, mean))
 
     def _featurize_all_images(self, dataset_key):
         """ Featurize all the images in the dataset given by the argument
@@ -329,28 +353,87 @@ class FitJobHandler:
         from level_set_machine_learning.core.datasets_handler import (
             TRAINING_DATASET_KEY)
 
-        self._log_info_with_iter("Fitting regression model")
+        self._log_with_iter("Fitting regression model")
 
         # Get input and output variables
         features, targets = self._featurize_all_images(
             dataset_key=TRAINING_DATASET_KEY)
 
-        # Instantiate the regression model
-        regression_model = self.regression_model_class(
-            **self.regression_model_kwargs)
+        self.temp_data_handler.store_array('features.npy', features)
+        self.temp_data_handler.store_array('targets.npy', targets)
 
-        # Fit it!
-        regression_model.fit(features, targets)
+        fit_proc = multiprocessing.Process(target=self._fit_regression_model)
+        fit_proc.start()
+        fit_proc.join()
 
-        # Add it to the list
-        self.regression_models.append(regression_model)
+        if fit_proc.exitcode != 0:
+            msg = "An error occurred during regression model fit"
+            self._log_with_iter(msg, level='error')
+            raise RuntimeError(msg)
+
+    def _fit_regression_model(self):
+        """ Target for fitting the regression model in a new process
+        """
+
+        try:
+            features = self.temp_data_handler.load_array('features.npy')
+            targets = self.temp_data_handler.load_array('targets.npy')
+
+            # Instantiate the regression model
+            regression_model = self.regression_model_class(
+                **self.regression_model_kwargs)
+
+            # Fit it!
+            regression_model.fit(features, targets)
+
+            self._store_regression_model(regression_model)
+
+        except Exception as e:
+            self._log_with_iter(repr(e), level='error')
+            raise e
+
+    def _store_regression_model(self, regression_model, iteration=None):
+        """ Pickle the regression model for given iteration to disk. None
+        uses `self.iteration`.
+        """
+        iter = iteration or self.iteration
+
+        # Create the folder for storing the regression models if necessary
+        if not os.path.exists(REGRESSION_MODEL_DIRNAME):
+            os.makedirs(REGRESSION_MODEL_DIRNAME)
+
+        # Build the regression model path from defaults and current iteration
+        regression_model_filename = REGRESSION_MODEL_FILENAME.format(iter)
+        regression_model_path = os.path.join(REGRESSION_MODEL_DIRNAME,
+                                             regression_model_filename)
+
+        # Pickle it!
+        with open(regression_model_path, 'wb') as f:
+            pickle.dump(regression_model, f)
+
+    def _load_regression_model(self, iteration=None):
+        """ Load the regression model for the given iteration from disk. The
+        default of None uses `self.iteration`.
+        """
+        iter = iteration or self.iteration
+
+        # Build the regression model path from defaults and current iteration
+        regression_model_filename = REGRESSION_MODEL_FILENAME.format(iter)
+        regression_model_path = os.path.join(REGRESSION_MODEL_DIRNAME,
+                                             regression_model_filename)
+
+        # Un-pickle it!
+        with open(regression_model_path, 'wb') as f:
+            regression_model = pickle.load(f)
+
+        return regression_model
 
     def update_level_sets(self):
         """ Update all the level sets using the learned regression model
         """
-        self._log_info_with_iter("Updating level sets")
+        self._log_with_iter("Updating level sets")
 
-        regression_model = self.regression_models[-1]
+        regression_model = self._load_regression_model()
 
         # Loop over all indices in the validation dataset.
         for example in self.datasets_handler.iterate_examples():
@@ -383,6 +466,8 @@ class FitJobHandler:
                     # Here's the actual level set update.
                     u[mask] += self.step*velocity[mask]*gmag[mask]
 
+                    # Update the distance transform and mask
+                    # after the level set field has been updated
                     dist, mask = distance_transform(
                         arr=u, band=self.model.band, dx=example.dx)
 
@@ -401,7 +486,7 @@ class FitJobHandler:
         va_hist_len = self.validation_history_len
         va_hist_tol = self.validation_history_tol
 
-        self._log_info_with_iter("Checking early exit condition")
+        self._log_with_iter("Checking early exit condition")
 
         if iteration >= va_hist_len-1:
 
@@ -422,14 +507,14 @@ class FitJobHandler:
             slope = numpy.linalg.lstsq(x, y, rcond=None)[0][1]
 
             msg = "Trend in validation scores is {:.7f} (tol = {:.7f})"
-            self._log_info_with_iter(msg.format(slope, va_hist_tol))
+            self._log_with_iter(msg.format(slope, va_hist_tol))
 
             if slope < va_hist_tol:  # trend is not increasing sufficiently
                 msg = "Early exit condition satisfied"
-                self._log_info_with_iter(msg)
+                self._log_with_iter(msg)
                 return True
 
-        self._log_info_with_iter("Early stop conditions not satisfied")
+        self._log_with_iter("Early stop conditions not satisfied")
         return False
 
     def clean_up(self):

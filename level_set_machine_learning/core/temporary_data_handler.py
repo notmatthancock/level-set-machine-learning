@@ -4,6 +4,7 @@ import shutil
 import time
 
 import h5py
+import numpy
 
 
 # The name of the temporary hdf5 file to be created
@@ -54,6 +55,18 @@ class TemporaryDataHandler:
         """ Returns the full path to the hdf5 file holding the temporary data
         """
         return os.path.join(self.tmp_data_location, TMP_H5_FILE_NAME)
+
+    def store_array(self, filename, array):
+        """ Store a numpy array in the temp data location
+        """
+        path = os.path.join(self.tmp_data_location, filename)
+        numpy.save(path, array)
+
+    def load_array(self, filename):
+        """ Load a numpy array in the temp data location
+        """
+        path = os.path.join(self.tmp_data_location, filename)
+        return numpy.load(path)
 
     @contextlib.contextmanager
     def open_h5_file(self, lock=False):
