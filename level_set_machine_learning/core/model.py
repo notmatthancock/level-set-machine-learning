@@ -340,8 +340,6 @@ class LevelSetMachineLearning:
                 features = self.feature_map(
                     u=u[i], img=img_, dist=dist, mask=mask, dx=dx)
 
-                #velocity[mask] = self.regression_models[i].predict(
-                #    features[mask])
                 velocity[mask] = self._get_regression_model_prediction(
                     iteration=i, features=features[mask])
 
