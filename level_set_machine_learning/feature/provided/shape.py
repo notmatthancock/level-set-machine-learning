@@ -265,4 +265,3 @@ class DistanceToCenterOfMass(BaseShapeFeature):
                                           axis=0)[mask]
 
         return feature
-
