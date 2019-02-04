@@ -3,7 +3,7 @@ from skimage.measure import marching_cubes_lewiner as marching_cubes
 from skimage.measure import find_contours, mesh_surface_area
 
 from level_set_machine_learning.feature.base_feature import (
-    BaseShapeFeature, GLOBAL_FEATURE_TYPE)
+    BaseShapeFeature, GLOBAL_FEATURE_TYPE, LOCAL_FEATURE_TYPE)
 
 
 class Size(BaseShapeFeature):
@@ -236,3 +236,33 @@ class Moment(BaseShapeFeature):
         feature[mask] = moment
 
         return feature
+
+
+class DistanceToCenterOfMass(BaseShapeFeature):
+    """ Computes the distance to the computed center of mass
+    """
+    locality = LOCAL_FEATURE_TYPE
+
+    @property
+    def name(self):
+        return "Distance to center of mass"
+
+    def compute_feature(self, u, dist, mask, dx):
+
+        # Sneakily use the center of mass utility buried in the
+        # moment feature class
+        moment_feature = Moment(ndim=self.ndim)
+        center_of_mass = moment_feature._compute_center_of_mass(u, dx)
+
+        # Add extra axes for some broadcasting below
+        slicer = tuple([slice(None), ] + [None for _ in range(self.ndim)])
+
+        indices = numpy.indices(u.shape, dtype=numpy.float)
+        mesh = indices * dx[slicer]
+
+        feature = numpy.empty_like(u)
+        feature[mask] = numpy.linalg.norm(mesh - center_of_mass[slicer],
+                                          axis=0)[mask]
+
+        return feature
+
