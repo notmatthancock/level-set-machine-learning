@@ -16,7 +16,7 @@ from level_set_machine_learning.util.distance_transform import (
     distance_transform)
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__.replace('level_set_machine_learning', ''))
 
 DEFAULT_MODEL_FILENAME = 'LSML-model.pkl'
 
@@ -75,6 +75,11 @@ class LevelSetMachineLearning:
         self.scorer = scorer
         self.band = band
         self.normalize_imgs = normalize_imgs
+
+        # These are filled in with `DatasetProxy` post fit
+        self.training_data = None
+        self.validation_data = None
+        self.testing_data = None
 
         self.fit_job_handler = None
         self._is_fitted = False
@@ -403,7 +408,6 @@ class LevelSetMachineLearning:
         from .datasets_handler import TESTING_DATASET_KEY
         return self._get_scores_for_dataset(TESTING_DATASET_KEY)
 
-    @property
     @_requires_fit
-    def regression_models(self):
-        return self.fit_job_handler.regression_models
+    def regression_model(self, iteration):
+        return self.fit_job_handler._load_regression_model(iteration=iteration)

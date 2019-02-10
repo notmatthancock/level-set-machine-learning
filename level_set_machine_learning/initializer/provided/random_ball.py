@@ -41,12 +41,15 @@ class RandomBallInitializer(InitializerBase):
         # Seed the random state from the image so that the same "random"
         # initialization is given for identical image inputs
         seed_value = self._get_seed_value_from_image(img)
+
+        # Save the state to be reset later
+        state = self.random_state.get_state()
         self.random_state.seed(seed_value)
 
         # Generate a random radius
-        radius = (5 * dx.min() +
-                  self.random_state.rand() *
-                  min(dx * img.shape) * 0.25)
+        min_dim = min(dx * img.shape)
+        radius = self.random_state.uniform(
+            low=0.20*min_dim, high=0.25*min_dim)
 
         indices = [numpy.arange(img.shape[i], dtype=numpy.float)*dx[i]
                    for i in range(img.ndim)]
@@ -71,5 +74,8 @@ class RandomBallInitializer(InitializerBase):
         indices **= 2
 
         init_mask = indices.sum(axis=0)**0.5 <= radius
+
+        # Reset the random state state
+        self.random_state.set_state(state)
 
         return init_mask

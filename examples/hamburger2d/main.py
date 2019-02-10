@@ -10,6 +10,8 @@ from level_set_machine_learning.feature.provided.shape import (
     BoundarySize, DistanceToCenterOfMass, IsoperimetricRatio, Moment, Size)
 from level_set_machine_learning.initializer.provided.random_ball import (
     RandomBallInitializer)
+from level_set_machine_learning.initializer.provided.threshold import (
+    ThresholdInitializer)
 
 
 random_state = np.random.RandomState(1234)
@@ -40,12 +42,15 @@ features = [
 # Instantiate the model with features and initializer
 lsml = LevelSetMachineLearning(
     features=features,
-    initializer=RandomBallInitializer()
+    initializer=RandomBallInitializer(random_state=random_state)
 )
+
+from sklearn.linear_model import LinearRegression
 
 # Fit the model
 lsml.fit('dataset.h5', imgs=imgs, segs=segs,
-         regression_model_class=RandomForestRegressor,
-         regression_model_kwargs={'n_estimators': 10,
-                                  'random_state': random_state},
-         max_iters=150, random_state=random_state)
+         regression_model_class=LinearRegression,#RandomForestRegressor,
+         regression_model_kwargs={},
+         #regression_model_kwargs={'n_estimators': 10,
+         #                         'random_state': random_state},
+         max_iters=300, random_state=random_state)

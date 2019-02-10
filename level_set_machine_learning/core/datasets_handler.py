@@ -8,7 +8,7 @@ import numpy
 import skfmm
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__.replace('level_set_machine_learning', ''))
 
 
 TRAINING_DATASET_KEY = 'training'
@@ -403,11 +403,12 @@ class DatasetsHandler:
             return None
 
     def iterate_keys(self, dataset_key=None):
+
         for i in range(self.n_examples):
 
             example_key = self._example_key_from_index(i)
 
-            if (dataset_key and self._in_dataset(
+            if (not dataset_key or self._in_dataset(
                     example_key=example_key, dataset_key=dataset_key)):
                 yield example_key
 
@@ -420,6 +421,21 @@ class DatasetsHandler:
 
             example = DatasetExample(
                 index=index,
+                key=example_key,
+                img=hf[example_key][IMAGE_KEY][...],
+                seg=hf[example_key][SEGMENTATION_KEY][...],
+                dist=hf[example_key][DISTANCE_TRANSFORM_KEY][...],
+                dx=hf[example_key].attrs['dx']
+            )
+
+        return example
+
+    def _get_example_by_key(self, example_key):
+
+        with self.open_h5_file() as hf:
+
+            example = DatasetExample(
+                index=int(example_key.split('-')[-1]),
                 key=example_key,
                 img=hf[example_key][IMAGE_KEY][...],
                 seg=hf[example_key][SEGMENTATION_KEY][...],
@@ -482,3 +498,27 @@ class DatasetsHandler:
         """ Returns True if example key is in the testing dataset
         """
         return self._in_dataset(example_key, TESTING_DATASET_KEY)
+
+
+class DatasetProxy:
+    """ A proxy object attached to a level set machine learning model
+    after fitting so that we can do things like `model.training_data[0]`"""
+
+    def __init__(self, datasets_handler, dataset_key):
+
+        self._datasets_handler = datasets_handler
+        self._dataset_key = dataset_key
+
+    def __len__(self):
+        return len(self._datasets_handler.datasets[self._dataset_key])
+
+    def __getitem__(self, item):
+
+        if not isinstance(item, int):
+            raise KeyError
+
+        key = self._datasets_handler.datasets[self._dataset_key][item]
+        return self._datasets_handler._get_example_by_key(key)
+
+    def __iter__(self):
+        return (self[i] for i in range(len(self)))

@@ -15,7 +15,7 @@ from level_set_machine_learning.util.distance_transform import (
     distance_transform)
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__.replace('level_set_machine_learning', ''))
 
 REGRESSION_MODEL_DIRNAME = 'regression-models'
 REGRESSION_MODEL_FILENAME = 'regression-model-{:d}.pkl'
@@ -513,7 +513,7 @@ class FitJobHandler:
             # The slope of the best fit line.
             slope = numpy.linalg.lstsq(x, y, rcond=None)[0][1]
 
-            msg = "Trend in validation scores is {:.7f} (tol = {:.7f})"
+            msg = "Validation trend = {:.6f} (Exits when ≤ {:.6f})"
             self._log_with_iter(msg.format(slope, va_hist_tol))
 
             if slope < va_hist_tol:  # trend is not increasing sufficiently
@@ -527,5 +527,24 @@ class FitJobHandler:
     def clean_up(self):
         """ Handles exit procedures, e.g., removing temp data
         """
+        from level_set_machine_learning.core.datasets_handler import (
+            DatasetProxy,
+            TESTING_DATASET_KEY, TRAINING_DATASET_KEY, VALIDATION_DATASET_KEY)
+
+        # Eliminate the temporary data used during fit
         self.temp_data_handler.remove_tmp_data()
+
+        # Build the dataset proxy objects and attach to the model
+        self.model.training_data = DatasetProxy(
+            datasets_handler=self.datasets_handler,
+            dataset_key=TRAINING_DATASET_KEY)
+
+        self.model.validation_data = DatasetProxy(
+            datasets_handler=self.datasets_handler,
+            dataset_key=VALIDATION_DATASET_KEY)
+
+        self.model.testing_data = DatasetProxy(
+            datasets_handler=self.datasets_handler,
+            dataset_key=TESTING_DATASET_KEY)
+
         self.model._is_fitted = True

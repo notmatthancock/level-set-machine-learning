@@ -93,7 +93,7 @@ def make(n=101, r=25, ishift=0, jshift=0,
 def make_dataset(N, n=101, rad=[30,50], shift=[0,0],
                  nsig=[0.3,0.5], ssig=[0,0], cthick=[10,15],
                  ctheta=[0,2*np.pi], cb=[0,10], return_meta=False,
-                 verbose=True, rs=None, print_mistakes=False):
+                 verbose=True, random_state=None, print_mistakes=False):
     """
     Make a randomly generated dataset of hamburger data.
 
@@ -129,14 +129,14 @@ def make_dataset(N, n=101, rad=[30,50], shift=[0,0],
     return_meta: bool, default=False
         Return a list of meta data attributes for each example if True.
 
-    rs: numpy.random.RandomState, default=None
+    random_state: numpy.random.RandomState, default=None
         Include a for reproducible results.
 
     print_mistakes: bool, default=False
     """
-    rs = rs if rs is not None else np.random.RandomState()
+    random_state = random_state if random_state is not None else np.random.RandomState()
     def betarvs(**kwargs):
-        return beta.rvs(3,3,random_state=rs,**kwargs)
+        return beta.rvs(3, 3, random_state=random_state, **kwargs)
 
     imgs = np.zeros((N,n,n))
     segs = np.zeros((N,n,n), dtype=np.bool)
@@ -161,10 +161,10 @@ def make_dataset(N, n=101, rad=[30,50], shift=[0,0],
             cut_b = betarvs(loc=cb[0], scale=cb[1]-cb[0])
             cut_thickness = betarvs(loc=cthick[0], scale=cthick[1]-cthick[0])
             cut_theta = betarvs(loc=ctheta[0], scale=ctheta[1]-ctheta[0])
-            img,seg,info = make(n, r, ishift, jshift, 
+            img,seg,info = make(n, r, ishift, jshift,
                                 sigma_noise, sigma_smooth,
                                 cut_b=cut_b, cut_theta=cut_theta,
-                                cut_thickness=cut_thickness, rs=rs)
+                                cut_thickness=cut_thickness, rs=random_state)
             imgs[i] = img
             segs[i] = seg
             if return_meta:
