@@ -261,7 +261,7 @@ class DistanceToCenterOfMass(BaseShapeFeature):
         mesh = indices * dx[slicer]
 
         feature = numpy.empty_like(u)
-        feature[mask] = numpy.linalg.norm(mesh - center_of_mass[slicer],
-                                          axis=0)[mask]
+        feature[mask] = numpy.linalg.norm(
+            mesh - center_of_mass[slicer], axis=0)[mask]
 
         return feature
