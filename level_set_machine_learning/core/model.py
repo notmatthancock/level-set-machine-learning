@@ -269,7 +269,7 @@ class LevelSetMachineLearning:
         return method_wrapped
 
     @_requires_fit
-    def segment(self, img, seg=None, dx=None, verbose=True,
+    def segment(self, img, dx=None, verbose=True, on_iterate=None,
                 iterate_until_validation_max=True):
         """
         Segment `img`.
@@ -279,16 +279,16 @@ class LevelSetMachineLearning:
         img: ndarray
             The image
 
-        seg: ndarray, default=None
-            The boolean segmentation volume. If provided (not None), then
-            the score for the model against the ground-truth `seg` is
-            computed and returned.
-
         dx: ndarray or list, default=None
             List of the spatial delta terms along each axis; default is ones
 
         verbose: bool, default=True
             Print progress
+
+        on_iterate: callable or list of callables, default=None
+            Supply a callable to be performed prior to each level set iteration
+            The expected signature is :code:`on_iterate(i, u)`
+            where :code:`u` is level set function at iteration :code:`i`
 
         iterate_until_validation_max: bool, default=True
             If True, then the iteration will stop at the index corresponding
@@ -298,13 +298,15 @@ class LevelSetMachineLearning:
 
         Returns
         -------
-        u[, scores]: ndarray[, ndarray]
-            `u` is shape `(len(self.models)+1,) + img.shape`, where `u[i]`
-            is the i'th iterate of the level set function and `u[i] > 0`
+        us: ndarray
+            `us` is shape `(len(self.models)+1,) + img.shape`, where `us[i]`
+            is the i'th iterate of the level set function and `us[i] > 0`
             yields an approximate boolean-mask segmentation of `img` at
-            the i'th iteration.
+            the i'th iteration
 
         """
+        ############################################################
+        # Input validation
         if self.normalize_imgs:
             img_ = (img - img.mean()) / img.std()
         else:
@@ -320,57 +322,58 @@ class LevelSetMachineLearning:
         if dx.shape[0] != img_.ndim:
             raise ValueError("`dx` has incorrect number of elements.")
 
-        u = numpy.zeros((n_iters+1,) + img.shape)
-        u[0], dist, mask = self.initializer(img_, self.band, dx=dx)
+        if on_iterate:
+            if not isinstance(on_iterate, list):
+                on_iterate = [on_iterate]
 
-        if seg is not None:
-            scores = numpy.zeros((n_iters+1,))
-            scores[0] = self.scorer(u[0], seg)
+            if not all([callable(func) for func in on_iterate]):
+                msg = "All on_iterate items must be callable"
+                raise TypeError(msg)
+        # End Input validation
+        ############################################################
+
+        us = numpy.zeros((n_iters+1,) + img.shape)
+        us[0], dist, mask = self.initializer(img_, self.band, dx=dx)
+
+        if on_iterate:
+            for func in on_iterate:
+                func(0, us[0])
 
         velocity = numpy.zeros(img.shape)
 
+        print_string = "Iter: {:02d}"
         if verbose:
-            if seg is None:
-                print_string = "Iter: {:02d}"
-                print(print_string.format(0))
-            else:
-                print_string = "Iter: {:02d}, Score: {:0.5f}"
-                print(print_string.format(0, scores[0]))
+            print(print_string.format(0))
 
         for i in range(n_iters):
-            u[i+1] = u[i].copy()
+            us[i+1] = us[i].copy()
 
             if mask.any():
                 # Compute the features, and use the model to predict velocity
                 features = self.feature_map(
-                    u=u[i], img=img_, dist=dist, mask=mask, dx=dx)
+                    u=us[i], img=img_, dist=dist, mask=mask, dx=dx)
 
                 velocity[mask] = self._get_regression_model_prediction(
                     iteration=i, features=features[mask])
 
                 gmag = mg.gradient_magnitude_osher_sethian(
-                    arr=u[i], nu=velocity, mask=mask, dx=dx)
+                    arr=us[i], nu=velocity, mask=mask, dx=dx)
 
                 # Update the level set.
-                u[i+1][mask] += self.step*velocity[mask]*gmag[mask]
+                us[i+1][mask] += self.step*velocity[mask]*gmag[mask]
 
                 # Check for level set vanishing.
                 dist, mask = distance_transform(
-                    arr=u[i+1], band=self.band, dx=dx)
-
-            if seg is not None:
-                scores[i+1] = self.scorer(u[i+1], seg)
+                    arr=us[i+1], band=self.band, dx=dx)
 
             if verbose:
-                if seg is None:
-                    print(print_string.format(i+1))
-                else:
-                    print(print_string.format(i+1, scores[i+1]))
+                print(print_string.format(i+1))
 
-        if seg is None:
-            return u
-        else:
-            return u, scores
+            if on_iterate:
+                for func in on_iterate:
+                    func(i+1, us[i+1])
+
+        return us
 
     @_requires_fit
     def _get_regression_model_prediction(self, iteration, features):
