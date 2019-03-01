@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import pickle
@@ -260,6 +261,7 @@ class LevelSetMachineLearning:
     def _requires_fit(method):
         """ Decorator for methods that require a fitted model
         """
+        @functools.wraps(method)
         def method_wrapped(self, *args, **kwargs):
             if not self._is_fitted:
                 raise ModelNotFit("This model has not been fit yet")
@@ -272,7 +274,7 @@ class LevelSetMachineLearning:
     def segment(self, img, dx=None, verbose=True, on_iterate=None,
                 iterate_until_validation_max=True):
         """
-        Segment `img`.
+        Segment `img`
 
         Parameters
         ----------
