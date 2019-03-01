@@ -1,5 +1,0 @@
-Visualization utilities
------------------------
-
-.. automodule:: LevelSetMachineLearning.utils.visualize
-    :members:

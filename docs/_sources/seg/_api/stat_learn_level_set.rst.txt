@@ -1,5 +1,0 @@
-Stat Learn Level Set
---------------------
-
-.. autoclass:: LevelSetMachineLearning.LevelSetMachineLearning
-    :members:

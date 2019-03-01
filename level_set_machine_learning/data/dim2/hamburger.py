@@ -90,8 +90,8 @@ def make(n=101, r=25, ishift=0, jshift=0,
     return img,seg,info
 
 
-def make_dataset(N, n=101, rad=[30,50], shift=[0,0],
-                 nsig=[0.3,0.5], ssig=[0,0], cthick=[10,15],
+def make_dataset(N, n=51, rad=[15,21], shift=[0,0],
+                 nsig=[0.3,0.5], ssig=[0,0], cthick=[4,7],
                  ctheta=[0,2*np.pi], cb=[0,10], return_meta=False,
                  verbose=True, random_state=None, print_mistakes=False):
     """

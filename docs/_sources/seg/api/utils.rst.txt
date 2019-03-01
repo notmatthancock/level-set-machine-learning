@@ -1,8 +1,0 @@
-Utils
------
-
-.. automodule:: LevelSetMachineLearning.utils.masked_grad
-    :members:
-
-.. automodule:: LevelSetMachineLearning.utils.visualize
-    :members:

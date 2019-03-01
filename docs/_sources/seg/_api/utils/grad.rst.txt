@@ -1,5 +1,0 @@
-Masked gradient utilities
--------------------------
-
-.. automodule:: LevelSetMachineLearning.utils.masked_grad
-    :members:

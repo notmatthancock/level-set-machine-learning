@@ -1,5 +1,0 @@
-Gradient Utilities
-------------------
-
-.. automodule:: LevelSetMachineLearning.utils.masked_grad
-    :members:
