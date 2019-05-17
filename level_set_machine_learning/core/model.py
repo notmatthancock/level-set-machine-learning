@@ -17,7 +17,8 @@ from level_set_machine_learning.util.distance_transform import (
     distance_transform)
 
 
-logger = logging.getLogger(__name__.replace('level_set_machine_learning', ''))
+_logger_name = __name__.rsplit('.', 1)[-1]
+logger = logging.getLogger(_logger_name)
 
 DEFAULT_MODEL_FILENAME = 'LSML-model.pkl'
 
@@ -86,11 +87,12 @@ class LevelSetMachineLearning:
         self._is_fitted = False
 
     def fit(self,
-            # Args
+            # args
             data_filename,
             regression_model_class,
             regression_model_kwargs,
-            # KWArgs
+
+            # kwargs
             balance_regression_targets=True,
             datasets_split=(0.6, 0.2, 0.2),
             dx=None,
@@ -220,11 +222,13 @@ class LevelSetMachineLearning:
         self.fit_job_handler.compute_and_collect_scores()
 
         for self.fit_job_handler.iteration in range(1, max_iters+1):
+            # Log things
             logger.info("*"*40)
             msg = "Beginning iteration {:03d}"
             logger.info(msg.format(self.fit_job_handler.iteration))
             logger.info("*"*40)
 
+            # Do LSML regression model fit + level set update
             self.fit_job_handler.fit_regression_model()
             self.fit_job_handler.update_level_sets()
             self.fit_job_handler.compute_and_collect_scores()
@@ -272,6 +276,7 @@ class LevelSetMachineLearning:
 
     @_requires_fit
     def segment(self, img, dx=None, verbose=True, on_iterate=None,
+                return_scores=False, seg=None,
                 iterate_until_validation_max=True):
         """
         Segment `img`
@@ -292,6 +297,12 @@ class LevelSetMachineLearning:
             The expected signature is :code:`on_iterate(i, u)`
             where :code:`u` is level set function at iteration :code:`i`
 
+        return_scores: bool, default=False,
+            Flag to return the scores per iteration
+
+        seg: ndarray, default=None
+            The segmentation mask. Only required when `return_scores=True`
+
         iterate_until_validation_max: bool, default=True
             If True, then the iteration will stop at the index corresponding
             to the global max over the validation data; otherwise, iterations
@@ -300,7 +311,7 @@ class LevelSetMachineLearning:
 
         Returns
         -------
-        us: ndarray
+        us[, scores]: ndarray[, ndarray]
             `us` is shape `(len(self.models)+1,) + img.shape`, where `us[i]`
             is the i'th iterate of the level set function and `us[i] > 0`
             yields an approximate boolean-mask segmentation of `img` at
@@ -317,7 +328,7 @@ class LevelSetMachineLearning:
         if iterate_until_validation_max:
             n_iters = self.validation_scores.mean(axis=1).argmax()
         else:
-            n_iters = len(self.fit_job_handler.iteration)
+            n_iters = self.fit_job_handler.iteration
 
         dx = numpy.ones(img_.ndim) if dx is None else dx
 
@@ -331,12 +342,24 @@ class LevelSetMachineLearning:
             if not all([callable(func) for func in on_iterate]):
                 msg = "All on_iterate items must be callable"
                 raise TypeError(msg)
+        if return_scores:
+            if seg is None:
+                msg = "`seg` must be provided to when `return_scores` is True"
+                raise ValueError(msg)
+            from level_set_machine_learning.util.on_iterate import (
+                collect_scores)
+
+            if on_iterate is None:
+                on_iterate = []
+            the_score_collector = collect_scores(seg, self.scorer)
+            on_iterate.append(the_score_collector)
         # End Input validation
         ############################################################
 
         us = numpy.zeros((n_iters+1,) + img.shape)
         us[0], dist, mask = self.initializer(img_, self.band, dx=dx)
 
+        # Call all of the `on_iterate` callbacks
         if on_iterate:
             for func in on_iterate:
                 func(0, us[0])
@@ -355,8 +378,9 @@ class LevelSetMachineLearning:
                 features = self.feature_map(
                     u=us[i], img=img_, dist=dist, mask=mask, dx=dx)
 
-                velocity[mask] = self._get_regression_model_prediction(
-                    iteration=i, features=features[mask])
+                regression_model = self.fit_job_handler._load_regression_model(
+                    iteration=i+1)
+                velocity[mask] = regression_model.predict(features[mask])
 
                 gmag = mg.gradient_magnitude_osher_sethian(
                     arr=us[i], nu=velocity, mask=mask, dx=dx)
@@ -371,18 +395,15 @@ class LevelSetMachineLearning:
             if verbose:
                 print(print_string.format(i+1))
 
+            # Call all of the `on_iterate` callbacks
             if on_iterate:
                 for func in on_iterate:
                     func(i+1, us[i+1])
 
-        return us
-
-    @_requires_fit
-    def _get_regression_model_prediction(self, iteration, features):
-        regression_model = self.fit_job_handler._load_regression_model(
-            iteration=iteration)
-        velocity = regression_model.predict(features)
-        return velocity
+        if return_scores:
+            return us, numpy.array(the_score_collector.scores)
+        else:
+            return us
 
     @property
     @_requires_fit

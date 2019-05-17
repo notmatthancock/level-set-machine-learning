@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import pickle
+import sys
 
 import numpy
 
@@ -15,7 +16,8 @@ from level_set_machine_learning.util.distance_transform import (
     distance_transform)
 
 
-logger = logging.getLogger(__name__.replace('level_set_machine_learning', ''))
+_logger_name = __name__.rsplit('.', 1)[-1]
+logger = logging.getLogger(_logger_name)
 
 REGRESSION_MODEL_DIRNAME = 'regression-models'
 REGRESSION_MODEL_FILENAME = 'regression-model-{:d}.pkl'
@@ -37,6 +39,19 @@ def setup_logging():
     logging.basicConfig(
         filename=logger_filename, format=line_fmt,
         datefmt=date_fmt, level=logging.DEBUG)
+
+    class StdOutLogger:
+        _logger = logging.getLogger('STD OUT CAPTURE')
+
+        def write(self, message):
+            if message != '\n':
+                self._logger.info(message)
+
+        def flush(self):
+            pass
+
+    sys._stdout = sys.stdout
+    sys.stdout = StdOutLogger()
 
 
 class FitJobHandler:
@@ -186,9 +201,16 @@ class FitJobHandler:
 
                 seed = self.get_seed(example)
 
+                # Normalize the image if necessary
+                if self.model.normalize_imgs:
+                    img_ = (example.img -
+                            example.img.mean()) / example.img.std()
+                else:
+                    img_ = example.img
+
                 # Compute the initializer for this example and seed value
                 u0, dist, mask = self.model.initializer(
-                    img=example.img, band=self.model.band,
+                    img=img_, band=self.model.band,
                     dx=example.dx, seed=seed)
 
                 # Auto step should only use training and validation datasets
@@ -359,6 +381,9 @@ class FitJobHandler:
         features, targets = self._featurize_all_images(
             dataset_key=TRAINING_DATASET_KEY)
 
+        msg = "... regression training set shapes: features={}, targets={}"
+        self._log_with_iter(msg.format(features.shape, targets.shape))
+
         self.temp_data_handler.store_array('features.npy', features)
         self.temp_data_handler.store_array('targets.npy', targets)
 
@@ -422,7 +447,10 @@ class FitJobHandler:
         """ Load the regression model for the given iteration from disk. The
         default of None uses `self.iteration`.
         """
-        iter = iteration or self.iteration
+        if iteration is None:
+            iter = self.iteration
+        else:
+            iter = iteration
 
         # Build the regression model path from defaults and current iteration
         regression_model_filename = REGRESSION_MODEL_FILENAME.format(iter)
@@ -442,7 +470,6 @@ class FitJobHandler:
 
         regression_model = self._load_regression_model()
 
-        # Loop over all indices in the validation dataset.
         for example in self.datasets_handler.iterate_examples():
 
             if self.model.normalize_imgs:
@@ -546,5 +573,11 @@ class FitJobHandler:
         self.model.testing_data = DatasetProxy(
             datasets_handler=self.datasets_handler,
             dataset_key=TESTING_DATASET_KEY)
+
+        # Give stdout back
+        try:
+            sys.stdout = sys._stdout
+        except AttributeError:
+            pass
 
         self.model._is_fitted = True

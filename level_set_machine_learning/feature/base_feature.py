@@ -47,7 +47,7 @@ class BaseFeature(abc.ABC):
     def __repr__(self):
         return self.__str__()
 
-    def __init__(self, ndim):
+    def __init__(self, ndim=2):
         """ Initialize the feature
 
         Parameters
@@ -169,6 +169,22 @@ class BaseImageFeature(BaseFeature):
     """ The abstract base class for all image features
     """
     type = IMAGE_FEATURE_TYPE
+
+    def __init__(self, ndim=2, sigma=3):
+        """ Initialize a smoothed image standard deviation feature
+
+        ndim: int
+            The number of dimensions in which the feature will be computed
+
+        sigma: float
+            The smooth parameter for Gaussian smoothing (note that
+            sigma = 0 yields no smoothing; also note that anisotropic
+            volumes will alter sigma along each axis according to the
+            provided dx terms)
+
+        """
+        super(BaseImageFeature, self).__init__(ndim)
+        self.sigma = sigma
 
 
 class BaseShapeFeature(BaseFeature):

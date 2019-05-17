@@ -3,7 +3,7 @@ used in the LevelSetMachineLearning.segment member function
 """
 
 
-def collect_scores(seg, score_list, score_func):
+def collect_scores(seg, score_func):
     """ Collects the scores from the iterations. Scores are appended to
     :code:`score_list` and so an empty list should be provided. Usage::
 
@@ -12,8 +12,12 @@ def collect_scores(seg, score_list, score_func):
         model.segment(img=img, on_iterate=[score_collector, ...])
     """
 
+    scores = []
+
     def on_iterate(i, u):
-        score_list.append(score_func(u, seg))
+        scores.append(score_func(u, seg))
+
+    on_iterate.scores = scores
 
     return on_iterate
 

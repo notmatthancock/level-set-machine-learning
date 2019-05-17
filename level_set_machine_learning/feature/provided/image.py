@@ -16,22 +16,6 @@ class ImageSample(BaseImageFeature):
     def name(self):
         return u"Image sample (\u03c3 = {:.3f})".format(self.sigma)
 
-    def __init__(self, ndim, sigma):
-        """ Initialize a smoothed image sample feature
-
-        ndim: int
-            The number of dimensions in which the feature will be computed
-
-        sigma: float
-            The smooth parameter for Gaussian smoothing (note that
-            sigma = 0 yields no smoothing; also note that anisotropic
-            volumes will alter sigma along each axis according to the
-            provided dx terms)
-
-        """
-        super(ImageSample, self).__init__(ndim)
-        self.sigma = sigma
-
     def compute_feature(self, u, img, dist, mask, dx):
         feature = numpy.empty_like(u)
 
@@ -57,22 +41,6 @@ class ImageEdgeSample(BaseImageFeature):
     @property
     def name(self):
         return u"Image edge sample (\u03c3 = {:.3f})".format(self.sigma)
-
-    def __init__(self, ndim, sigma):
-        """ Initialize a smoothed image sample feature
-
-        ndim: int
-            The number of dimensions in which the feature will be computed
-
-        sigma: float
-            The smooth parameter for Gaussian smoothing (note that
-            sigma = 0 yields no smoothing; also note that anisotropic
-            volumes will alter sigma along each axis according to the
-            provided dx terms)
-
-        """
-        super(ImageEdgeSample, self).__init__(ndim)
-        self.sigma = sigma
 
     def compute_feature(self, u, img, dist, mask, dx):
         feature = numpy.empty_like(u)
@@ -107,22 +75,6 @@ class InteriorImageAverage(BaseImageFeature):
     def name(self):
         return u"Interior image average (\u03c3 = {:.3f})".format(self.sigma)
 
-    def __init__(self, ndim, sigma):
-        """ Initialize a smoothed image average feature
-
-        ndim: int
-            The number of dimensions in which the feature will be computed
-
-        sigma: float
-            The smooth parameter for Gaussian smoothing (note that
-            sigma = 0 yields no smoothing; also note that anisotropic
-            volumes will alter sigma along each axis according to the
-            provided dx terms)
-
-        """
-        super(InteriorImageAverage, self).__init__(ndim)
-        self.sigma = sigma
-
     def compute_feature(self, u, img, dist, mask, dx):
 
         feature = numpy.empty_like(u)
@@ -150,22 +102,6 @@ class InteriorImageVariation(BaseImageFeature):
     @property
     def name(self):
         return u"Interior image variation (\u03c3 = {:.3f})".format(self.sigma)
-
-    def __init__(self, ndim, sigma):
-        """ Initialize a smoothed image standard deviation feature
-
-        ndim: int
-            The number of dimensions in which the feature will be computed
-
-        sigma: float
-            The smooth parameter for Gaussian smoothing (note that
-            sigma = 0 yields no smoothing; also note that anisotropic
-            volumes will alter sigma along each axis according to the
-            provided dx terms)
-
-        """
-        super(InteriorImageVariation, self).__init__(ndim)
-        self.sigma = sigma
 
     def compute_feature(self, u, img, dist, mask, dx):
 

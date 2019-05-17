@@ -38,7 +38,7 @@ class BoundarySize(BaseShapeFeature):
     """
     locality = GLOBAL_FEATURE_TYPE
 
-    def __init__(self, ndim):
+    def __init__(self, ndim=2):
         if ndim < 2 or ndim > 3:
             msg = ("Isoperimetric ratio defined for dimensions 2 and 3; "
                    "ndim provided = {}")
@@ -104,7 +104,7 @@ class IsoperimetricRatio(BaseShapeFeature):
         else:
             return 'Sphericity'
 
-    def __init__(self, ndim):
+    def __init__(self, ndim=2):
         if ndim < 2 or ndim > 3:
             msg = ("Isoperimetric ratio defined for dimensions 2 and 3; "
                    "ndim provided = {}")
@@ -163,7 +163,7 @@ class Moment(BaseShapeFeature):
     def name(self):
         return "Moment (axis={}; order={})".format(self.axis, self.order)
 
-    def __init__(self, ndim, axis=0, order=1):
+    def __init__(self, ndim=2, axis=0, order=1):
         """ Initialize a normalized statistical moment feature
 
         ndim: int

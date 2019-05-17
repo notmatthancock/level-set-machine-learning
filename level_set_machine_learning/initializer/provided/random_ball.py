@@ -9,7 +9,7 @@ class RandomBallInitializer(InitializerBase):
     with random center and radius
     """
 
-    def __init__(self, random_state=None):
+    def __init__(self, randomize_center=True, random_state=None):
         """ Initialize a RandomBallInitializer initialization object
 
         Parameters
@@ -17,12 +17,16 @@ class RandomBallInitializer(InitializerBase):
         random_state: numpy.random.RandomState, default None
             Supply for reproducible results
 
+        randomize_center: bool
+            If True, then location of the random ball is randomized
+
         """
 
         if random_state is None:
-            self.random_state = numpy.random.RandomState()
-        elif isinstance(random_state, numpy.random.RandomState):
-            self.random_state = random_state
+            random_state = numpy.random.RandomState()
+
+        self.random_state = random_state
+        self.randomize_center = randomize_center
 
     def _get_seed_value_from_image(self, img):
         """ Uses the first integer 4 values after the decimal point of the
@@ -57,15 +61,18 @@ class RandomBallInitializer(InitializerBase):
         # Select the center point uniformly at random.
         # Expected center is at the center of image, but could
         # be terribly far away in general.
-        center = []
-        for i in range(img.ndim):
-            while True:
-                center_coord = self.random_state.choice(indices[i])
-                if (center_coord-radius > indices[i][0] and
-                        center_coord+radius <= indices[i][-1]):
-                    center.append(center_coord)
-                    break
-        center = numpy.array(center)
+        if self.randomize_center:
+            center = []
+            for i in range(img.ndim):
+                while True:
+                    center_coord = self.random_state.choice(indices[i])
+                    if (center_coord-radius > indices[i][0] and
+                            center_coord+radius <= indices[i][-1]):
+                        center.append(center_coord)
+                        break
+            center = numpy.array(center)
+        else:
+            center = 0.5 * numpy.array(img.shape, dtype=numpy.float)
 
         indices = numpy.indices(img.shape, dtype=numpy.float)
         shape = dx.shape + tuple(numpy.ones(img.ndim, dtype=int))

@@ -5,6 +5,13 @@ from skimage.measure import find_contours
 from matplotlib.widgets import Slider
 
 
+def plot_iso_contours(mpl_axis, image, value=0.5, **line_kwargs):
+    return [
+        mpl_axis.plot(contour[:, 1], contour[:, 0], **line_kwargs)[0]
+        for contour in find_contours(image, value)
+    ]
+
+
 def interactive2d(
         img, u, seg=None, scores=None,
         img_kwargs=dict(cmap=plt.cm.gray, aspect=1, interpolation='bilinear'),

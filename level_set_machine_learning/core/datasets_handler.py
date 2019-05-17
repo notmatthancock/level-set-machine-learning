@@ -8,7 +8,8 @@ import numpy
 import skfmm
 
 
-logger = logging.getLogger(__name__.replace('level_set_machine_learning', ''))
+_logger_name = __name__.rsplit('.', 1)[-1]
+logger = logging.getLogger(_logger_name)
 
 
 TRAINING_DATASET_KEY = 'training'
