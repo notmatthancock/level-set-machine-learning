@@ -6,6 +6,8 @@
 Level set image segmentation with velocity field from
 machine learning methods
 
+![Hamburger](https://raw.githubusercontent.com/notmatthancock/level-set-machine-learning/master/examples/hamburger2d/seg-evolution.gif)
+
 ### Description of the method
 
 In the standard level set segmentation

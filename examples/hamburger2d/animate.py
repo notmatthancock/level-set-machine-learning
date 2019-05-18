@@ -11,7 +11,7 @@ example = model.testing_data[13]
 
 
 # Set up plotting for the movie frames
-fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+fig, ax = plt.subplots(1, 1, figsize=(2, 2))
 ax.axis('off')
 ax.imshow(example.img, cmap=plt.cm.gray, interpolation='bilinear')
 lines = []
