@@ -5,7 +5,6 @@ from level_set_machine_learning.visualize import interactive2d
 
 
 model = LevelSetMachineLearning.load('./LSML-model.pkl')
-model.initializer.randomize_center = True
 example = model.testing_data[13]
 
 us, scores = model.segment(

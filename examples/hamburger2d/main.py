@@ -1,6 +1,8 @@
 import numpy as np
 
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from level_set_machine_learning.data.dim2 import hamburger
 from level_set_machine_learning import LevelSetMachineLearning
@@ -14,6 +16,7 @@ from level_set_machine_learning.initializer.provided.random_ball import (
 
 
 random_state = np.random.RandomState(1234)
+
 
 ############################################################
 # Create the dataset
@@ -57,10 +60,6 @@ lsml = LevelSetMachineLearning(
     features=image_features + shape_features,
     initializer=RandomBallInitializer(random_state=random_state)
 )
-
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-
 
 lsml.fit('dataset.h5', imgs=imgs, segs=segs,
          regression_model_class=Pipeline,
