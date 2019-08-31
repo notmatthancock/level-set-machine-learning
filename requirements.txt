@@ -1,7 +1,0 @@
-scikit_fmm
-scikit_image
-numpy
-scipy
-matplotlib
-h5py
-scikit_learn

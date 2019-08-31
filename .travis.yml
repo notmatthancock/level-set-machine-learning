@@ -5,8 +5,8 @@ python:
   - "3.6"
 
 before_install:
-  - pip install -r requirements.txt
-  - make -C level_set_machine_learning/gradient
+  - pip install -e .
+  - make -C lsml/gradient
   - pip install flake8
 
 script:
