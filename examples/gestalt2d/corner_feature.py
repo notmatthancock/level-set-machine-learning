@@ -1,7 +1,7 @@
 from skimage.feature.corner import corner_harris
 from scipy.ndimage import gaussian_filter
 
-from level_set_machine_learning.feature.base_feature import BaseImageFeature
+from lsml.feature.base_feature import BaseImageFeature
 
 
 class CornerFeature(BaseImageFeature):

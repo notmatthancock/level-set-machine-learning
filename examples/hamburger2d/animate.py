@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 from matplotlib.animation import ImageMagickWriter
 
-from level_set_machine_learning import LevelSetMachineLearning
-from level_set_machine_learning.visualize import plot_iso_contours
+from lsml import LevelSetMachineLearning
+from lsml.visualize import plot_iso_contours
 
 
 # Load the model and an example

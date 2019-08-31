@@ -1,7 +1,7 @@
 import numpy as np
 
-from level_set_machine_learning import LevelSetMachineLearning
-from level_set_machine_learning.visualize import interactive2d
+from lsml import LevelSetMachineLearning
+from lsml.visualize import interactive2d
 
 
 model = LevelSetMachineLearning.load('./LSML-model.pkl')

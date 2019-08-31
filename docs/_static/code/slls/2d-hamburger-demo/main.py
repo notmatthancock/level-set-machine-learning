@@ -1,8 +1,8 @@
 import numpy as np
 
-from level_set_machine_learning import LevelSetMachineLearning as SLLS
-from level_set_machine_learning.feature.dim2 import simple_feature_map as sfm
-from level_set_machine_learning.initializer.provided import random_ball as rand_init
+from lsml import LevelSetMachineLearning as SLLS
+from lsml.feature.dim2 import simple_feature_map as sfm
+from lsml.initializer.provided import random_ball as rand_init
 
 # Seed a random number generator.
 rs = np.random.RandomState(1234)

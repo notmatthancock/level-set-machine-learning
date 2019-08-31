@@ -4,14 +4,14 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from level_set_machine_learning.data.dim2 import hamburger
-from level_set_machine_learning import LevelSetMachineLearning
-from level_set_machine_learning.feature.provided.image import (
+from lsml.data.dim2 import hamburger
+from lsml import LevelSetMachineLearning
+from lsml.feature.provided.image import (
     ImageSample, ImageEdgeSample,
     InteriorImageAverage, InteriorImageVariation)
-from level_set_machine_learning.feature.provided.shape import (
+from lsml.feature.provided.shape import (
     BoundarySize, DistanceToCenterOfMass, IsoperimetricRatio, Moment, Size)
-from level_set_machine_learning.initializer.provided.random_ball import (
+from lsml.initializer.provided.random_ball import (
     RandomBallInitializer)
 
 

@@ -1,8 +1,8 @@
 import numpy as np
 
-from level_set_machine_learning import LevelSetMachineLearning
-from level_set_machine_learning.visualize import interactive2d
-from level_set_machine_learning.initializer.initializer_base import InitializerBase
+from lsml import LevelSetMachineLearning
+from lsml.visualize import interactive2d
+from lsml.initializer.initializer_base import InitializerBase
 
 from sklearn.model_selection import GridSearchCV
 

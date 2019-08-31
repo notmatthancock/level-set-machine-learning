@@ -1,7 +1,7 @@
 import numpy as np  # from RandomState
 
-import level_set_machine_learning.util.datasets
-from level_set_machine_learning.data.dim2 import hamburger
+import lsml.util.datasets
+from lsml.data.dim2 import hamburger
 
 # Create the random number generator.
 seed = 1234
@@ -20,4 +20,4 @@ imgs,segs = hamburger.make_dataset(N=n_samples, n=img_dim,
 h5file = './dataset.h5'
 
 # Convert the arrays to an hdf5 file with correct schema for the SLLS routines.
-level_set_machine_learning.util.datasets.convert_to_hdf5(imgs, segs, h5file)
+lsml.util.datasets.convert_to_hdf5(imgs, segs, h5file)

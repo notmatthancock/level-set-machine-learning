@@ -1,6 +1,6 @@
 import os
 
-import level_set_machine_learning as slls
+import lsml as slls
 
 base = os.path.dirname(level_set_learn.__file__)
 

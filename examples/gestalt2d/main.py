@@ -2,14 +2,14 @@ import numpy as np
 
 from sklearn.linear_model import LinearRegression
 
-from level_set_machine_learning.data.dim2 import gestalt_triangle
-from level_set_machine_learning import LevelSetMachineLearning
-from level_set_machine_learning.feature.provided.image import (
+from lsml.data.dim2 import gestalt_triangle
+from lsml import LevelSetMachineLearning
+from lsml.feature.provided.image import (
     ImageSample, ImageEdgeSample,
     InteriorImageAverage, InteriorImageVariation)
-from level_set_machine_learning.feature.provided.shape import (
+from lsml.feature.provided.shape import (
     BoundarySize, DistanceToCenterOfMass, IsoperimetricRatio, Moment, Size)
-from level_set_machine_learning.initializer.initializer_base import (
+from lsml.initializer.initializer_base import (
     InitializerBase)
 
 from corner_feature import CornerFeature
