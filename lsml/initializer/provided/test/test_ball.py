@@ -1,9 +1,9 @@
 import unittest
 
-from lsml.initializer.provided.random_ball import RandomBallInitializer
+from lsml.initializer.provided.ball import RandomBallInitializer
 
 
-class TestRandomBallInitialize(unittest.TestCase):
+class TestBallInitialize(unittest.TestCase):
 
     def test_random_ball_smoke_test(self):
 

@@ -13,7 +13,7 @@ class CornerFeature(BaseImageFeature):
         return "corner-reponse-sigma={:.2f}".format(self.sigma)
 
     def __init__(self, ndim=2, sigma=2):
-        super(CornerFeature, self).__init__(ndim)
+        super().__init__(ndim)
         self.sigma = sigma
 
     def compute_feature(self, u, img, dist, mask, dx):

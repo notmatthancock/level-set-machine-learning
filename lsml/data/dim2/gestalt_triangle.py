@@ -108,7 +108,7 @@ def make(n, side_len, circ_rad, theta, ishift=0, jshift=0,
 
 def make_dataset(N, n=101, slen=[40,60], crad=[10,20],
                  shift=[-0, 0], nsig=[0.05,0.15], ssig=[1,1],
-                 theta=[0,2*np.pi/3], rs=None, verbose=True):
+                 theta=[0,2*np.pi/3], random_state=None, verbose=True):
     """
     Make a randomly generated dataset of illusory triangle data.
 
@@ -141,15 +141,15 @@ def make_dataset(N, n=101, slen=[40,60], crad=[10,20],
     return_meta: bool, default=False
         Return a list of meta data attributes for each example if True.
 
-    rs: numpy.random.RandomState, default=None
+    random_state: numpy.random.RandomState, default=None
         Include a for reproducible results.
 
     verbose: bool, default=True
         Print progress.
     """
-    rs = rs if rs is not None else np.random.RandomState()
+    random_state = random_state if random_state is not None else np.random.RandomState()
     def betarvs(**kwargs):
-        return beta.rvs(3,3,random_state=rs,**kwargs)
+        return beta.rvs(3, 3, random_state=random_state, **kwargs)
 
     if verbose:
         q = len(str(N))
@@ -183,7 +183,7 @@ def make_dataset(N, n=101, slen=[40,60], crad=[10,20],
             )
 
             img,seg = make(n, sl, cr, th, ishift, jshift,
-                           sigma_smooth, sigma_noise, rs=rs)
+                           sigma_smooth, sigma_noise, rs=random_state)
             imgs[i] = img
             segs[i] = seg
             i+=1

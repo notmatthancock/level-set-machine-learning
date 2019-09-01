@@ -1,2 +1,2 @@
-from .provided.random_ball import RandomBallInitializer  # noqa
+from .provided.ball import BallInitializer, RandomBallInitializer  # noqa
 from .provided.threshold import ThresholdInitializer  # noqa
