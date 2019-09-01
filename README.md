@@ -8,6 +8,14 @@ machine learning methods
 
 ![Hamburger](https://raw.githubusercontent.com/notmatthancock/level-set-machine-learning/master/examples/hamburger2d/seg-evolution.gif)
 
+### Installation
+
+```bash
+git@github.com:notmatthancock/level-set-machine-learning.git
+cd level-set-machine-learning
+pip install -e .
+```
+
 ### Description of the method
 
 In the standard level set segmentation

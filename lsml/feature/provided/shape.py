@@ -265,3 +265,34 @@ class DistanceToCenterOfMass(BaseShapeFeature):
             mesh - center_of_mass[slicer], axis=0)[mask]
 
         return feature
+
+def get_basic_shape_features(ndim=2, moment_orders=[1, 2]):
+    """ Generate a list of basic shape features at multiple sigma values
+
+    Parameters
+    ----------
+    ndim : int, default=2
+        The number of dimension of the image to which these features
+        will be applied
+    moment_orders : list[float], default=[1, 2]
+        Orders for which we compute moments
+
+    Returns
+    -------
+    features : list[BaseImageFeature]
+        A list of image feature instances
+    """
+    feature_classes = [
+        BoundarySize,
+        DistanceToCenterOfMass,
+        IsoperimetricRatio,
+        Size,
+    ]
+    features = [
+        feature_class(ndim=ndim)
+        for feature_class in feature_classes
+    ]
+    for axis in range(ndim):
+        for order in moment_orders:
+            features.append(Moment(ndim=ndim, axis=axis, order=order))
+    return features

@@ -1,14 +1,13 @@
-import numpy as np
-
 from lsml import LevelSetMachineLearning
 from lsml.visualize import interactive2d
 
 
+# Load the model and grab an example from the testing set
 model = LevelSetMachineLearning.load('./LSML-model.pkl')
-example = model.testing_data[13]
+example = model.testing_data[0]
 
-us, scores = model.segment(
-    img=example.img, seg=example.seg, return_scores=True, verbose=False,
-    iterate_until_validation_max=False)
+# Segment the example image
+us = model.segment(img=example.img)
 
-interactive2d(u=us, img=example.img, seg=example.seg, scores=scores)
+# View the example interactively
+interactive2d(u=us, img=example.img, seg=example.seg)

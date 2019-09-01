@@ -14,7 +14,7 @@ class ImageSample(BaseImageFeature):
 
     @property
     def name(self):
-        return u"Image sample (\u03c3 = {:.3f})".format(self.sigma)
+        return "Image sample (\u03c3 = {:.3f})".format(self.sigma)
 
     def compute_feature(self, u, img, dist, mask, dx):
         feature = numpy.empty_like(u)
@@ -40,7 +40,7 @@ class ImageEdgeSample(BaseImageFeature):
 
     @property
     def name(self):
-        return u"Image edge sample (\u03c3 = {:.3f})".format(self.sigma)
+        return "Image edge sample (\u03c3 = {:.3f})".format(self.sigma)
 
     def compute_feature(self, u, img, dist, mask, dx):
         feature = numpy.empty_like(u)
@@ -73,7 +73,7 @@ class InteriorImageAverage(BaseImageFeature):
 
     @property
     def name(self):
-        return u"Interior image average (\u03c3 = {:.3f})".format(self.sigma)
+        return "Interior image average (\u03c3 = {:.3f})".format(self.sigma)
 
     def compute_feature(self, u, img, dist, mask, dx):
 
@@ -101,7 +101,7 @@ class InteriorImageVariation(BaseImageFeature):
 
     @property
     def name(self):
-        return u"Interior image variation (\u03c3 = {:.3f})".format(self.sigma)
+        return "Interior image variation (\u03c3 = {:.3f})".format(self.sigma)
 
     def compute_feature(self, u, img, dist, mask, dx):
 
@@ -119,3 +119,32 @@ class InteriorImageVariation(BaseImageFeature):
             feature[mask] = smoothed[mask].std()
 
         return feature
+
+
+def get_basic_image_features(ndim=2, sigmas=[0, 2]):
+    """ Generate a list of basic image features at multiple sigma values
+
+    Parameters
+    ----------
+    ndim : int, default=2
+        The number of dimension of the image to which these features
+        will be applied
+    sigmas : list[float], default=[0, 2]
+        A list of sigma values
+
+    Returns
+    -------
+    features : list[BaseImageFeature]
+        A list of image feature instances
+    """
+    feature_classes = [
+        ImageSample,
+        ImageEdgeSample,
+        InteriorImageAverage,
+        InteriorImageVariation,
+    ]
+    return [
+        feature_class(ndim=ndim, sigma=sigma)
+        for feature_class in feature_classes
+        for sigma in sigmas
+    ]

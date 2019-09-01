@@ -6,6 +6,9 @@ from matplotlib.widgets import Slider
 
 
 def plot_iso_contours(mpl_axis, image, value=0.5, **line_kwargs):
+    """ Plots the level curves of `image` at level `value` onto the
+    matplotlib axis provided, `mpl_axis`.
+    """
     return [
         mpl_axis.plot(contour[:, 1], contour[:, 0], **line_kwargs)[0]
         for contour in find_contours(image, value)

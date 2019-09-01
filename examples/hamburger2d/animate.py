@@ -20,7 +20,7 @@ plot_iso_contours(ax, example.seg.astype(float), value=0.5, c='r')
 
 # Set up the movie writer and grab the frame at initialization
 writer = ImageMagickWriter(fps=7)
-writer.setup(fig, 'seg-evolution.gif', 100)
+writer.setup(fig, 'evolution.gif', 100)
 writer.grab_frame()
 
 
