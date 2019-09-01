@@ -1,7 +1,6 @@
 import unittest
 
-from lsml.initializer.provided import (
-    ThresholdInitializer)
+from lsml.initializer.provided.threshold import ThresholdInitializer
 
 
 class TestThresholdInitialize(unittest.TestCase):

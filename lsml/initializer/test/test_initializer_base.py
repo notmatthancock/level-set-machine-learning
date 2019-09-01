@@ -1,7 +1,6 @@
 import unittest
 
-from lsml.initializer.initializer_base import (
-    InitializerBase)
+from lsml.initializer.initializer_base import InitializerBase
 
 
 class TestInitializeBase(unittest.TestCase):

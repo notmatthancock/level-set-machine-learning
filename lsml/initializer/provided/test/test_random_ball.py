@@ -1,7 +1,6 @@
 import unittest
 
-from lsml.initializer.provided import (
-    RandomBallInitializer)
+from lsml.initializer.provided.random_ball import RandomBallInitializer
 
 
 class TestRandomBallInitialize(unittest.TestCase):
