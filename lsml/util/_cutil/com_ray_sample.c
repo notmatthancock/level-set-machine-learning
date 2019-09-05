@@ -1,23 +1,25 @@
+/*
+ * COM (center of mass) ray samples
+ * --------------------------------
+ * This function samples image values along the "COM ray" from each point.
+ * I.e., connecting any given location to the center of mass provided
+ * yields a ray, along which we can sample the underlying image data in
+ * both the inward and outward directions from the ray starting point.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "../../../utils/utils.h"
-#include "../../../utils/trilinear.c"
+#include "helpers.c"
 
-// This utility grabs `nsamples` image samples in both the inward and outward
-// normal directions. The sampled points are equally spaced along the normal
-// ray, and the ray extends in the inward and outward directions, a
-// distance equal to distance from the local spatial coordinate to 
-// the provided center of mass (com).
 
 void get_samples(
         int m, int n, int p, double * img, // dims and image vol.
-        double   di, double   dj, double   dk, // delta terms
-        bool * mask, // boolean mask volume
-        double * com, // center of mass (in *index* coordinates)
-        int nsamples, // desired # of samples
-        double * samples // output volume, shape = (m, n, p, nsamples, 2)
+        double di, double dj, double dk,   // delta terms
+        bool * mask,                       // boolean mask volume
+        double * com,                      // center of mass (in index space)
+        int nsamples,                      // desired # of samples
+        double * samples                   // output volume, shape = (m, n, p, nsamples, 2)
     ) {
     int l,ll;
     double a, b, c;
@@ -48,12 +50,12 @@ void get_samples(
                 // the feature for this coordinate, (i,j,k).
                 is_zero = (a == 0 && b == 0 && c == 0);
 
-                // _i = inward normal
+                // _i = inward ray
                 ii_i = i*di;
                 jj_i = j*dj;
                 kk_i = k*dk;
                 
-                // _o = outward normal
+                // _o = outward ray
                 ii_o = i*di;
                 jj_o = j*dj;
                 kk_o = k*dk;
@@ -78,10 +80,13 @@ void get_samples(
                         samples[2*ll+0] = 0.0;
                     }
                     else {
-                        samples[2*ll+0] = interpolate_point(ii_i, jj_i, kk_i,
-                                                            img, 
-                                                            di, dj, dk,
-                                                            m, n, p);
+                        l = mi3d(
+                            (int) round(ii_i/di),
+                            (int) round(jj_i/dj),
+                            (int) round(kk_i/dk),
+                            m, n, p
+                        );
+                        samples[2*ll+0] = img[l];
                     }
 
                     // Add the outward normal sample to `samples`.
@@ -89,10 +94,13 @@ void get_samples(
                         samples[2*ll+1] = 0.0;
                     }
                     else {
-                        samples[2*ll+1] = interpolate_point(ii_o, jj_o, kk_o,
-                                                            img,
-                                                            di, dj, dk,
-                                                            m, n, p);
+                        l = mi3d(
+                            (int) round(ii_o/di),
+                            (int) round(jj_o/dj),
+                            (int) round(kk_o/dk),
+                            m, n, p
+                        );
+                        samples[2*ll+1] = img[l];
                     }
 
                     // Advance one step along ray.

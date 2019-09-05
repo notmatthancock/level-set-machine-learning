@@ -19,7 +19,7 @@ class TestFeatureMap(unittest.TestCase):
             image.ImageEdgeSample(ndim=2, sigma=3),
             shape.Size(ndim=2),
             shape.IsoperimetricRatio(ndim=2),
-            shape.Moment(ndim=2, axis=0, order=1),
+            shape.Moments(ndim=2, axis=0, order=1),
         ]
 
         feature_map = FeatureMap(features=features)

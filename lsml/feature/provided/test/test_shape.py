@@ -117,16 +117,13 @@ class TestShapeFeatures(unittest.TestCase):
         mask = np.zeros(xx.shape, dtype=np.bool)
         mask.ravel()[0] = True
 
-        moments = [shape.Moment(ndim=2, axis=0, order=1),
-                   shape.Moment(ndim=2, axis=1, order=1)]
+        moments = shape.Moments(ndim=2, axes=[0, 1], orders=[1])
 
-        center_of_mass = [
-            moment(u=z, mask=mask, dx=[dy, dx])
-            for moment in moments
-        ]
+        center_of_mass = moments(u=z, mask=mask, dx=[dy, dx])
+        center_of_mass = center_of_mass[mask].squeeze()
 
-        self.assertAlmostEqual(2.0, center_of_mass[0][mask][0], places=3)
-        self.assertAlmostEqual(2.0, center_of_mass[1][mask][0], places=3)
+        self.assertAlmostEqual(2.0, center_of_mass[0], places=3)
+        self.assertAlmostEqual(2.0, center_of_mass[1], places=3)
 
     def test_moment2d_order1_off_center(self):
 
@@ -139,16 +136,13 @@ class TestShapeFeatures(unittest.TestCase):
         mask = np.zeros(xx.shape, dtype=np.bool)
         mask.ravel()[0] = True
 
-        moments = [shape.Moment(ndim=2, axis=0, order=1),
-                   shape.Moment(ndim=2, axis=1, order=1)]
+        moments = shape.Moments(ndim=2, axes=[0, 1], orders=[1])
 
-        center_of_mass = [
-            moment(u=z, mask=mask, dx=[dy, dx])
-            for moment in moments
-        ]
+        center_of_mass = moments(u=z, mask=mask, dx=[dy, dx])
+        center_of_mass = center_of_mass[mask].squeeze()
 
-        self.assertAlmostEqual(1.75, center_of_mass[0][mask][0], places=3)
-        self.assertAlmostEqual(2.25, center_of_mass[1][mask][0], places=3)
+        self.assertAlmostEqual(1.75, center_of_mass[0], places=3)
+        self.assertAlmostEqual(2.25, center_of_mass[1], places=3)
 
     def test_moment2d_order2(self):
 
@@ -161,16 +155,13 @@ class TestShapeFeatures(unittest.TestCase):
         mask = np.zeros(xx.shape, dtype=np.bool)
         mask.ravel()[0] = True
 
-        moments = [shape.Moment(ndim=2, axis=0, order=2),
-                   shape.Moment(ndim=2, axis=1, order=2)]
+        moments = shape.Moments(ndim=2, axes=[0, 1], orders=[2])
 
-        spread = [
-            moment(u=z, mask=mask, dx=[dy, dx])
-            for moment in moments
-        ]
+        spread = moments(u=z, mask=mask, dx=[dy, dx])
+        spread = spread[mask].squeeze()
 
-        self.assertAlmostEqual(0.25, spread[0][mask][0], places=2)
-        self.assertAlmostEqual(0.25, spread[1][mask][0], places=2)
+        self.assertAlmostEqual(0.25, spread[0], places=2)
+        self.assertAlmostEqual(0.25, spread[1], places=2)
 
     def test_moment3d_order1(self):
 
@@ -184,18 +175,14 @@ class TestShapeFeatures(unittest.TestCase):
         mask = np.zeros(xx.shape, dtype=np.bool)
         mask.ravel()[0] = True
 
-        moments = [shape.Moment(ndim=3, axis=0, order=1),
-                   shape.Moment(ndim=3, axis=1, order=1),
-                   shape.Moment(ndim=3, axis=2, order=1)]
+        moments = shape.Moments(ndim=3, axes=[0, 1, 2], orders=[1])
 
-        center_of_mass = [
-            moment(u=w, mask=mask, dx=[dy, dx, dz])
-            for moment in moments
-        ]
+        center_of_mass = moments(u=w, mask=mask, dx=[dy, dx, dz])
+        center_of_mass = center_of_mass[mask].squeeze()
 
-        self.assertAlmostEqual(2.0, center_of_mass[0][mask][0], places=3)
-        self.assertAlmostEqual(2.0, center_of_mass[1][mask][0], places=3)
-        self.assertAlmostEqual(2.0, center_of_mass[2][mask][0], places=3)
+        self.assertAlmostEqual(2.0, center_of_mass[0], places=3)
+        self.assertAlmostEqual(2.0, center_of_mass[1], places=3)
+        self.assertAlmostEqual(2.0, center_of_mass[2], places=3)
 
     def test_moment3d_order1_off_center(self):
 
@@ -209,18 +196,14 @@ class TestShapeFeatures(unittest.TestCase):
         mask = np.zeros(xx.shape, dtype=np.bool)
         mask.ravel()[0] = True
 
-        moments = [shape.Moment(ndim=3, axis=0, order=1),
-                   shape.Moment(ndim=3, axis=1, order=1),
-                   shape.Moment(ndim=3, axis=2, order=1)]
+        moments = shape.Moments(ndim=3, axes=[0, 1, 2], orders=[1])
 
-        center_of_mass = [
-            moment(u=w, mask=mask, dx=[dy, dx, dz])
-            for moment in moments
-        ]
+        center_of_mass = moments(u=w, mask=mask, dx=[dy, dx, dz])
+        center_of_mass = center_of_mass[mask].squeeze()
 
-        self.assertAlmostEqual(1.75, center_of_mass[0][mask][0], places=3)
-        self.assertAlmostEqual(2.25, center_of_mass[1][mask][0], places=3)
-        self.assertAlmostEqual(2.50, center_of_mass[2][mask][0], places=3)
+        self.assertAlmostEqual(1.75, center_of_mass[0], places=3)
+        self.assertAlmostEqual(2.25, center_of_mass[1], places=3)
+        self.assertAlmostEqual(2.50, center_of_mass[2], places=3)
 
     def test_moment3d_order2(self):
 
@@ -234,15 +217,11 @@ class TestShapeFeatures(unittest.TestCase):
         mask = np.zeros(xx.shape, dtype=np.bool)
         mask.ravel()[0] = True
 
-        moments = [shape.Moment(ndim=3, axis=0, order=2),
-                   shape.Moment(ndim=3, axis=1, order=2),
-                   shape.Moment(ndim=3, axis=2, order=2)]
+        moments = shape.Moments(ndim=3, axes=[0, 1, 2], orders=[2])
 
-        spread = [
-            moment(u=w, mask=mask, dx=[dy, dx, dz])
-            for moment in moments
-        ]
+        spread = moments(u=w, mask=mask, dx=[dy, dx, dz])
+        spread = spread[mask].squeeze()
 
-        self.assertAlmostEqual(0.2, spread[0][mask][0], places=2)
-        self.assertAlmostEqual(0.2, spread[1][mask][0], places=2)
-        self.assertAlmostEqual(0.2, spread[2][mask][0], places=2)
+        self.assertAlmostEqual(0.2, spread[0], places=2)
+        self.assertAlmostEqual(0.2, spread[1], places=2)
+        self.assertAlmostEqual(0.2, spread[2], places=2)

@@ -1,14 +1,16 @@
-import os
 import ctypes
+import pkg_resources
 
 import numpy as np
 from numpy.ctypeslib import ndpointer
 
 
 # Load the masked gradient C library
-curdir = os.path.abspath(os.path.dirname(__file__))
 _masked_gradient = ctypes.cdll.LoadLibrary(
-    os.path.join(curdir, '_masked_gradient.so'))
+    pkg_resources.resource_filename(
+        'lsml.util', '_cutil/masked_gradient.so'
+    )
+)
 
 
 def _get_gradient_centered_func(ndim):

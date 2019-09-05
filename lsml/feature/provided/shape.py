@@ -153,7 +153,7 @@ class IsoperimetricRatio(BaseShapeFeature):
         return feature
 
 
-class Moment(BaseShapeFeature):
+class Moments(BaseShapeFeature):
     """ Computes the normalized statistical moments of a given order along
     a given axis
     """
@@ -161,45 +161,44 @@ class Moment(BaseShapeFeature):
 
     @property
     def name(self):
-        return "Moment (axis={}; order={})".format(self.axis, self.order)
+        return "Moments (axes={}; orders={})".format(self.axes, self.orders)
 
-    def __init__(self, ndim=2, axis=0, order=1):
+    @property
+    def size(self):
+        return len(self.axes) * len(self.orders)
+
+    def __init__(self, ndim=2, axes=(0, 1), orders=(1, 2)):
         """ Initialize a normalized statistical moment feature
 
         ndim: int
             Number of dimensions
 
-        axis: int, default=0
-            The axis along which the moment should be computed
+        axes: list[int], default=[0, 1]
+            The axes along which the moment should be computed
 
-        order: int, default=1
-            The order of the moment, e.g., order=1 yields the 'center of
+        order: list[int], default=[1, 2]
+            The orders of the moments, e.g., order=1 yields the 'center of
             mass' coordinate along the given axis and order=2 yields a measure
             of spread along the given axis
 
         """
 
-        super(Moment, self).__init__(ndim)
+        super(Moments, self).__init__(ndim)
 
-        if axis < 0 or axis > ndim-1:
-            msg = "axis provided ({}) does not lie in required range (0-{})"
-            raise ValueError(msg.format(axis, ndim-1))
+        for axis in axes:
+            if axis < 0 or axis > ndim-1:
+                msg = "axis provided ({}) must be one of 0 ... {}"
+                raise ValueError(msg.format(axis, ndim-1))
 
-        if order < 1:
-            msg = "Moment order should be greater than or equal to 1"
-            raise ValueError(msg)
+        for order in orders:
+            if order < 1:
+                msg = "Moments order should be greater than or equal to 1"
+                raise ValueError(msg)
 
-        self.axis = axis
-        self.order = order
+        self.axes = axes
+        self.orders = orders
 
     def _compute_center_of_mass(self, u, dx):
-
-        # Store the original axis and order to reset later
-        original_axis = self.axis
-        original_order = self.order
-
-        # Set the order to 1 to compute center of mass
-        self.order = 1
 
         # Initialize center of mass container and mask with singular entry
         center_of_mass = numpy.zeros(self.ndim)
@@ -207,35 +206,36 @@ class Moment(BaseShapeFeature):
         mask.ravel()[0] = True
 
         for i in range(self.ndim):
-            self.axis = i
-            center_of_mass[i] = self.__call__(
-                u=u, dist=u, mask=mask, dx=dx)[mask][0]
-
-        self.axis = original_axis
-        self.order = original_order
+            center_of_mass[i] = self._compute_moment(
+                u=u, dist=u, mask=mask, dx=dx, axis=i, order=1)
 
         return center_of_mass
 
-    def compute_feature(self, u, dist, mask, dx):
+    def _compute_moment(self, u, dist, mask, dx, axis, order):
+        """ Computes the feature for just a single axis and order """
 
         indices = numpy.indices(u.shape, dtype=numpy.float)
-        mesh = indices[self.axis] * dx[self.axis]
+        mesh = indices[axis] * dx[axis]
 
-        size = Size(ndim=u.ndim)
+        size = Size(ndim=self.ndim)
 
         # Normalize by centering if order is greater than 1
-        if self.order > 1:
+        if order > 1:
             center_of_mass = self._compute_center_of_mass(u=u, dx=dx)
-            mesh -= center_of_mass[self.axis]
+            mesh -= center_of_mass[axis]
 
         measure = size(u=u, dist=dist, mask=mask, dx=dx)[mask].ravel()[0]
+        moment = (mesh**order)[u > 0].sum() * numpy.prod(dx) / measure
 
-        moment = (mesh**self.order)[u > 0].sum() * numpy.prod(dx) / measure
+        return moment
 
-        feature = numpy.empty_like(u)
-        feature[mask] = moment
-
-        return feature
+    def compute_feature(self, u, dist, mask, dx):
+        from itertools import product
+        features = numpy.empty(u.shape + (self.size,))
+        for i, (axis, order) in enumerate(product(self.axes, self.orders)):
+            features[mask, i] = self._compute_moment(
+                u, dist, mask, dx, axis, order)
+        return features
 
 
 class DistanceToCenterOfMass(BaseShapeFeature):
@@ -251,7 +251,7 @@ class DistanceToCenterOfMass(BaseShapeFeature):
 
         # Sneakily use the center of mass utility buried in the
         # moment feature class
-        moment_feature = Moment(ndim=self.ndim)
+        moment_feature = Moments(ndim=self.ndim)
         center_of_mass = moment_feature._compute_center_of_mass(u, dx)
 
         # Add extra axes for some broadcasting below
@@ -294,5 +294,5 @@ def get_basic_shape_features(ndim=2, moment_orders=[1, 2]):
     ]
     for axis in range(ndim):
         for order in moment_orders:
-            features.append(Moment(ndim=ndim, axis=axis, order=order))
+            features.append(Moments(ndim=ndim, axis=axis, order=order))
     return features

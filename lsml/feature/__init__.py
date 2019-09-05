@@ -11,6 +11,6 @@ from .provided.shape import (
     DistanceToCenterOfMass,
     get_basic_shape_features,
     IsoperimetricRatio,
-    Moment,
+    Moments,
     Size,
 )

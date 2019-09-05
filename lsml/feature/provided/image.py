@@ -121,6 +121,80 @@ class InteriorImageVariation(BaseImageFeature):
         return feature
 
 
+class COMRaySample(BaseImageFeature):
+    """ The image is sampled along a line segment connecting a pixel
+    to the center of mass (COM) of the current segmentation iterate. Samples
+    are also taken symmetrically in the outward direction.
+    """
+    locality = LOCAL_FEATURE_TYPE
+
+    @property
+    def name(self):
+        return f"COM Ray (N={self.n_samples}, \u03c3 = {self.sigma:.3f})"
+
+    def __init__(self, ndim=2, sigma=3, n_samples=10):
+        if ndim not in (2, 3):
+            raise ValueError("`ndim` must be either 2 or 3")
+        super().__init__(ndim, sigma)
+        self.n_samples = n_samples
+        self._get_samples = None
+
+    def _load_get_samples(self):
+        """ Loads the c function that computes COM ray samples
+        """
+        import ctypes
+        import pkg_resources
+        from numpy.ctypeslib import ndpointer
+
+        com_ray_sample = ctypes.cdll.LoadLibrary(
+            pkg_resources.resource_filename(
+                'lsml.util', '_cutil/com_ray_sample.so'
+            )
+        )
+
+        func = com_ray_sample.get_samples
+        func.restype = None
+        func.argtypes = (
+            # Image dims
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            # The image
+            ndpointer(ctypes.c_double),
+            # Delta terms
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_double,
+            # Boolean mask
+            ndpointer(ctypes.c_bool),
+            # Center of mass
+            ndpointer(ctypes.c_double),
+            # The number of samples
+            ctypes.c_int,
+            # The result array, shape=img.shape + (n_samples, 2)
+            ndpointer(ctypes.c_double),
+        )
+        # Store the wrapped function for reuse
+        self._get_samples = func
+
+    def compute_feature(self, u, img, dist, mask, dx):
+        import numpy as np
+        if self._get_samples is None:
+            # Load and wrap the c function if this is the first call
+            self._load_get_samples()
+
+        img_ = np.atleast_3d(img) if img.ndim == 2 else img
+        samples = np.zeros(img.shape + (self.n_samples, 2))
+        self._get_samples(
+            *img.shape_,
+            img_,
+            *dx,
+            mask,
+            self.n_samples,
+            samples,
+        )
+
+
 def get_basic_image_features(ndim=2, sigmas=[0, 2]):
     """ Generate a list of basic image features at multiple sigma values
 

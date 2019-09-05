@@ -14,6 +14,12 @@ class BaseFeature(abc.ABC):
     """ The abstract base class for all features
     """
 
+    #: The size variable indicates the number of features
+    #: that this feature-class produces. For `size > 1`, this
+    #: indicates that this feature actually yields many features
+    #: simultaneously.
+    size = 1
+
     @property
     @abc.abstractmethod
     def name(self):
@@ -123,7 +129,7 @@ class BaseFeature(abc.ABC):
 
         # Handle the empty mask case
         if not mask.any():
-            return numpy.empty_like(u)
+            return numpy.empty(u.shape + (self.size,))
 
         if isinstance(self, BaseImageFeature):
             return self.compute_feature(

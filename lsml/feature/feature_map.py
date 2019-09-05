@@ -21,7 +21,7 @@ class FeatureMap(object):
 
     @property
     def n_features(self):
-        return len(self.features)
+        return len([f.size for f in self.features])
 
     def _validate_features(self, features):
 
@@ -37,6 +37,15 @@ class FeatureMap(object):
         if len(set(features)) != len(features):
             msg = "`features` list included non-unique features"
             raise ValueError(msg)
+
+    @property
+    def feature_indices(self):
+        j = 0
+        indices = []
+        for feature in self.features:
+            indices.append(slice(j, j+feature.size))
+            j += feature.size
+        return indices
 
     def __call__(self, u, img, dist, mask, dx=None):
         """ Compute the features from the feature list.

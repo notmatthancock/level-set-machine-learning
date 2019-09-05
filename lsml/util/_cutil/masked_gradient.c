@@ -1,8 +1,13 @@
+/*
+ * Masked gradient
+ * ---------------
+ * Routines for computing gradients over masked regions.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "../util/helpers.h"
+#include "helpers.c"
 
 
 void gradient_centered3d(int m, int n, int p, double * A, bool * mask,
