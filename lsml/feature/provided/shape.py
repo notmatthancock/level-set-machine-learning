@@ -287,13 +287,11 @@ def get_basic_shape_features(ndim=2, moment_orders=[1, 2]):
         BoundarySize,
         DistanceToCenterOfMass,
         IsoperimetricRatio,
+        Moments,
         Size,
     ]
-    features = [
+
+    return [
         feature_class(ndim=ndim)
         for feature_class in feature_classes
     ]
-    for axis in range(ndim):
-        for order in moment_orders:
-            features.append(Moments(ndim=ndim, axis=axis, order=order))
-    return features
