@@ -38,6 +38,7 @@ void get_samples(
                 cdist = sqrt(sqr(di*(i-com[0])) +
                              sqr(dj*(j-com[1])) +
                              sqr(dk*(k-com[2])));
+                printf("%.2f", cdist);
 
                 // dt is the step length along in the normal directions.
                 dt = cdist / (nsamples+1.0);
@@ -51,16 +52,18 @@ void get_samples(
                 is_zero = (a == 0 && b == 0 && c == 0);
 
                 // _i = inward ray
-                ii_i = i*di;
-                jj_i = j*dj;
-                kk_i = k*dk;
-                
                 // _o = outward ray
-                ii_o = i*di;
-                jj_o = j*dj;
-                kk_o = k*dk;
-
+                ii_i = ii_o = i*di;
+                jj_i = jj_o = j*dj;
+                kk_i = kk_o = k*dk;
+                
                 for (int q=1; q <= nsamples; q++) {
+                    printf("%d, %d, %d\n",
+                        (int) round(ii_i/di),
+                        (int) round(jj_i/dj),
+                        (int) round(kk_i/dk)
+                    );
+
                     in_bounds_i = check_bounds((int) round(ii_i/di),
                                                (int) round(jj_i/dj),
                                                (int) round(kk_i/dk),

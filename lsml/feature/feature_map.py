@@ -39,11 +39,14 @@ class FeatureMap(object):
             raise ValueError(msg)
 
     @property
-    def feature_indices(self):
+    def feature_slices(self):
         j = 0
         indices = []
         for feature in self.features:
-            indices.append(slice(j, j+feature.size))
+            if feature.size > 1:
+                indices.append(slice(j, j+feature.size))
+            else:
+                indices.append(j)
             j += feature.size
         return indices
 
@@ -62,12 +65,14 @@ class FeatureMap(object):
         # Loop through the feature list and stack the results into an array
         for ifeature, feature in enumerate(self.features):
 
+            feature_slice = self.feature_slices[ifeature]
+
             if isinstance(feature, BaseImageFeature):
-                features_array[mask, ifeature] = feature(
-                    u=u, img=img, dist=dist, mask=mask, dx=dx)[mask]
+                features_array[mask, feature_slice] = feature(
+                    u=u, img=img, dist=dist, mask=mask, dx=dx)[mask].squeeze()
             elif isinstance(feature, BaseShapeFeature):
-                features_array[mask, ifeature] = feature(
-                    u=u, dist=dist, mask=mask, dx=dx)[mask]
+                features_array[mask, feature_slice] = feature(
+                    u=u, dist=dist, mask=mask, dx=dx)[mask].squeeze()
             else:
                 msg = "Unknown feature type ({})"
                 raise ValueError(msg.format(feature.__class__.__name__))

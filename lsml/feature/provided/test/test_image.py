@@ -155,3 +155,36 @@ class TestImageFeatures(unittest.TestCase):
         feature = interior_average(u=u, img=img, mask=mask, dx=[1, 2])
 
         self.assertAlmostEqual(smoothed_image[mask].std(), feature[mask][0])
+
+    def test_com_ray_samples2d(self):
+
+        x, dx = np.linspace(-2, 2, 301, retstep=True)
+        y, dy = np.linspace(-2, 2, 201, retstep=True)
+
+        xx, yy = np.meshgrid(x, y)
+
+        # Make the image a signed distance field
+        img = 1 - np.sqrt(xx**2 + yy**2)
+
+        # Set up the mask to be just a single sample
+        mask = abs(img) < 0.01
+        ii, jj = np.where(mask)
+        mask[ii[1:], jj[1:]] = False
+
+        # Take COM ray samples over the signed distance field.
+        # This should yield samples that yield a line with slope=1
+        # due to the signed distance properties (and that the center
+        # of mass is at the origin).
+        com_ray = image.COMRaySample(sigma=0, n_samples=10)
+        features = com_ray(u=img, img=img, mask=mask, dx=[dy, dx])
+        samples = features[mask][0]
+
+        _, dt = np.linspace(-1, 1, 2*com_ray.n_samples+2, retstep=True)
+        ds = np.diff(samples)
+
+        # Difference between consecutive samples should be nearly identical
+        self.assertAlmostEqual(ds.var(), 0, places=10)
+
+        # The slope should be 1. Note that we can use the mean WLOG here
+        # since the previous test asserts the differences are nearly the same
+        self.assertAlmostEqual((ds/dt).mean(), 1, places=1)

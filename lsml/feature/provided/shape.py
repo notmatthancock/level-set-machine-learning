@@ -266,6 +266,7 @@ class DistanceToCenterOfMass(BaseShapeFeature):
 
         return feature
 
+
 def get_basic_shape_features(ndim=2, moment_orders=[1, 2]):
     """ Generate a list of basic shape features at multiple sigma values
 

@@ -164,11 +164,11 @@ class TestBaseFeature(unittest.TestCase):
         mask = np.zeros((3, 2), dtype=np.bool)
 
         feature = image_feature(u=u, img=img, dist=dist, mask=mask)
-        self.assertEqual(u.shape, feature.shape)
+        self.assertEqual(u.shape + (image_feature.size,), feature.shape)
         self.assertEqual(u.dtype, feature.dtype)
 
         feature = shape_feature(u=u, dist=dist, mask=mask)
-        self.assertEqual(u.shape, feature.shape)
+        self.assertEqual(u.shape + (image_feature.size,), feature.shape)
         self.assertEqual(u.dtype, feature.dtype)
 
     def test_no_mask_and_no_dist(self):
