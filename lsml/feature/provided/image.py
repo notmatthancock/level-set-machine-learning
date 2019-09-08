@@ -152,13 +152,14 @@ class COMRaySample(BaseImageFeature):
         com = moments._compute_center_of_mass(u, dx)
         t = numpy.linspace(-1, 1, 2*self.n_samples+2)[1:-1, None]
 
-        features = numpy.empty(u.shape + (2*self.n_samples,))
+        features = numpy.full(u.shape + (2*self.n_samples,))
 
         interpolator = RegularGridInterpolator(
             points=[numpy.arange(s, dtype=numpy.float)*delta
                     for s, delta in zip(u.shape, dx)],
             values=img,
             bounds_error=False,
+            fill_value=0.0
         )
 
         coords = numpy.array(numpy.where(mask)).T
