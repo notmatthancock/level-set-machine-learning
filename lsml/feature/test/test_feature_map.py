@@ -13,11 +13,11 @@ class TestFeatureMap(unittest.TestCase):
         from lsml.feature.provided import shape
 
         features = [
-            image.ImageSample(ndim=2, sigma=0),
-            image.ImageEdgeSample(ndim=2, sigma=3),
-            shape.Size(ndim=2),
-            shape.IsoperimetricRatio(ndim=2),
-            shape.Moments(ndim=2, axes=[0], orders=[1]),
+            image.ImageSample(sigma=0),
+            image.ImageEdgeSample(sigma=3),
+            shape.Size(),
+            shape.IsoperimetricRatio(),
+            shape.Moments(),
         ]
 
         feature_map = FeatureMap(features=features)

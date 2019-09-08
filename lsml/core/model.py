@@ -87,6 +87,7 @@ class LevelSetMachineLearning:
         self._is_fitted = False
 
     def fit(self,
+
             # args
             data_filename,
             regression_model_class,
@@ -107,7 +108,7 @@ class LevelSetMachineLearning:
             temp_data_dir=os.path.curdir,
             validation_history_len=5,
             validation_history_tol=0.0,
-            ):
+            redirect_stdout_to_logfile=True):
         """ Fit a level set machine learning segmentation model
 
         Parameters
@@ -208,6 +209,10 @@ class LevelSetMachineLearning:
 
         random_state: numpy.random.RandomState
             Provide for reproducible results.
+
+        redirect_stdout_to_logfile: bool, default=True
+            If True, then stdout gets captured and written to the logfile.
+            NOTE: disable this to use [i]pdb.set_trace
 
         """
         # Dirty tricks to initialize the fit handler...

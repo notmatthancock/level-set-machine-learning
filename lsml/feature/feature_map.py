@@ -21,7 +21,7 @@ class FeatureMap(object):
 
     @property
     def n_features(self):
-        return len([f.size for f in self.features])
+        return sum([f.size for f in self.features])
 
     def _validate_features(self, features):
 

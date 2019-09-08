@@ -23,8 +23,16 @@ REGRESSION_MODEL_DIRNAME = 'regression-models'
 REGRESSION_MODEL_FILENAME = 'regression-model-{:d}.pkl'
 
 
-def setup_logging():
+def setup_logging(capture_std_out=True):
     """ Sets up logging formatting, etc
+
+    Parameters
+    ----------
+    capture_std_out : bool, default=True
+        If True, then std out gets captured and written to the log
+        file. This is useful for capture the printed output from
+        models for which you do not have control to redirect their
+        status outputs (e.g., the fitting status of a scikit-learn model)
     """
     logger_filename = "fit-log.txt"
 
@@ -40,18 +48,19 @@ def setup_logging():
         filename=logger_filename, format=line_fmt,
         datefmt=date_fmt, level=logging.DEBUG)
 
-    class StdOutLogger:
-        _logger = logging.getLogger('STD OUT CAPTURE')
+    if capture_std_out:
+        class StdOutLogger:
+            _logger = logging.getLogger('STD OUT CAPTURE')
 
-        def write(self, message):
-            if message != '\n':
-                self._logger.info(message)
+            def write(self, message):
+                if message != '\n':
+                    self._logger.info(message)
 
-        def flush(self):
-            pass
+            def flush(self):
+                pass
 
-    sys._stdout = sys.stdout
-    sys.stdout = StdOutLogger()
+        sys._stdout = sys.stdout
+        sys.stdout = StdOutLogger()
 
 
 class FitJobHandler:
@@ -76,6 +85,7 @@ class FitJobHandler:
                  temp_data_dir,
                  validation_history_len,
                  validation_history_tol,
+                 redirect_stdout_to_logfile,
                  ):
         """
         See :class:`level_set_machine_learning.LevelSetMachineLearning`
@@ -92,7 +102,7 @@ class FitJobHandler:
                 raise TypeError(msg)
 
         # Set up logging formatting, file location, etc.
-        setup_logging()
+        setup_logging(capture_std_out=redirect_stdout_to_logfile)
 
         # Store the seeds list or function
         self.seeds = seeds
