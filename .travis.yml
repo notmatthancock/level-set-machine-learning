@@ -6,7 +6,6 @@ python:
 
 before_install:
   - pip install -e .
-  - make -C lsml/gradient
   - pip install flake8
 
 script:
