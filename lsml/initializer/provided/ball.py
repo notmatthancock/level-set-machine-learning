@@ -6,22 +6,29 @@ from lsml.initializer.initializer_base import InitializerBase
 class BallInitializer(InitializerBase):
     """ Initialize the zero level set to a ball of fixed radius """
 
-    def __init__(self, radius=10):
+    def __init__(self, radius=10, location=None):
         self.radius = radius
+        self.location = location
 
     def initialize(self, img, dx, seed):
-        if img.ndim == 2:
-            from skimage.morphology import disk as ball
-        elif img.ndim == 3:
-            from skimage.morphology import ball
-        else:
-            raise ValueError("BallInitializer only supported for ndim = 2, 3")
 
-        return numpy.pad(
-            ball(self.radius),
-            min(img.shape) // 2 - self.radius,
-            'constant'
-        ).astype(numpy.bool)
+        if self.location is not None and len(self.location) != img.ndim:
+            msg = '`location` is len {} but should be {}'
+            raise ValueError(msg.format(len(self.location), img.ndim))
+
+        if self.location is None:
+            location = 0.5 * numpy.array(img.shape)
+        else:
+            location = self.location
+
+        # Used for broadcasting ...
+        slices = (slice(None),) + tuple(None for _ in range(img.ndim))
+
+        indices = numpy.indices(img.shape, dtype=float)
+        indices *= dx[slices]
+        indices -= (location * dx)[slices]
+
+        return (self.radius - numpy.sqrt((indices**2).sum(axis=0))) > 0
 
 
 class RandomBallInitializer(InitializerBase):
