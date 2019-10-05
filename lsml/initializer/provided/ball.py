@@ -113,3 +113,42 @@ class RandomBallInitializer(InitializerBase):
         self.random_state.set_state(state)
 
         return init_mask
+
+
+class ThresholdBallInitializer(InitializerBase):
+
+    def __init__(self, sigma=4.0):
+        self.sigma = sigma
+
+    def initialize(self, img, dx, seed):
+        from scipy.ndimage import gaussian_filter
+        from scipy.ndimage import label
+        import skfmm
+
+        smoothed = gaussian_filter(img, self.sigma)
+        thresholded = img > smoothed
+        labels, _ = label(thresholded)
+
+        if labels[self._seed_to_index(seed)] > 0:
+            seed_ = seed
+        else:
+            nonzero = numpy.array(numpy.nonzero(labels)).T
+            nonzero *= dx
+            dists = numpy.linalg.norm(nonzero - seed, axis=1)
+            seed_ = nonzero[dists.argmin()]
+
+        mask = labels == labels[self._seed_to_index(seed_)]
+
+        inds = numpy.indices(img.shape, dtype=float)
+        for i in range(inds.shape[0]):
+            inds[i] -= seed_[i]
+            inds[i] *= dx[i]
+
+        dist_to_seed = (inds**2).sum(axis=0)**0.5
+        dist_to_boundary = skfmm.distance(mask, dx)
+
+        return dist_to_seed < dist_to_boundary[self._seed_to_index(seed_)]
+
+    @staticmethod
+    def _seed_to_index(seed):
+        return tuple(seed.round().astype(int))

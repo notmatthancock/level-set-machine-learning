@@ -30,6 +30,11 @@ class InitializerBase(abc.ABC):
                 msg = "Number of dx terms ({}) doesn't match dimensions ({})"
                 raise ValueError(msg.format(len(dx), img.ndim))
 
+        if seed is None:
+            seed = numpy.array(img.shape) / 2
+        else:
+            seed = numpy.array(seed)
+
         # Compute the initializer
         init_mask = self.initialize(img=img, dx=dx, seed=seed)
 
