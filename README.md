@@ -6,12 +6,16 @@
 Level set image segmentation with velocity field from
 machine learning methods
 
-![Hamburger](https://raw.githubusercontent.com/notmatthancock/level-set-machine-learning/master/examples/hamburger2d/seg-evolution.gif)
+Example 1 | Example 2
+:--------:|:---------:
+![Hamburger2d](https://raw.githubusercontent.com/notmatthancock/level-set-machine-learning/master/img/hamburger2d.gif) | ![Gestalt2d](https://raw.githubusercontent.com/notmatthancock/level-set-machine-learning/master/img/gestalt2d.gif)
 
 ### Installation
 
+Not on pip :( install locally:
+
 ```bash
-git@github.com:notmatthancock/level-set-machine-learning.git
+git clone git@github.com:notmatthancock/level-set-machine-learning.git
 cd level-set-machine-learning
 pip install -e .
 ```
@@ -27,17 +31,18 @@ usually takes into account underlying image information.
 
 This prescribed movement is summarized in the following PDE [1]:
 
-u<sub>t</sub> = ν ||Du||<sub>2</sub>
+u<sub>t</sub> = v ||Du||<sub>2</sub>
 
-In our machine learning extension of this method, the velocity
-field ν is learned from data via machine learning regression methods,
+In this extension of the level set method method [2], the velocity
+field v is learned from data via machine learning regression methods,
 rather than fixing the velocity function a priori based on expected image 
 appearance (e.g., assuming object boundaries being defined by strong
 image gradients).
 
-The method accepts a feature set, wherein particular problem domain
-characteristics and heuristics can be encoded, and the mapping from this
-feature set to local level set velocities is delegated to machine learning
-based regression techniques.
+[1]: Malladi, Ravi, James A. Sethian, and Baba C. Vemuri. "Shape modeling with front propagation: A level set approach." IEEE transactions on pattern analysis and machine intelligence 17.2 (1995): 158-175.
 
-> [1]: Malladi, Ravi, James A. Sethian, and Baba C. Vemuri. "Shape modeling with front propagation: A level set approach." IEEE transactions on pattern analysis and machine intelligence 17.2 (1995): 158-175.
+[2]: Hancock, Matthew C., and Jerry F. Magnan. "Lung nodule segmentation via level set machine learning." arXiv preprint arXiv:1910.03191 (2019). https://arxiv.org/abs/1910.03191
+
+### Examples
+
+See `examples` directory for the method illustrated on some synthetic data.
