@@ -23,6 +23,23 @@ if __name__ == '__main__':
     setup(
         author='Matt Hancock',
         author_email='not.matt.hancock@gmail.com',
+        classifiers=[
+            'Development Status :: 3 - Alpha',
+            'Intended Audience :: Science/Research',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: BSD License',
+            'Programming Language :: C',
+            'Programming Language :: Python',
+            'Programming Language :: Python :: 3',
+            'Topic :: Scientific/Engineering',
+            'Topic :: Scientific/Engineering :: Image Recognition',
+            'Topic :: Scientific/Engineering :: Mathematics',
+            'Topic :: Scientific/Engineering :: Visualization',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: POSIX',
+            'Operating System :: Unix',
+            'Operating System :: MacOS',
+        ],
         description='Level set machine learning for image segmentation',
         ext_modules=[
             Extension(
