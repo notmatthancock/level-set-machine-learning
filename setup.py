@@ -63,6 +63,7 @@ if __name__ == '__main__':
         license='MIT',
         name=PKG_NAME,
         packages=find_packages(),
+        python_requires='>=3.6',
         url='https://github.com/notmatthancock/level-set-machine-learning/',
         version=VERSION,
     )
