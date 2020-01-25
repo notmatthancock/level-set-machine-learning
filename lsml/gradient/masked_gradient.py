@@ -1,16 +1,17 @@
 import ctypes
-import pkg_resources
+import pathlib
 
 import numpy as np
 from numpy.ctypeslib import ndpointer
 
 
-# Load the masked gradient C library
-_masked_gradient = ctypes.cdll.LoadLibrary(
-    pkg_resources.resource_filename(
-        'lsml.util', '_cutil/masked_gradient.so'
-    )
-)
+try:
+    import lsml
+    util = pathlib.Path(lsml.__file__).parent / 'util'
+    name = list(util.glob('masked_gradient*'))[0]
+    _masked_gradient = ctypes.cdll.LoadLibrary(str(name))
+except Exception:
+    raise ImportError('Could not find shared library for masked_gradient')
 
 
 def _get_gradient_centered_func(ndim):
