@@ -83,7 +83,7 @@ class DatasetsHandler:
             self.convert_to_hdf5(
                 imgs=imgs, segs=segs, dx=dx, compress=compress)
 
-        with h5py.File(self.h5_file) as hf:
+        with h5py.File(self.h5_file, mode='r') as hf:
             self.n_examples = len(hf.keys())
 
     def convert_to_hdf5(self, imgs, segs, dx=None, compress=True):
@@ -171,7 +171,7 @@ class DatasetsHandler:
         # End input validation
         ##########################
 
-        hf = h5py.File(self.h5_file, 'w')
+        hf = h5py.File(self.h5_file, mode='w')
 
         for i in range(n_examples):
 
@@ -367,7 +367,7 @@ class DatasetsHandler:
         """
         h5 = None
         try:
-            h5 = h5py.File(self.h5_file, 'r')
+            h5 = h5py.File(self.h5_file, mode='r')
             yield h5
         finally:
             if h5:

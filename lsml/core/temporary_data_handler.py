@@ -70,7 +70,7 @@ class TemporaryDataHandler:
         return numpy.load(path)
 
     @contextlib.contextmanager
-    def open_h5_file(self, lock=False):
+    def open_h5_file(self, lock=False, mode='a'):
         """ Opens the hdf5 file housing the temporary data in the form of
         a context manager that handles locking, closing, etc.
 
@@ -79,6 +79,8 @@ class TemporaryDataHandler:
         lock: bool, default=False
             If True, then a lock file is created that indicates to other
             processes to not open the file. This is useful for do writes.
+        mode: char, default='a'
+            The h5py file open mode.
 
         Example
         -------
@@ -95,7 +97,7 @@ class TemporaryDataHandler:
             h5 = None
             if lock:
                 self._create_h5_file_lock()
-            h5 = h5py.File(self._get_h5_file_path())
+            h5 = h5py.File(self._get_h5_file_path(), mode=mode)
             yield h5
         finally:
             if h5:
@@ -108,7 +110,7 @@ class TemporaryDataHandler:
         """ Loop and sleep until the lock file is released
         """
         while not self._can_open_h5_file():
-            time.sleep(0.1)
+            time.sleep(0.01)
 
     def _get_lock_file_path(self):
         """ Returns the full path to the lock file

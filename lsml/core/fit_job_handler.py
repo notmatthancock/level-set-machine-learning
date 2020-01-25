@@ -198,7 +198,7 @@ class FitJobHandler:
         # Initialize the auto-computed step estimate
         step = numpy.inf
 
-        with self.temp_data_handler.open_h5_file(lock=True) as temp_file:
+        with self.temp_data_handler.open_h5_file(lock=True, mode='a') as tf:
             for example in self.datasets_handler.iterate_examples():
 
                 msg = "Initializing level set {} / {}"
@@ -207,7 +207,7 @@ class FitJobHandler:
                 logger.info(msg)
 
                 # Create dataset group if it doesn't exist.
-                group = temp_file.create_group(example.key)
+                group = tf.create_group(example.key)
 
                 seed = self.get_seed(example)
 
@@ -264,10 +264,10 @@ class FitJobHandler:
         """
         self._log_with_iter("Collecting scores")
 
-        with self.temp_data_handler.open_h5_file() as temp_file:
+        with self.temp_data_handler.open_h5_file(lock=False, mode='r') as tf:
             for example in self.datasets_handler.iterate_examples():
 
-                u = temp_file[example.key][LEVEL_SET_KEY][...]
+                u = tf[example.key][LEVEL_SET_KEY][...]
                 seg = example.seg
                 score = self.model.scorer(u, seg)
 
@@ -321,8 +321,8 @@ class FitJobHandler:
 
         for example in examples:
 
-            with self.temp_data_handler.open_h5_file() as temp_file:
-                mask = temp_file[example.key][MASK_KEY][...]
+            with self.temp_data_handler.open_h5_file(lock=False, mode='r') as tf:  # noqa
+                mask = tf[example.key][MASK_KEY][...]
 
             if self.balance_regression_targets:
 
@@ -352,7 +352,7 @@ class FitJobHandler:
             else:
                 img_ = example.img
 
-            with self.temp_data_handler.open_h5_file() as tf:
+            with self.temp_data_handler.open_h5_file(lock=False, mode='r') as tf:  # noqa
                 u = tf[example.key][LEVEL_SET_KEY][...]
                 dist = tf[example.key][SIGNED_DIST_KEY][...]
                 mask = tf[example.key][MASK_KEY][...]
@@ -487,7 +487,7 @@ class FitJobHandler:
             else:
                 img_ = example.img
 
-            with self.temp_data_handler.open_h5_file(lock=True) as tf:
+            with self.temp_data_handler.open_h5_file(lock=True, mode='a') as tf:  # noqa
                 mask = tf[example.key][MASK_KEY][...]
 
                 # Only update if the mask is not empty

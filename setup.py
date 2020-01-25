@@ -1,5 +1,5 @@
 import os
-from setuptools import Extension, setup
+from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
 import subprocess
 
@@ -27,10 +27,13 @@ if __name__ == '__main__':
         ext_modules=[
             Extension(
                 name=f'{PKG_NAME}.util.masked_gradient',
-                sources=[os.path.join(PKG_NAME, 'util', '_cutil', 'masked_gradient.c')],
+                sources=[
+                    os.path.join(
+                        PKG_NAME, 'util', '_cutil', 'masked_gradient.c'
+                    )
+                ],
             ),
         ],
-        include_package_data=True,
         install_requires=[
             'h5py',
             'matplotlib',
@@ -42,7 +45,7 @@ if __name__ == '__main__':
         ],
         license='MIT',
         name=PKG_NAME,
-        packages=[PKG_NAME],
+        packages=find_packages(),
         url='https://github.com/notmatthancock/level-set-machine-learning/',
         version=VERSION,
     )
