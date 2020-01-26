@@ -12,11 +12,24 @@ Example 1 | Example 2
 
 ### Installation
 
-Not on pip :( install locally:
+#### Linux
+
+Install via pip:
 
 ```bash
+pip install lsml
+```
+
+#### MacOS and Windows
+
+Not on pip; install locally:
+
+```bash
+# Clone the repo
 git clone git@github.com:notmatthancock/level-set-machine-learning.git
+# Change working directory to the cloned repo
 cd level-set-machine-learning
+# Install via pip locally
 pip install -e .
 ```
 

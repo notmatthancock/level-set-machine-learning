@@ -49,6 +49,7 @@ if __name__ == '__main__':
                         PKG_NAME, 'util', '_cutil', 'masked_gradient.c'
                     )
                 ],
+                extra_compile_args=['-std=c99', '-DMI_CHECK_INDEX=0']
             ),
         ],
         install_requires=[
